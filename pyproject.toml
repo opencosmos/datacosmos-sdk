@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "datacosmos-sdk"
+version = "0.0.1" 
+authors = [
+    { name="Open Cosmos", email="support@open-cosmos.com" },
+]
+description = "A library for interacting with DataCosmos from Python code"
+requires-python = ">=3.10"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+]
+dependencies = [
+]
+
+[tool.setuptools.packages]
+find = {}
