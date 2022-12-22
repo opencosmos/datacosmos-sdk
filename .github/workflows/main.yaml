@@ -26,10 +26,23 @@ jobs:
           continue_on_error: false
           black: true
           flake8: true
+  bandit:
+    name: bandit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: set up python
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.10.9
+      - name: install dependencies
+        run: pip install .
+      - name: bandit
+        run: bandit -r -c pyproject.toml .
   test:
     name: test
     runs-on: ubuntu-latest
-    needs: lint
+    needs: [lint, bandit]
     steps:
       - uses: actions/checkout@v3
       - name: set up python
