@@ -19,7 +19,7 @@ jobs:
         with:
           python-version: 3.10.9
       - name: install dependencies
-        run: pip install .
+        run: pip install .[test]
       - name: lint
         uses: wearerequired/lint-action@v2
         with:
@@ -36,7 +36,7 @@ jobs:
         with:
           python-version: 3.10.9
       - name: install dependencies
-        run: pip install .
+        run: pip install .[test]
       - name: bandit
         run: bandit -r -c pyproject.toml .
   cognitive:
@@ -49,7 +49,7 @@ jobs:
         with:
           python-version: 3.10.9
       - name: install dependencies
-        run: pip install .
+        run: pip install .[test]
       - name: cognitive
         run: flake8 . --max-cognitive-complexity=5
   isort:
@@ -62,7 +62,7 @@ jobs:
         with:
           python-version: 3.10.9
       - name: install dependencies
-        run: pip install .
+        run: pip install .[test]
       - name: isort
         uses: isort/isort-action@v1.1.0
   pydocstyle:
@@ -75,7 +75,7 @@ jobs:
         with:
           python-version: 3.10.9
       - name: install dependencies
-        run: pip install .
+        run: pip install .[test]
       - name: pydocstyle
         run: pydocstyle .
   test:
@@ -89,7 +89,7 @@ jobs:
         with:
           python-version: 3.10.9
       - name: install dependencies
-        run: pip install .
+        run: pip install .[test]
       - name: test
         run: python -m pytest
   release:
