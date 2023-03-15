@@ -1,0 +1,138 @@
+name: main
+
+on:
+  push:
+    branches:
+      - "**"  
+  pull_request:
+    branches:
+      - "**"
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: set up python
+        uses: actions/setup-python@v1
+        with:
+          python-version: "3.10"
+      - name: install dependencies
+        run: pip install .[test]
+      - name: lint
+        uses: wearerequired/lint-action@v2
+        with:
+          continue_on_error: false
+          black: true
+          flake8: true
+  bandit:
+    name: bandit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: set up python
+        uses: actions/setup-python@v1
+        with:
+          python-version: "3.10"
+      - name: install dependencies
+        run: pip install .[test]
+      - name: bandit
+        run: bandit -r -c pyproject.toml .
+  cognitive:
+    name: cognitive
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: set up python
+        uses: actions/setup-python@v1
+        with:
+          python-version: "3.10"
+      - name: install dependencies
+        run: pip install .[test]
+      - name: cognitive
+        run: flake8 . --max-cognitive-complexity=5
+  isort:
+    name: isort
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: set up python
+        uses: actions/setup-python@v1
+        with:
+          python-version: "3.10"
+      - name: install dependencies
+        run: pip install .[test]
+      - name: isort
+        uses: isort/isort-action@v1.1.0
+  pydocstyle:
+    name: pydocstyle
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: set up python
+        uses: actions/setup-python@v1
+        with:
+          python-version: "3.10"
+      - name: install dependencies
+        run: pip install .[test]
+      - name: pydocstyle
+        run: pydocstyle .
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
+    needs: [bandit, cognitive, isort, lint, pydocstyle]
+    steps:
+      - uses: actions/checkout@v3
+      - name: set up python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: install dependencies
+        run: pip install .[test]
+      - name: test
+        run: python -m pytest
+  release:
+    name: tag, changelog, release, publish
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v3
+      - name: version
+        uses: paulhatch/semantic-version@v5.0.0
+        id: version
+        with:
+          major_pattern: "(feat!)"
+          minor_pattern: "(feat)"
+      - name: create changelog text
+        id: changelog
+        uses: loopwerk/tag-changelog@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          exclude_types: other,doc,chore
+      - name: Create release
+        uses: actions/create-release@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.version.outputs.version_tag }}
+          release_name: Release ${{ steps.version.outputs.version_tag }}
+          body: ${{ steps.changelog.outputs.changes }}
+      - name: create changelog pull request
+        uses: peter-evans/create-pull-request@v2
+        with:
+          commit-message: "Release ${{ steps.version.outputs.version_tag }} [skip ci]"
+          labels: release, bot
+          title: "Release ${{ steps.version.outputs.version_tag }}"
+          body: |
+            # Release ${{ steps.version.outputs.version_tag }}
+
+            Merge this PR to update your version and changelog!
+
+            ## Included Pull Requests
+
+            ${{ steps.changelog.outputs.changes }}
