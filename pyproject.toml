@@ -34,3 +34,6 @@ find = {}
 
 [tool.pydocstyle]
 convention = "google"
+
+[tool.isort]
+profile = "black"
