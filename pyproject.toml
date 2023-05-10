@@ -39,6 +39,7 @@ find = {}
 
 [tool.pydocstyle]
 convention = "google"
+match = '(?!(test_|conftest)).*\.py'
 
 [tool.isort]
 profile = "black"
