@@ -1,0 +1,506 @@
+{
+    "context": {
+        "limit": 2,
+        "matched": 937433,
+        "returned": 2
+    },
+    "features": [
+        {
+            "assets": {
+                "ALL": {
+                    "gsd": 10,
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-T-TK-2023-5-4-0/L2A-30-T-TK-2023-5-4-0/ALL_COG.tiff",
+                    "roles": [
+                        "data"
+                    ],
+                    "title": "All bands",
+                    "type": "image/tiff; application=geotiff; profile=cloud-optimized"
+                },
+                "AOT": {
+                    "gsd": 10,
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-T-TK-2023-5-4-0/L2A-30-T-TK-2023-5-4-0/AOT_COG.tiff",
+                    "roles": [
+                        "data"
+                    ],
+                    "title": "Aerosol optical thickness",
+                    "type": "image/tiff; application=geotiff; profile=cloud-optimized"
+                },
+                "B01": {
+                    "gsd": 60,
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-T-TK-2023-5-4-0/L2A-30-T-TK-2023-5-4-0/B01_COG.tiff",
+                    "roles": [
+                        "data"
+                    ],
+                    "title": "Band 1 (coastal)",
+                    "type": "image/tiff; application=geotiff; profile=cloud-optimized"
+                },
+                "B02": {
+                    "gsd": 10,
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-T-TK-2023-5-4-0/L2A-30-T-TK-2023-5-4-0/B02_COG.tiff",
+                    "roles": [
+                        "data"
+                    ],
+                    "title": "Band 2 (blue)",
+                    "type": "image/tiff; application=geotiff; profile=cloud-optimized"
+                },
+                "B03": {
+                    "gsd": 10,
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-T-TK-2023-5-4-0/L2A-30-T-TK-2023-5-4-0/B03_COG.tiff",
+                    "roles": [
+                        "data"
+                    ],
+                    "title": "Band 3 (green)",
+                    "type": "image/tiff; application=geotiff; profile=cloud-optimized"
+                },
+                "B04": {
+                    "gsd": 10,
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-T-TK-2023-5-4-0/L2A-30-T-TK-2023-5-4-0/B04_COG.tiff",
+                    "roles": [
+                        "data"
+                    ],
+                    "title": "Band 4 (red)",
+                    "type": "image/tiff; application=geotiff; profile=cloud-optimized"
+                },
+                "B05": {
+                    "gsd": 20,
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-T-TK-2023-5-4-0/L2A-30-T-TK-2023-5-4-0/B05_COG.tiff",
+                    "roles": [
+                        "data"
+                    ],
+                    "title": "Band 5",
+                    "type": "image/tiff; application=geotiff; profile=cloud-optimized"
+                },
+                "B06": {
+                    "gsd": 20,
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-T-TK-2023-5-4-0/L2A-30-T-TK-2023-5-4-0/B06_COG.tiff",
+                    "roles": [
+                        "data"
+                    ],
+                    "title": "Band 6",
+                    "type": "image/tiff; application=geotiff; profile=cloud-optimized"
+                },
+                "B07": {
+                    "gsd": 20,
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-T-TK-2023-5-4-0/L2A-30-T-TK-2023-5-4-0/B07_COG.tiff",
+                    "roles": [
+                        "data"
+                    ],
+                    "title": "Band 7",
+                    "type": "image/tiff; application=geotiff; profile=cloud-optimized"
+                },
+                "B08": {
+                    "gsd": 10,
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-T-TK-2023-5-4-0/L2A-30-T-TK-2023-5-4-0/B08_COG.tiff",
+                    "roles": [
+                        "data"
+                    ],
+                    "title": "Band 8 (nir)",
+                    "type": "image/tiff; application=geotiff; profile=cloud-optimized"
+                },
+                "B09": {
+                    "gsd": 60,
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-T-TK-2023-5-4-0/L2A-30-T-TK-2023-5-4-0/B09_COG.tiff",
+                    "roles": [
+                        "data"
+                    ],
+                    "title": "Band 9",
+                    "type": "image/tiff; application=geotiff; profile=cloud-optimized"
+                },
+                "B11": {
+                    "gsd": 20,
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-T-TK-2023-5-4-0/L2A-30-T-TK-2023-5-4-0/B11_COG.tiff",
+                    "roles": [
+                        "data"
+                    ],
+                    "title": "Band 11 (swir16)",
+                    "type": "image/tiff; application=geotiff; profile=cloud-optimized"
+                },
+                "B12": {
+                    "gsd": 20,
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-T-TK-2023-5-4-0/L2A-30-T-TK-2023-5-4-0/B12_COG.tiff",
+                    "roles": [
+                        "data"
+                    ],
+                    "title": "Band 12 (swir22)",
+                    "type": "image/tiff; application=geotiff; profile=cloud-optimized"
+                },
+                "B8A": {
+                    "gsd": 20,
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-T-TK-2023-5-4-0/L2A-30-T-TK-2023-5-4-0/B8A_COG.tiff",
+                    "roles": [
+                        "data"
+                    ],
+                    "title": "Band 8A",
+                    "type": "image/tiff; application=geotiff; profile=cloud-optimized"
+                },
+                "SCL": {
+                    "gsd": 20,
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-T-TK-2023-5-4-0/L2A-30-T-TK-2023-5-4-0/SCL_COG.tiff",
+                    "roles": [
+                        "data"
+                    ],
+                    "title": "Scene classification layer",
+                    "type": "image/tiff; application=geotiff; profile=cloud-optimized"
+                },
+                "WVP": {
+                    "gsd": 10,
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-T-TK-2023-5-4-0/L2A-30-T-TK-2023-5-4-0/WVP_COG.tiff",
+                    "roles": [
+                        "data"
+                    ],
+                    "title": "Water vapour",
+                    "type": "image/tiff; application=geotiff; profile=cloud-optimized"
+                },
+                "overview": {
+                    "gsd": 10,
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-T-TK-2023-5-4-0/L2A-30-T-TK-2023-5-4-0/TCI_overview.webp",
+                    "roles": [
+                        "overview"
+                    ],
+                    "title": "Overview (TCI)",
+                    "type": "image/webp"
+                },
+                "thumbnail": {
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-T-TK-2023-5-4-0/L2A-30-T-TK-2023-5-4-0/TCI_thumbnail.webp",
+                    "roles": [
+                        "thumbnail"
+                    ],
+                    "title": "Thumbnail",
+                    "type": "image/webp"
+                },
+                "visual": {
+                    "gsd": 10,
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-T-TK-2023-5-4-0/L2A-30-T-TK-2023-5-4-0/TCI_COG.tiff",
+                    "roles": [
+                        "visual",
+                        "data"
+                    ],
+                    "title": "True color image (TCI)",
+                    "type": "image/tiff; application=geotiff; profile=cloud-optimized"
+                }
+            },
+            "bbox": [
+                -6.545463701459793,
+                39.60901314716637,
+                -5.216764656539091,
+                40.628948993420835
+            ],
+            "collection": "sentinel-s2-l2a-cogs",
+            "geometry": {
+                "coordinates": [
+                    [
+                        [
+                            -6.545464,
+                            40.596401
+                        ],
+                        [
+                            -5.249135,
+                            40.628949
+                        ],
+                        [
+                            -5.216765,
+                            39.640449
+                        ],
+                        [
+                            -6.494513,
+                            39.609013
+                        ],
+                        [
+                            -6.545464,
+                            40.596401
+                        ]
+                    ]
+                ],
+                "type": "Polygon"
+            },
+            "id": "L2A-30-T-TK-2023-5-4-0",
+            "links": [
+                {
+                    "href": "https://test.beeapp.open-cosmos.com/api/data/v0/stac/collections/sentinel-s2-l2a-cogs",
+                    "rel": "parent"
+                },
+                {
+                    "href": "https://test.beeapp.open-cosmos.com/api/data/v0/stac/collections/sentinel-s2-l2a-cogs/items/L2A-30-T-TK-2023-5-4-0",
+                    "rel": "self"
+                },
+                {
+                    "href": "https://test.beeapp.open-cosmos.com/api/data/v0/stac",
+                    "rel": "root",
+                    "title": "Welcome to Franklin",
+                    "type": "application/json"
+                }
+            ],
+            "properties": {
+                "constellation": "sentinel-2",
+                "datacosmos:scenario": "6921c167-7b9b-4d62-a25d-7d5944359e34",
+                "datetime": "2023-05-04T11:30:07.578Z",
+                "eo:cloud_cover": 23.629072,
+                "gsd": 10,
+                "opencosmos:copyright": "© 2023 European Space Agency - ESA",
+                "opencosmos:product_type": "Satellite",
+                "opencosmos:source": "Satellite Imagery",
+                "platform": "sentinel-2a",
+                "processing:level": "L2A",
+                "sat:platform_international_designator": "2015-028A",
+                "sentinel:grid_square": "TK",
+                "sentinel:latitude_band": "T",
+                "sentinel:utm_zone": 30,
+                "view:incidence_angle": 10.027247025229604,
+                "view:sun_elevation": 63.49788559814
+            },
+            "stac_extensions": [],
+            "stac_version": "1.0.0-rc.2",
+            "type": "Feature"
+        },
+        {
+            "assets": {
+                "ALL": {
+                    "gsd": 10,
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-U-XC-2023-5-4-0/L2A-30-U-XC-2023-5-4-0/ALL_COG.tiff",
+                    "roles": [
+                        "data"
+                    ],
+                    "title": "All bands",
+                    "type": "image/tiff; application=geotiff; profile=cloud-optimized"
+                },
+                "AOT": {
+                    "gsd": 10,
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-U-XC-2023-5-4-0/L2A-30-U-XC-2023-5-4-0/AOT_COG.tiff",
+                    "roles": [
+                        "data"
+                    ],
+                    "title": "Aerosol optical thickness",
+                    "type": "image/tiff; application=geotiff; profile=cloud-optimized"
+                },
+                "B01": {
+                    "gsd": 60,
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-U-XC-2023-5-4-0/L2A-30-U-XC-2023-5-4-0/B01_COG.tiff",
+                    "roles": [
+                        "data"
+                    ],
+                    "title": "Band 1 (coastal)",
+                    "type": "image/tiff; application=geotiff; profile=cloud-optimized"
+                },
+                "B02": {
+                    "gsd": 10,
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-U-XC-2023-5-4-0/L2A-30-U-XC-2023-5-4-0/B02_COG.tiff",
+                    "roles": [
+                        "data"
+                    ],
+                    "title": "Band 2 (blue)",
+                    "type": "image/tiff; application=geotiff; profile=cloud-optimized"
+                },
+                "B03": {
+                    "gsd": 10,
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-U-XC-2023-5-4-0/L2A-30-U-XC-2023-5-4-0/B03_COG.tiff",
+                    "roles": [
+                        "data"
+                    ],
+                    "title": "Band 3 (green)",
+                    "type": "image/tiff; application=geotiff; profile=cloud-optimized"
+                },
+                "B04": {
+                    "gsd": 10,
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-U-XC-2023-5-4-0/L2A-30-U-XC-2023-5-4-0/B04_COG.tiff",
+                    "roles": [
+                        "data"
+                    ],
+                    "title": "Band 4 (red)",
+                    "type": "image/tiff; application=geotiff; profile=cloud-optimized"
+                },
+                "B05": {
+                    "gsd": 20,
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-U-XC-2023-5-4-0/L2A-30-U-XC-2023-5-4-0/B05_COG.tiff",
+                    "roles": [
+                        "data"
+                    ],
+                    "title": "Band 5",
+                    "type": "image/tiff; application=geotiff; profile=cloud-optimized"
+                },
+                "B06": {
+                    "gsd": 20,
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-U-XC-2023-5-4-0/L2A-30-U-XC-2023-5-4-0/B06_COG.tiff",
+                    "roles": [
+                        "data"
+                    ],
+                    "title": "Band 6",
+                    "type": "image/tiff; application=geotiff; profile=cloud-optimized"
+                },
+                "B07": {
+                    "gsd": 20,
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-U-XC-2023-5-4-0/L2A-30-U-XC-2023-5-4-0/B07_COG.tiff",
+                    "roles": [
+                        "data"
+                    ],
+                    "title": "Band 7",
+                    "type": "image/tiff; application=geotiff; profile=cloud-optimized"
+                },
+                "B08": {
+                    "gsd": 10,
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-U-XC-2023-5-4-0/L2A-30-U-XC-2023-5-4-0/B08_COG.tiff",
+                    "roles": [
+                        "data"
+                    ],
+                    "title": "Band 8 (nir)",
+                    "type": "image/tiff; application=geotiff; profile=cloud-optimized"
+                },
+                "B09": {
+                    "gsd": 60,
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-U-XC-2023-5-4-0/L2A-30-U-XC-2023-5-4-0/B09_COG.tiff",
+                    "roles": [
+                        "data"
+                    ],
+                    "title": "Band 9",
+                    "type": "image/tiff; application=geotiff; profile=cloud-optimized"
+                },
+                "B11": {
+                    "gsd": 20,
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-U-XC-2023-5-4-0/L2A-30-U-XC-2023-5-4-0/B11_COG.tiff",
+                    "roles": [
+                        "data"
+                    ],
+                    "title": "Band 11 (swir16)",
+                    "type": "image/tiff; application=geotiff; profile=cloud-optimized"
+                },
+                "B12": {
+                    "gsd": 20,
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-U-XC-2023-5-4-0/L2A-30-U-XC-2023-5-4-0/B12_COG.tiff",
+                    "roles": [
+                        "data"
+                    ],
+                    "title": "Band 12 (swir22)",
+                    "type": "image/tiff; application=geotiff; profile=cloud-optimized"
+                },
+                "B8A": {
+                    "gsd": 20,
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-U-XC-2023-5-4-0/L2A-30-U-XC-2023-5-4-0/B8A_COG.tiff",
+                    "roles": [
+                        "data"
+                    ],
+                    "title": "Band 8A",
+                    "type": "image/tiff; application=geotiff; profile=cloud-optimized"
+                },
+                "SCL": {
+                    "gsd": 20,
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-U-XC-2023-5-4-0/L2A-30-U-XC-2023-5-4-0/SCL_COG.tiff",
+                    "roles": [
+                        "data"
+                    ],
+                    "title": "Scene classification layer",
+                    "type": "image/tiff; application=geotiff; profile=cloud-optimized"
+                },
+                "WVP": {
+                    "gsd": 10,
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-U-XC-2023-5-4-0/L2A-30-U-XC-2023-5-4-0/WVP_COG.tiff",
+                    "roles": [
+                        "data"
+                    ],
+                    "title": "Water vapour",
+                    "type": "image/tiff; application=geotiff; profile=cloud-optimized"
+                },
+                "overview": {
+                    "gsd": 10,
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-U-XC-2023-5-4-0/L2A-30-U-XC-2023-5-4-0/TCI_overview.webp",
+                    "roles": [
+                        "overview"
+                    ],
+                    "title": "Overview (TCI)",
+                    "type": "image/webp"
+                },
+                "thumbnail": {
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-U-XC-2023-5-4-0/L2A-30-U-XC-2023-5-4-0/TCI_thumbnail.webp",
+                    "roles": [
+                        "thumbnail"
+                    ],
+                    "title": "Thumbnail",
+                    "type": "image/webp"
+                },
+                "visual": {
+                    "gsd": 10,
+                    "href": "https://storage.googleapis.com/test-datacosmos-public/L2A/L2A-30-U-XC-2023-5-4-0/L2A-30-U-XC-2023-5-4-0/TCI_COG.tiff",
+                    "roles": [
+                        "visual",
+                        "data"
+                    ],
+                    "title": "True color image (TCI)",
+                    "type": "image/tiff; application=geotiff; profile=cloud-optimized"
+                }
+            },
+            "bbox": [
+                -1.563879374885302,
+                51.324523354307196,
+                0.0777579252987403,
+                52.34135509678961
+            ],
+            "collection": "sentinel-s2-l2a-cogs",
+            "geometry": {
+                "coordinates": [
+                    [
+                        [
+                            -1.532116,
+                            52.341355
+                        ],
+                        [
+                            0.077758,
+                            52.310367
+                        ],
+                        [
+                            0.011254,
+                            51.324523
+                        ],
+                        [
+                            -1.563879,
+                            51.354439
+                        ],
+                        [
+                            -1.532116,
+                            52.341355
+                        ]
+                    ]
+                ],
+                "type": "Polygon"
+            },
+            "id": "L2A-30-U-XC-2023-5-4-0",
+            "links": [
+                {
+                    "href": "https://test.beeapp.open-cosmos.com/api/data/v0/stac/collections/sentinel-s2-l2a-cogs",
+                    "rel": "parent"
+                },
+                {
+                    "href": "https://test.beeapp.open-cosmos.com/api/data/v0/stac/collections/sentinel-s2-l2a-cogs/items/L2A-30-U-XC-2023-5-4-0",
+                    "rel": "self"
+                },
+                {
+                    "href": "https://test.beeapp.open-cosmos.com/api/data/v0/stac",
+                    "rel": "root",
+                    "title": "Welcome to Franklin",
+                    "type": "application/json"
+                }
+            ],
+            "properties": {
+                "constellation": "sentinel-2",
+                "datacosmos:scenario": "cc4752ab-81bd-4a77-9938-170d7b0d9ac2",
+                "datetime": "2023-05-04T11:26:45.081Z",
+                "eo:cloud_cover": 41.166106,
+                "gsd": 10,
+                "opencosmos:copyright": "© 2023 European Space Agency - ESA",
+                "opencosmos:product_type": "Satellite",
+                "opencosmos:source": "Satellite Imagery",
+                "platform": "sentinel-2a",
+                "processing:level": "L2A",
+                "sat:platform_international_designator": "2015-028A",
+                "sentinel:grid_square": "XC",
+                "sentinel:latitude_band": "U",
+                "sentinel:utm_zone": 30,
+                "view:incidence_angle": 10.179282575393485,
+                "view:sun_elevation": 53.5335259314707
+            },
+            "stac_extensions": [],
+            "stac_version": "1.0.0-rc.2",
+            "type": "Feature"
+        }
+    ],
+    "next": null,
+    "prev": null,
+    "type": "FeatureCollection"
+}
