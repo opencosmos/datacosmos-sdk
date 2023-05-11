@@ -147,7 +147,10 @@ class SearchResults:
 
     def __repr__(self):
         """Return a string representation of the SearchResults object."""
-        return f"<SearchResults matched={self.matched} params={self.params}>"
+        return (
+            f"<SearchResults matched={self.matched} fetched={len(self.items)} "
+            f"params={self.params}>"
+        )
 
     def __iter__(self) -> Iterator[STACItem]:
         """Return an iterator over the STAC items returned from the search request."""

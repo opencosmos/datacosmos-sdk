@@ -74,6 +74,10 @@ class DataCosmos:
         self.base_url = api_url
         self.http_session = self.credentials.authenticated_session()
 
+    def __repr__(self):
+        """Return a string representation of the DataCosmos object."""
+        return f"DataCosmos(base_url={self.base_url})"
+
     @classmethod
     def with_credentials_from(cls, path: os.PathLike | str) -> "DataCosmos":
         """Load credentials from the provided file path.
