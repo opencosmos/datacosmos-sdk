@@ -1,4 +1,5 @@
 """Handles searching for STAC items using the DataCosmos POST API."""
+from __future__ import annotations
 
 import datetime
 import json
