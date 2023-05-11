@@ -14,7 +14,11 @@ classifiers = [
   "Programming Language :: Python :: 3",
   "Operating System :: OS Independent",
 ]
-dependencies = []
+dependencies = [
+  "requests==2.*",
+  "geojson==3.*",
+  "requests_oauthlib==1.*",
+]
 
 [project.optional-dependencies]
 test = [
