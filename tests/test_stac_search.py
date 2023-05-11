@@ -91,12 +91,14 @@ def test_search_pagination(testdata, mocked_responses):
     assert results.items[0].id == "L2A-30-T-TK-2023-5-4-0"
     assert not results._all_fetched()
 
+    cursor = "cursor=L2A-30-T-TK-2023-5-4-0"
     mocked_responses.post(
-        url=f"{DATACOSMOS_PRODUCTION_BASE_URL}/stac/search?cursor=L2A-30-T-TK-2023-5-4-0",
+        url=f"{DATACOSMOS_PRODUCTION_BASE_URL}/stac/search?{cursor}",
         json=testdata.json_from("002_search_pagination/page_2.json"),
     )
 
-    # list() will exhaust the iterator, fetching all pages until we reach the desired number
+    # list() will exhaust the iterator, fetching all pages until we reach the
+    # desired number
     assert len(list(results)) == 2
     assert len(results.items) == 2
     assert results.items[1].id == "L2A-30-U-XC-2023-5-4-0"
