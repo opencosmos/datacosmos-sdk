@@ -13,7 +13,6 @@ from datacosmos.const import (
     DATACOSMOS_PRODUCTION_BASE_URL,
     Constellations,
     Levels,
-    Satellites,
 )
 from datacosmos.stac import search as stac_search
 
@@ -89,7 +88,7 @@ class DataCosmos:
         self,
         number: int | None = None,
         constellations: List[Constellations] | None = None,
-        satellites: List[Satellites] | None = None,
+        satellites: List[str] | None = None,
         levels: List[Levels] | None = None,
         after: datetime.datetime | None = None,
         before: datetime.datetime | None = None,
@@ -112,8 +111,9 @@ class DataCosmos:
             provided, will search all constellations. See the constellations
             enum in datacosmos.const for a list of available constellations.
         :param satellites: List of satellites to search for. If not provided,
-            will search all satellites. See the Satellites enum in
-            datacosmos.const for a list of available satellites.
+            will search all satellites. The values are the COSPAR IDs of the
+            satellites, e.g. "2023-001B". Values for common satellites are
+            defined in the satellites module.
         :param levels: List of data processing levels to search for. If not
             provided, will search all levels.
         :param after: Search for items after this datetime.
