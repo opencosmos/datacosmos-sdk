@@ -9,7 +9,7 @@ import geojson
 import requests
 from requests_oauthlib import OAuth2Session
 
-from datacosmos.const import Constellations, Levels
+from datacosmos.const import Constellations
 from datacosmos.errors import DataCosmosRequestError
 from datacosmos.stac.item import STACItem
 
@@ -27,7 +27,7 @@ class SearchParams:
     number: int | None = None
     constellations: List[Constellations] | None = None
     satellites: List[str] | None = None
-    levels: List[Levels] | None = None
+    levels: List[str] | None = None
     after: datetime.datetime | None = None
     before: datetime.datetime | None = None
     bbox: List[float] | None = None
@@ -52,7 +52,7 @@ class SearchParams:
 
     def _add_levels(self, body: Dict) -> None:
         if self.levels is not None:
-            body["query"]["processing:level"] = {"in": [c.value for c in self.levels]}
+            body["query"]["processing:level"] = {"in": self.levels}
 
     def _add_datetimes(self, body: Dict) -> None:
         expr = {}

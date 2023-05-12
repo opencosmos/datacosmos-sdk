@@ -12,7 +12,6 @@ from datacosmos.auth import DataCosmosCredentials
 from datacosmos.const import (
     DATACOSMOS_PRODUCTION_BASE_URL,
     Constellations,
-    Levels,
 )
 from datacosmos.stac import search as stac_search
 
@@ -89,7 +88,7 @@ class DataCosmos:
         number: int | None = None,
         constellations: List[Constellations] | None = None,
         satellites: List[str] | None = None,
-        levels: List[Levels] | None = None,
+        levels: List[str] | None = None,
         after: datetime.datetime | None = None,
         before: datetime.datetime | None = None,
         bbox: List[float] | None = None,
@@ -115,7 +114,9 @@ class DataCosmos:
             satellites, e.g. "2023-001B". Values for common satellites are
             defined in the satellites module.
         :param levels: List of data processing levels to search for. If not
-            provided, will search all levels.
+            provided, will search all levels. e.g. "L1B". See
+            https://www.earthdata.nasa.gov/engage/open-data-services-and-software/data-information-policy/data-levels
+            for more information about data processing levels.
         :param after: Search for items after this datetime.
         :param before: Search for items before this datetime.
         :param bbox: Search for items within this bounding box, as a list of
