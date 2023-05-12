@@ -11,7 +11,6 @@ import geojson
 from datacosmos.auth import DataCosmosCredentials
 from datacosmos.const import (
     DATACOSMOS_PRODUCTION_BASE_URL,
-    Constellations,
 )
 from datacosmos.stac import search as stac_search
 
@@ -86,7 +85,7 @@ class DataCosmos:
     def search(
         self,
         number: int | None = None,
-        constellations: List[Constellations] | None = None,
+        constellations: List[str] | None = None,
         satellites: List[str] | None = None,
         levels: List[str] | None = None,
         after: datetime.datetime | None = None,
@@ -108,7 +107,7 @@ class DataCosmos:
             will return all results.
         :param constellations: List of constellations to search for. If not
             provided, will search all constellations. See the constellations
-            enum in datacosmos.const for a list of available constellations.
+            module in datacosmos for a list of available constellations.
         :param satellites: List of satellites to search for. If not provided,
             will search all satellites. The values are the COSPAR IDs of the
             satellites, e.g. "2023-001B". Values for common satellites are
