@@ -108,9 +108,6 @@ class SearchParams:
         self._add_resolution(body)
         self._add_query(body)
 
-        if not body["query"]:
-            del body["query"]
-
         return body
 
 
