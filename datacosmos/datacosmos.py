@@ -9,9 +9,7 @@ from typing import Dict, List
 import geojson
 
 from datacosmos.auth import DataCosmosCredentials
-from datacosmos.const import (
-    DATACOSMOS_PRODUCTION_BASE_URL,
-)
+from datacosmos.constants.urls import DATACOSMOS_PRODUCTION_BASE_URL
 from datacosmos.stac import search as stac_search
 
 

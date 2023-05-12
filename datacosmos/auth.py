@@ -8,7 +8,10 @@ from dataclasses import dataclass
 from oauthlib.oauth2 import BackendApplicationClient
 from requests_oauthlib import OAuth2Session
 
-from datacosmos.const import DATACOSMOS_PRODUCTION_AUDIENCE, DATACOSMOS_TOKEN_URL
+from datacosmos.constants.urls import (
+    DATACOSMOS_PRODUCTION_AUDIENCE,
+    DATACOSMOS_TOKEN_URL,
+)
 from datacosmos.errors import DataCosmosCredentialsError
 
 
