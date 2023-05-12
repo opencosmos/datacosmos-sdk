@@ -21,20 +21,13 @@ class DataCosmosCredentials:
 
     To load credentials from environment variables:
 
-    .. code-block:: python
-
-        from datacosmos import DataCosmosCredentials
-
-        credentials = DataCosmosCredentials.from_env()
+    >>> from datacosmos import DataCosmosCredentials
+    >>> credentials = DataCosmosCredentials.from_env()
 
     To load credentials from a file:
 
-    .. code-block:: python
-
-        from datacosmos import DataCosmosCredentials
-
-        credentials =
-        DataCosmosCredentials.from_file("path/to/credentials.json")
+    >>> from datacosmos import DataCosmosCredentials
+    >>> credentials = DataCosmosCredentials.from_file("path/to/credentials.json")
 
     :param client_id: Client ID
     :param client_secret: Client Secret
@@ -72,8 +65,6 @@ class DataCosmosCredentials:
         """Load credentials from a file.
 
         The file should be a JSON file with the following format:
-
-        .. code-block:: json
 
             {
                 "id": "your_client_id",

@@ -32,22 +32,17 @@ class DataCosmos:
     With credentials from environment variables DATACOSMOS_KEY_ID and
     DATACOSMOS_KEY_SECRET:
 
-    .. code-block:: python
-
-        from datacosmos import DataCosmos
-
-        dc = DataCosmos() results = dc.search(number=10) for item in results:
-            print(item.id)
+        >>> from datacosmos import DataCosmos
+        >>> dc = DataCosmos() results = dc.search(number=10)
+        >>> for item in results:
+        >>>     print(item.id)
 
     With credentials from a file:
 
-    .. code-block:: python
-
-        from datacosmos import DataCosmos
-
-        dc = DataCosmos.with_credentials_from("path/to/credentials.json")
-        results = dc.search(number=10) for item in results:
-            print(item.id)
+        >>> from datacosmos import DataCosmos
+        >>> dc = DataCosmos.with_credentials_from("path/to/credentials.json")
+        >>> results = dc.search(number=10) for item in results:
+        >>>     print(item.id)
 
     :param credentials: DataCosmosCredentials object containing client ID and
         secret. If not provided, will be loaded from environment variables.
