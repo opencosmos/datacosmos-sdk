@@ -66,9 +66,8 @@ class DataCosmos:
             variables.
         :param api_url: Override the default API URL (useful for development).
         """
-        if credentials is not None:
-            self.credentials = credentials
-        else:
+        self.credentials = credentials
+        if self.credentials is None:
             self.credentials = DataCosmosCredentials.from_env()
 
         self.base_url = api_url
