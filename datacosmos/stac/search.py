@@ -213,8 +213,7 @@ class SearchResults:
         nexts = [link for link in js["links"] if link["rel"] == "next"]
         if len(nexts) == 0:
             return None
-        else:
-            return nexts[0]["href"]
+        return nexts[0]["href"]
 
     def _total_matched_from(self, response: requests.Response) -> int:
         """Return the total number of items matched by the query."""
