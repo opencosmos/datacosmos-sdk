@@ -10,7 +10,9 @@ from config.config import Config
 
 
 class DatacosmosClient:
-    def __init__(self, config: Optional[Config] = None, config_file: str = "config/config.yaml"):
+    def __init__(
+        self, config: Optional[Config] = None, config_file: str = "config/config.yaml"
+    ):
         self.config = config or self._load_config(config_file)
         self.token = None
         self.token_expiry = None
@@ -34,7 +36,9 @@ class DatacosmosClient:
         )
 
         self.token = token_response["access_token"]
-        self.token_expiry = datetime.now(timezone.utc) + timedelta(seconds=token_response.get("expires_in", 3600))
+        self.token_expiry = datetime.now(timezone.utc) + timedelta(
+            seconds=token_response.get("expires_in", 3600)
+        )
 
         # Initialize the HTTP session with the Authorization header
         http_client = requests.Session()
@@ -57,7 +61,9 @@ class DatacosmosClient:
         return self._http_client
 
     # Proxy HTTP methods to the underlying authenticated session
-    def request(self, method: str, url: str, *args: Any, **kwargs: Any) -> requests.Response:
+    def request(
+        self, method: str, url: str, *args: Any, **kwargs: Any
+    ) -> requests.Response:
         """
         Proxy method to send HTTP requests using the authenticated session.
         """
