@@ -1,21 +1,30 @@
-from __future__ import annotations
+"""Module for managing configuration settings for the Datacosmos SDK.
+
+Supports loading from YAML files and environment variables.
+"""
 
 import os
-import yaml
 from dataclasses import dataclass
+
+import yaml
 
 
 @dataclass
 class Config:
+    """Configuration for the Datacosmos SDK.
+
+    Contains authentication details such as client ID, secret, token URL, and audience.
+    """
+
     client_id: str
     client_secret: str
     token_url: str
     audience: str
 
     @staticmethod
-    def from_yaml(file_path: str = "config/config.yaml") -> Config:
-        """
-        Load configuration from a YAML file.
+    def from_yaml(file_path: str = "config/config.yaml") -> "Config":
+        """Load configuration from a YAML file.
+
         Defaults to 'config/config.yaml' unless otherwise specified.
         """
         with open(file_path, "r") as f:
@@ -29,9 +38,9 @@ class Config:
         )
 
     @staticmethod
-    def from_env() -> Config:
-        """
-        Load configuration from environment variables.
+    def from_env() -> "Config":
+        """Load configuration from environment variables.
+
         Raises an exception if any required variable is missing.
         """
         return Config(

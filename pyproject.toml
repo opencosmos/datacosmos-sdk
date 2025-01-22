@@ -25,6 +25,7 @@ test = [
     "isort==5.11.4",
     "pydocstyle==6.1.1",
     "flake8-cognitive-complexity==0.1.0",
+    "ruff==0.0.286"
 ]
 
 [tool.setuptools.packages]
@@ -34,3 +35,57 @@ find = {}
 
 [tool.pydocstyle]
 convention = "google"
+
+[tool.ruff]
+fix = true
+line-length = 88
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+]
+
+[tool.ruff.lint]
+extend-select = ["I", "SLF", "F", "C90", "BLE", "B", "ARG", "ERA"]
+ignore = []
+fixable = ["ALL"]
+unfixable = []
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = false
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.black]
+line-length = 88
+
+[tool.isort]
+profile = "black"
