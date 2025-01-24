@@ -13,7 +13,8 @@ import yaml
 class Config:
     """Configuration for the Datacosmos SDK.
 
-    Contains authentication details such as client ID, secret, token URL, and audience.
+    Contains authentication details such as client ID, secret, token
+    URL, and audience.
     """
 
     client_id: str

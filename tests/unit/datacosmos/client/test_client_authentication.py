@@ -10,9 +10,7 @@ from datacosmos.client import DatacosmosClient
     autospec=True,
 )
 def test_client_authentication(mock_auth_client, mock_fetch_token):
-    """
-    Test that the client correctly fetches a token during authentication.
-    """
+    """Test that the client correctly fetches a token during authentication."""
     # Mock the token response from OAuth2Session
     mock_fetch_token.return_value = {
         "access_token": "mock-access-token",

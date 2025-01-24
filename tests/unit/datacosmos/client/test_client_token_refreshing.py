@@ -7,9 +7,7 @@ from datacosmos.client import DatacosmosClient
 
 @patch("datacosmos.client.DatacosmosClient._authenticate_and_initialize_client")
 def test_client_token_refreshing(mock_auth_client):
-    """
-    Test that the client refreshes the token when it expires.
-    """
+    """Test that the client refreshes the token when it expires."""
     # Mock the HTTP client returned by _authenticate_and_initialize_client
     mock_http_client = MagicMock()
     mock_response = MagicMock()

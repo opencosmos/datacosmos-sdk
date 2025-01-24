@@ -8,9 +8,8 @@ from datacosmos.client import DatacosmosClient
 @patch("os.path.exists", return_value=False)
 @patch("config.Config.from_env")
 def test_client_initialization(mock_from_env, mock_exists, mock_auth_client):
-    """
-    Test that the client initializes correctly with environment variables and mocks the HTTP client.
-    """
+    """Test that the client initializes correctly with environment variables
+    and mocks the HTTP client."""
     mock_config = Config(
         client_id="test-client-id",
         client_secret="test-client-secret",
