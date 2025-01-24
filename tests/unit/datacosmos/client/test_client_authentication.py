@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from config.config import Config
 from datacosmos.client import DatacosmosClient

@@ -5,9 +5,7 @@ from config.config import Config
 from datacosmos.client import DatacosmosClient
 
 
-@patch(
-    "datacosmos.client.DatacosmosClient._authenticate_and_initialize_client"
-)
+@patch("datacosmos.client.DatacosmosClient._authenticate_and_initialize_client")
 def test_client_token_refreshing(mock_auth_client):
     """
     Test that the client refreshes the token when it expires.

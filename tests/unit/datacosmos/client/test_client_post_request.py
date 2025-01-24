@@ -4,9 +4,7 @@ from config.config import Config
 from datacosmos.client import DatacosmosClient
 
 
-@patch(
-    "datacosmos.client.DatacosmosClient._authenticate_and_initialize_client"
-)
+@patch("datacosmos.client.DatacosmosClient._authenticate_and_initialize_client")
 def test_post_request(mock_auth_client):
     """
     Test that the client performs a POST request correctly.
@@ -26,9 +24,7 @@ def test_post_request(mock_auth_client):
         audience="https://mock.audience",
     )
     client = DatacosmosClient(config=config)
-    response = client.post(
-        "https://mock.api/some-endpoint", json={"key": "value"}
-    )
+    response = client.post("https://mock.api/some-endpoint", json={"key": "value"})
 
     # Assertions
     assert response.status_code == 201

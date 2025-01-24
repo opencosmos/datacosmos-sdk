@@ -4,9 +4,7 @@ from config.config import Config
 from datacosmos.client import DatacosmosClient
 
 
-@patch(
-    "datacosmos.client.DatacosmosClient._authenticate_and_initialize_client"
-)
+@patch("datacosmos.client.DatacosmosClient._authenticate_and_initialize_client")
 @patch("os.path.exists", return_value=False)
 @patch("config.Config.from_env")
 def test_client_initialization(mock_from_env, mock_exists, mock_auth_client):

@@ -1,46 +1,15 @@
-[build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
-
-[project]
-name = "datacosmos-sdk"
-version = "0.0.1" 
-authors = [
-    { name="Open Cosmos", email="support@open-cosmos.com" },
-]
-description = "A library for interacting with DataCosmos from Python code"
-requires-python = ">=3.8"
-classifiers = [
-  "Programming Language :: Python :: 3",
-  "Operating System :: OS Independent",
-]
-dependencies = []
-
-[project.optional-dependencies]
-test = [
-    "black==22.12.0",
-    "flake8==6.0.0",
-    "pytest==7.2.0",
-    "bandit[toml]==1.7.4",
-    "isort==5.11.4",
-    "pydocstyle==6.1.1",
-    "flake8-cognitive-complexity==0.1.0",
-    "ruff==0.0.286"
+# pytest configuration
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q"
+testpaths = [
+    "tests",
 ]
 
-[tool.setuptools.packages]
-find = {}
-
-[tool.bandit]
-skips = ["B101"]  # Example: ignore assert statement usage if needed
-targets = ["datacosmos"]  # Adjust to point to your project directory
-
-[tool.pydocstyle]
-convention = "google"
+[tool.pyright]
+typeCheckingMode = "basic"
 
 [tool.ruff]
-fix = true
-line-length = 88
 exclude = [
     ".bzr",
     ".direnv",
@@ -60,7 +29,6 @@ exclude = [
     ".tox",
     ".venv",
     ".vscode",
-    "__pycache__",
     "__pypackages__",
     "_build",
     "buck-out",
@@ -71,9 +39,25 @@ exclude = [
     "venv",
 ]
 
+line-length = 79
+indent-width = 4
+
 [tool.ruff.lint]
+# I - Sort imports
+# SLF - Private member access
+# F - pyflakes
+# C90 - Mccabe complexity check
+# ANN - Type hint annotations
+# BLE - Do not allow blind excepts
+# B - Standard bug bears in Python code
+# ARG - unused arguments
+# ERA - remove uncommented code
 extend-select = ["I", "SLF", "F", "C90", "BLE", "B", "ARG", "ERA"]
+
+# Ignored rules
 ignore = []
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
 fixable = ["ALL"]
 unfixable = []
 
@@ -82,26 +66,10 @@ quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
+
+# This is currently disabled by default, but it is planned for this
+# to be opt-out in the future.
 docstring-code-format = false
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10
-
-[tool.black]
-line-length = 88
-
-[tool.isort]
-profile = "black"
-
-[tool.flake8]
-max-line-length = 88
-exclude = [
-    ".venv",
-    "__pycache__",
-    "build",
-    "dist",
-]
-ignore = [
-    "E203",  # Whitespace before ':', handled by Black
-    "W503",  # Line break before binary operator
-]
