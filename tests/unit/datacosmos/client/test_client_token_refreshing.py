@@ -1,10 +1,13 @@
-from unittest.mock import patch, MagicMock
 from datetime import datetime, timedelta, timezone
-from datacosmos.client import DatacosmosClient
+from unittest.mock import MagicMock, patch
+
 from config.config import Config
+from datacosmos.client import DatacosmosClient
 
 
-@patch("datacosmos.client.DatacosmosClient._authenticate_and_initialize_client")
+@patch(
+    "datacosmos.client.DatacosmosClient._authenticate_and_initialize_client"
+)
 def test_client_token_refreshing(mock_auth_client):
     """
     Test that the client refreshes the token when it expires.
@@ -44,6 +47,5 @@ def test_client_token_refreshing(mock_auth_client):
 
     # Verify the request was made correctly
     mock_http_client.request.assert_called_once_with(
-        "GET",
-        "https://mock.api/some-endpoint"
+        "GET", "https://mock.api/some-endpoint"
     )

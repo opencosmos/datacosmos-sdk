@@ -1,12 +1,12 @@
 import logging
 import os
 from datetime import datetime, timedelta, timezone
-from typing import Optional, Any
+from typing import Any, Optional
 
 import requests
-from requests_oauthlib import OAuth2Session
 from oauthlib.oauth2 import BackendApplicationClient
 from requests.exceptions import RequestException
+from requests_oauthlib import OAuth2Session
 
 from config.config import Config
 
@@ -18,7 +18,9 @@ class DatacosmosClient:
     """
 
     def __init__(
-        self, config: Optional[Config] = None, config_file: str = "config/config.yaml"
+        self,
+        config: Optional[Config] = None,
+        config_file: str = "config/config.yaml",
     ):
         """
         Initialize the DatacosmosClient.
@@ -42,7 +44,9 @@ class DatacosmosClient:
             if os.path.exists(config_file):
                 self.logger.info(f"Loading configuration from {config_file}")
                 return Config.from_yaml(config_file)
-            self.logger.info("Loading configuration from environment variables")
+            self.logger.info(
+                "Loading configuration from environment variables"
+            )
             return Config.from_env()
         except Exception as e:
             self.logger.error(f"Failed to load configuration: {e}")
@@ -73,7 +77,9 @@ class DatacosmosClient:
 
             # Initialize the HTTP session with the Authorization header
             http_client = requests.Session()
-            http_client.headers.update({"Authorization": f"Bearer {self.token}"})
+            http_client.headers.update(
+                {"Authorization": f"Bearer {self.token}"}
+            )
             return http_client
         except RequestException as e:
             self.logger.error(f"Request failed during authentication: {e}")
@@ -97,7 +103,9 @@ class DatacosmosClient:
         self._refresh_token_if_needed()
         return self._http_client
 
-    def request(self, method: str, url: str, *args: Any, **kwargs: Any) -> requests.Response:
+    def request(
+        self, method: str, url: str, *args: Any, **kwargs: Any
+    ) -> requests.Response:
         """
         Send an HTTP request using the authenticated session.
         Logs request and response details.
@@ -107,7 +115,9 @@ class DatacosmosClient:
             self.logger.info(f"Making {method.upper()} request to {url}")
             response = self._http_client.request(method, url, *args, **kwargs)
             response.raise_for_status()
-            self.logger.info(f"Request to {url} succeeded with status {response.status_code}")
+            self.logger.info(
+                f"Request to {url} succeeded with status {response.status_code}"
+            )
             return response
         except RequestException as e:
             self.logger.error(f"HTTP request failed: {e}")

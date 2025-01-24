@@ -1,10 +1,14 @@
-from unittest.mock import patch, MagicMock
-from datacosmos.client import DatacosmosClient
+from unittest.mock import MagicMock, patch
+
 from config.config import Config
+from datacosmos.client import DatacosmosClient
 
 
 @patch("datacosmos.client.OAuth2Session.fetch_token")
-@patch("datacosmos.client.DatacosmosClient._authenticate_and_initialize_client", autospec=True)
+@patch(
+    "datacosmos.client.DatacosmosClient._authenticate_and_initialize_client",
+    autospec=True,
+)
 def test_client_authentication(mock_auth_client, mock_fetch_token):
     """
     Test that the client correctly fetches a token during authentication.

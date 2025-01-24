@@ -1,9 +1,12 @@
-from unittest.mock import patch, MagicMock
-from datacosmos.client import DatacosmosClient
+from unittest.mock import MagicMock, patch
+
 from config.config import Config
+from datacosmos.client import DatacosmosClient
 
 
-@patch("datacosmos.client.DatacosmosClient._authenticate_and_initialize_client")
+@patch(
+    "datacosmos.client.DatacosmosClient._authenticate_and_initialize_client"
+)
 def test_client_get_request(mock_auth_client):
     """
     Test that the client performs a GET request correctly.
@@ -29,7 +32,6 @@ def test_client_get_request(mock_auth_client):
     assert response.status_code == 200
     assert response.json() == {"message": "success"}
     mock_http_client.request.assert_called_once_with(
-        "GET",
-        "https://mock.api/some-endpoint"
+        "GET", "https://mock.api/some-endpoint"
     )
     mock_auth_client.call_count == 2
