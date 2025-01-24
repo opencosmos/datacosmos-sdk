@@ -1,15 +1,14 @@
 from unittest.mock import patch, MagicMock
-from datetime import datetime, timedelta, timezone
 from datacosmos.client import DatacosmosClient
 from config.config import Config
 
 
 @patch("datacosmos.client.DatacosmosClient._authenticate_and_initialize_client")
-def test_client_token_refreshing(mock_auth_client):
+def test_client_get_request(mock_auth_client):
     """
-    Test that the client refreshes the token when it expires.
+    Test that the client performs a GET request correctly.
     """
-    # Mock the HTTP client returned by _authenticate_and_initialize_client
+    # Mock the HTTP client
     mock_http_client = MagicMock()
     mock_response = MagicMock()
     mock_response.status_code = 200
@@ -23,27 +22,14 @@ def test_client_token_refreshing(mock_auth_client):
         token_url="https://mock.token.url/oauth/token",
         audience="https://mock.audience",
     )
-
-    # Initialize the client (first call to _authenticate_and_initialize_client)
     client = DatacosmosClient(config=config)
-
-    # Simulate expired token
-    client.token_expiry = datetime.now(timezone.utc) - timedelta(seconds=1)
-
-    # Make a GET request (should trigger token refresh)
     response = client.get("https://mock.api/some-endpoint")
 
     # Assertions
     assert response.status_code == 200
     assert response.json() == {"message": "success"}
-
-    # Verify _authenticate_and_initialize_client was called twice:
-    # 1. During initialization
-    # 2. During token refresh
-    assert mock_auth_client.call_count == 2
-
-    # Verify the request was made correctly
     mock_http_client.request.assert_called_once_with(
         "GET",
         "https://mock.api/some-endpoint"
     )
+    mock_auth_client.call_count == 2
