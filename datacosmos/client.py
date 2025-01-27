@@ -52,7 +52,8 @@ class DatacosmosClient:
                 self.logger.info(f"Loading configuration from {config_file}")
                 return Config.from_yaml(config_file)
             self.logger.info(
-                "Loading configuration from environment variables")
+                "Loading configuration from environment variables"
+            )
             return Config.from_env()
         except Exception as e:
             self.logger.error(f"Failed to load configuration: {e}")
@@ -82,7 +83,8 @@ class DatacosmosClient:
             # Initialize the HTTP session with the Authorization header
             http_client = requests.Session()
             http_client.headers.update(
-                {"Authorization": f"Bearer {self.token}"})
+                {"Authorization": f"Bearer {self.token}"}
+            )
             return http_client
         except RequestException as e:
             self.logger.error(f"Request failed during authentication: {e}")
