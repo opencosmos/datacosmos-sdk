@@ -49,7 +49,9 @@ class DatacosmosClient:
         """
         try:
             if os.path.exists(config_file):
-                self.logger.info(f"Loading configuration from {config_file}")
+                self.logger.info(
+                    f"Loading configuration from {config_file}"
+                )
                 return Config.from_yaml(config_file)
             self.logger.info(
                 "Loading configuration from environment variables"
