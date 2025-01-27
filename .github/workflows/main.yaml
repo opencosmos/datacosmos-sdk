@@ -57,7 +57,7 @@ jobs:
       - name: install dependencies
         run: pip install .[test]
       - name: cognitive
-        run: flake8 . --max-cognitive-complexity=5 --config=pyproject.toml
+        run: flake8 . --max-cognitive-complexity=5 --ignore=E501
 
   isort:
     name: isort

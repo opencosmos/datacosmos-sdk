@@ -35,6 +35,3 @@ find = {}
 
 [tool.pydocstyle]
 convention = "google"
-
-[tool.flake8]
-ignore = "E501"
