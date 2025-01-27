@@ -20,12 +20,17 @@ jobs:
           python-version: "3.10"
       - name: install dependencies
         run: pip install .[test]
+      - name: auto-fix with black and isort
+        run: |
+          black . --check --quiet || black .
+          isort . --check-only --quiet || isort .
       - name: lint
         uses: wearerequired/lint-action@v2
         with:
           continue_on_error: false
           black: true
           flake8: true
+          
   bandit:
     name: bandit
     runs-on: ubuntu-latest
@@ -39,6 +44,7 @@ jobs:
         run: pip install .[test]
       - name: bandit
         run: bandit -r -c pyproject.toml .
+
   cognitive:
     name: cognitive
     runs-on: ubuntu-latest
@@ -52,6 +58,7 @@ jobs:
         run: pip install .[test]
       - name: cognitive
         run: flake8 . --max-cognitive-complexity=5
+
   isort:
     name: isort
     runs-on: ubuntu-latest
@@ -65,6 +72,7 @@ jobs:
         run: pip install .[test]
       - name: isort
         uses: isort/isort-action@v1.1.0
+
   pydocstyle:
     name: pydocstyle
     runs-on: ubuntu-latest
@@ -78,6 +86,7 @@ jobs:
         run: pip install .[test]
       - name: pydocstyle
         run: pydocstyle .
+
   test:
     name: test
     runs-on: ubuntu-latest
@@ -95,6 +104,7 @@ jobs:
         run: pip install .[test]
       - name: test
         run: python -m pytest
+
   release:
     name: tag, changelog, release, publish
     runs-on: ubuntu-latest
