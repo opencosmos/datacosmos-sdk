@@ -30,7 +30,7 @@ jobs:
           continue_on_error: false
           black: true
           flake8: true
-          flake8-options: -ignore E501
+          flake8-options: "--ignore=E501"
           
   bandit:
     name: bandit
