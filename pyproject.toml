@@ -32,8 +32,6 @@ find = {}
 
 [tool.bandit]
 
-[tool.flake8]
-exclude = ["tests/*", "build/*"]
 
 [tool.pydocstyle]
 convention = "google"
