@@ -26,6 +26,7 @@ test = [
     "pydocstyle==6.1.1",
     "flake8-cognitive-complexity==0.1.0",
     "requests==2.26.0",
+    "oauthlib==3.1.1",
 ]
 
 [tool.setuptools.packages]
