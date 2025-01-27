@@ -100,7 +100,8 @@ class DatacosmosClient:
             self._http_client = self._authenticate_and_initialize_client()
 
     def get_http_client(self) -> requests.Session:
-        """Return the authenticated HTTP client, refreshing the token if necessary."""
+        """Return the authenticated HTTP client, 
+        refreshing the token if necessary."""
         self._refresh_token_if_needed()
         return self._http_client
 
@@ -117,7 +118,8 @@ class DatacosmosClient:
             response = self._http_client.request(method, url, *args, **kwargs)
             response.raise_for_status()
             self.logger.info(
-                f"Request to {url} succeeded with status {response.status_code}"
+                f"Request to {url} succeeded 
+                with status {response.status_code}"
             )
             return response
         except RequestException as e:
