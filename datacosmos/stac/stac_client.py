@@ -10,7 +10,6 @@ import pystac
 from datacosmos.client import DatacosmosClient
 from datacosmos.stac.models.search_parameters import SearchParameters
 
-
 class STACClient:
     """Client for interacting with the STAC API."""
 
