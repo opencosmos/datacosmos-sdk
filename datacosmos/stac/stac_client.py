@@ -3,7 +3,6 @@ from typing import Generator
 from datacosmos.client import DatacosmosClient
 from datacosmos.stac.models.search_parameters import SearchParameters
 
-
 class STACClient:
     """
     A client for interacting with the STAC API.
@@ -17,7 +16,7 @@ class STACClient:
             client (DatacosmosClient): The authenticated Datacosmos client instance.
         """
         self.client = client
-        self.base_url = "https://test.app.open-cosmos.com/api/data/v0/stac"
+        self.base_url = client.config.stac.as_domain_url()
 
     def search_items(
         self, parameters: SearchParameters
@@ -31,7 +30,7 @@ class STACClient:
         Yields:
             pystac.Item: Parsed STAC item.
         """
-        url = f"{self.base_url}/search"
+        url = self.base_url.with_suffix("/search")
         body = parameters.model_dump(by_alias=True, exclude_none=True)
         return self._paginate_items(url, body)
 
@@ -46,7 +45,7 @@ class STACClient:
         Returns:
             pystac.Item: The fetched STAC item.
         """
-        url = f"{self.client.config.base_url}/collections/{collection_id}/items/{item_id}"
+        url = self.base_url.with_suffix(f"/collections/{collection_id}/items/{item_id}")
         response = self.client.get(url)
         response.raise_for_status()
         return pystac.Item.from_dict(response.json())
