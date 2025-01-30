@@ -1,7 +1,8 @@
-from unittest.mock import patch, MagicMock
-from datacosmos.stac.stac_client import STACClient
-from datacosmos.stac.models.search_parameters import SearchParameters
+from unittest.mock import MagicMock, patch
+
 from datacosmos.client import DatacosmosClient
+from datacosmos.stac.models.search_parameters import SearchParameters
+from datacosmos.stac.stac_client import STACClient
 
 
 @patch.object(DatacosmosClient, "post")

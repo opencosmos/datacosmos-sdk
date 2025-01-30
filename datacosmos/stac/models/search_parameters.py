@@ -1,11 +1,18 @@
-from pydantic import BaseModel, Field, model_validator
+"""
+Module defining the SearchParameters model for STAC API queries.
+
+This module contains the `SearchParameters` model, which encapsulates
+filtering criteria for searching STAC items, such as spatial, temporal,
+and property-based filters.
+"""
+
 from typing import Optional, Union
+
+from pydantic import BaseModel, Field, model_validator
 
 
 class SearchParameters(BaseModel):
-    """
-    Encapsulates the parameters for the STAC search API with validation.
-    """
+    """Encapsulates the parameters for the STAC search API with validation."""
 
     bbox: Optional[list[float]] = Field(
         None,
@@ -47,6 +54,7 @@ class SearchParameters(BaseModel):
 
     @model_validator(mode="before")
     def validate_bbox(cls, values):
+        """Validate that the `bbox` field contains either 4 or 6 values."""
         bbox = values.get("bbox")
         if bbox and len(bbox) not in {4, 6}:
             raise ValueError("bbox must contain 4 or 6 values.")
