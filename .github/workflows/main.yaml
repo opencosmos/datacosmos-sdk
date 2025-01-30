@@ -1,8 +1,5 @@
 name: main
 
-env:
-  GITLAB_PYPI_TOKEN: ${{ secrets.GITLAB_PYPI_TOKEN }}
-
 on:
   push:
     branches:
