@@ -1,7 +1,5 @@
-"""
-STAC package for interacting with the STAC API.
+"""STAC package for interacting with the STAC API, providing query and fetch functionalities.
 
-This package provides functionalities to query, fetch, and interact
-with STAC (SpatioTemporal Asset Catalog) services using an authenticated
-Datacosmos client.
+It enables interaction with STAC (SpatioTemporal Asset Catalog) services
+using an authenticated Datacosmos client.
 """

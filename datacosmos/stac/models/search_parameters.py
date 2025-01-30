@@ -1,9 +1,6 @@
-"""
-Module defining the SearchParameters model for STAC API queries.
+"""Module defining the SearchParameters model for STAC API queries, encapsulating filtering criteria.
 
-This module contains the `SearchParameters` model, which encapsulates
-filtering criteria for searching STAC items, such as spatial, temporal,
-and property-based filters.
+It includes spatial, temporal, and property-based filters for querying STAC items efficiently.
 """
 
 from typing import Optional, Union
