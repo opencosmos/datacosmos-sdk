@@ -50,24 +50,17 @@ class STACClient:
         response.raise_for_status()
         return pystac.Item.from_dict(response.json())
 
-    def fetch_collection_items(
-        self, collection_id: str, parameters: SearchParameters = None
-    ) -> Generator[pystac.Item, None, None]:
+    def fetch_collection_items(self, collection_id: str) -> Generator[pystac.Item, None, None]:
         """
         Fetch all items in a collection with pagination.
 
         Args:
             collection_id (str): The ID of the collection.
-            parameters (SearchParameters): Optional additional parameters for the query.
 
         Yields:
             pystac.Item: Parsed STAC item.
         """
-        if not parameters:
-            parameters = SearchParameters(collections=[collection_id])
-        else:
-            parameters.collections = [collection_id]
-
+        parameters = SearchParameters(collections=[collection_id])
         return self.search_items(parameters)
 
     def _paginate_items(self, url: str, body: dict) -> Generator[pystac.Item, None, None]:
