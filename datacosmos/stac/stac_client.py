@@ -32,7 +32,7 @@ class STACClient:
         """
         url = self.base_url.with_suffix("/search")
         body = parameters.model_dump(by_alias=True, exclude_none=True)
-        return self._paginate_items(url, body)
+        return self.__paginate_items(url, body)
 
     def fetch_item(self, item_id: str, collection_id: str) -> pystac.Item:
         """
@@ -63,7 +63,7 @@ class STACClient:
         parameters = SearchParameters(collections=[collection_id])
         return self.search_items(parameters)
 
-    def _paginate_items(self, url: str, body: dict) -> Generator[pystac.Item, None, None]:
+    def __paginate_items(self, url: str, body: dict) -> Generator[pystac.Item, None, None]:
         """
         Handles pagination for the STAC search POST endpoint.
         Fetches items one page at a time using the 'next' link.
