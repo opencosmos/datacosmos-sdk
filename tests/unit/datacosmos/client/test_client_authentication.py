@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
 from config.config import Config
+from config.models.m2m_authentication_config import M2MAuthenticationConfig
 from datacosmos.client import DatacosmosClient
 
 
@@ -21,10 +22,10 @@ def test_client_authentication(mock_auth_client, mock_fetch_token):
     def mock_authenticate_and_initialize_client(self):
         # Call the real fetch_token (simulated by the mock)
         token_response = mock_fetch_token(
-            token_url=self.config.token_url,
-            client_id=self.config.client_id,
-            client_secret=self.config.client_secret,
-            audience=self.config.audience,
+            token_url=self.config.authentication.token_url,
+            client_id=self.config.authentication.client_id,
+            client_secret=self.config.authentication.client_secret,
+            audience=self.config.authentication.audience,
         )
         self.token = token_response["access_token"]
         self.token_expiry = "mock-expiry"
@@ -34,10 +35,13 @@ def test_client_authentication(mock_auth_client, mock_fetch_token):
 
     # Create a mock configuration
     config = Config(
-        client_id="test-client-id",
-        client_secret="test-client-secret",
-        token_url="https://mock.token.url/oauth/token",
-        audience="https://mock.audience",
+        authentication=M2MAuthenticationConfig(
+            type="m2m",
+            client_id="test-client-id",
+            client_secret="test-client-secret",
+            token_url="https://mock.token.url/oauth/token",
+            audience="https://mock.audience",
+        )
     )
 
     # Initialize the client

@@ -5,7 +5,6 @@ methods.
 """
 
 import logging
-import os
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
@@ -27,51 +26,35 @@ class DatacosmosClient:
     def __init__(
         self,
         config: Optional[Config] = None,
-        config_file: str = "config/config.yaml",
     ):
         """Initialize the DatacosmosClient.
 
-        If no configuration is provided, it will load from the specified
-        YAML file or fall back to environment variables.
+        Load configuration from the specified YAML file, environment variables,
+        or fallback to the default values provided in the `Config` class.
         """
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO)
 
-        self.config = config or self._load_config(config_file)
+        self.config = config or Config.from_yaml()
         self.token = None
         self.token_expiry = None
         self._http_client = self._authenticate_and_initialize_client()
-
-    def _load_config(self, config_file: str) -> Config:
-        """Load configuration from the YAML file.
-
-        Fall back to environment variables if the file is missing.
-        """
-        try:
-            if os.path.exists(config_file):
-                self.logger.info(f"Loading configuration from {config_file}")
-                return Config.from_yaml(config_file)
-            self.logger.info(
-                "Loading configuration from environment variables"
-            )
-            return Config.from_env()
-        except Exception as e:
-            self.logger.error(f"Failed to load configuration: {e}")
-            raise
 
     def _authenticate_and_initialize_client(self) -> requests.Session:
         """Authenticate and initialize the HTTP client with a valid token."""
         try:
             self.logger.info("Authenticating with the token endpoint")
-            client = BackendApplicationClient(client_id=self.config.client_id)
+            client = BackendApplicationClient(
+                client_id=self.config.authentication.client_id
+            )
             oauth_session = OAuth2Session(client=client)
 
             # Fetch the token using client credentials
             token_response = oauth_session.fetch_token(
-                token_url=self.config.token_url,
-                client_id=self.config.client_id,
-                client_secret=self.config.client_secret,
-                audience=self.config.audience,
+                token_url=self.config.authentication.token_url,
+                client_id=self.config.authentication.client_id,
+                client_secret=self.config.authentication.client_secret,
+                audience=self.config.authentication.audience,
             )
 
             self.token = token_response["access_token"]
@@ -82,9 +65,7 @@ class DatacosmosClient:
 
             # Initialize the HTTP session with the Authorization header
             http_client = requests.Session()
-            http_client.headers.update(
-                {"Authorization": f"Bearer {self.token}"}
-            )
+            http_client.headers.update({"Authorization": f"Bearer {self.token}"})
             return http_client
         except RequestException as e:
             self.logger.error(f"Request failed during authentication: {e}")

@@ -2,12 +2,11 @@ from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
 
 from config.config import Config
+from config.models.m2m_authentication_config import M2MAuthenticationConfig
 from datacosmos.client import DatacosmosClient
 
 
-@patch(
-    "datacosmos.client.DatacosmosClient._authenticate_and_initialize_client"
-)
+@patch("datacosmos.client.DatacosmosClient._authenticate_and_initialize_client")
 def test_client_token_refreshing(mock_auth_client):
     """Test that the client refreshes the token when it expires."""
     # Mock the HTTP client returned by _authenticate_and_initialize_client
@@ -19,10 +18,13 @@ def test_client_token_refreshing(mock_auth_client):
     mock_auth_client.return_value = mock_http_client
 
     config = Config(
-        client_id="test-client-id",
-        client_secret="test-client-secret",
-        token_url="https://mock.token.url/oauth/token",
-        audience="https://mock.audience",
+        authentication=M2MAuthenticationConfig(
+            type="m2m",
+            client_id="test-client-id",
+            client_secret="test-client-secret",
+            token_url="https://mock.token.url/oauth/token",
+            audience="https://mock.audience",
+        )
     )
 
     # Initialize the client (first call to _authenticate_and_initialize_client)
