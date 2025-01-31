@@ -67,7 +67,9 @@ class STACClient:
         parameters = SearchParameters(collections=[collection_id])
         return self.search_items(parameters)
 
-    def _paginate_items(self, url: str, body: dict) -> Generator[pystac.Item, None, None]:
+    def _paginate_items(
+        self, url: str, body: dict
+    ) -> Generator[pystac.Item, None, None]:
         """Handle pagination for the STAC search POST endpoint.
 
         Fetches items one page at a time using the 'next' link.
@@ -86,7 +88,9 @@ class STACClient:
             response.raise_for_status()
             data = response.json()
 
-            yield from (pystac.Item.from_dict(feature) for feature in data.get("features", []))
+            yield from (
+                pystac.Item.from_dict(feature) for feature in data.get("features", [])
+            )
 
             # Get next pagination link
             next_href = self._get_next_link(data)
@@ -108,7 +112,9 @@ class STACClient:
         Returns:
             Optional[str]: The URL for the next page, or None if no next page exists.
         """
-        next_link = next((link for link in data.get("links", []) if link.get("rel") == "next"), None)
+        next_link = next(
+            (link for link in data.get("links", []) if link.get("rel") == "next"), None
+        )
         return next_link.get("href", "") if next_link else None
 
     def _extract_pagination_token(self, next_href: str) -> Optional[str]:
@@ -123,5 +129,7 @@ class STACClient:
         try:
             return next_href.split("?")[1].split("=")[-1]
         except (IndexError, AttributeError):
-            self.client.logger.error(f"Failed to parse pagination token from {next_href}")
+            self.client.logger.error(
+                f"Failed to parse pagination token from {next_href}"
+            )
             return None

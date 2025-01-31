@@ -14,11 +14,9 @@ def test_fetch_item(mock_get):
         "type": "Feature",
         "stac_version": "1.0.0",
         "geometry": {"type": "Point", "coordinates": [0, 0]},
-        "properties": {
-            "datetime": "2023-12-01T12:00:00Z"
-        },
+        "properties": {"datetime": "2023-12-01T12:00:00Z"},
         "assets": {},
-        "links": []
+        "links": [],
     }
     mock_get.return_value = mock_response
 

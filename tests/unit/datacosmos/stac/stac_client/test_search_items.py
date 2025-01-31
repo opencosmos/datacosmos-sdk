@@ -17,14 +17,12 @@ def test_search_items(mock_post):
                 "type": "Feature",
                 "stac_version": "1.0.0",
                 "geometry": {"type": "Point", "coordinates": [0, 0]},
-                "properties": {
-                    "datetime": "2023-12-01T12:00:00Z"
-                },
+                "properties": {"datetime": "2023-12-01T12:00:00Z"},
                 "assets": {},
-                "links": []
+                "links": [],
             }
         ],
-        "links": []
+        "links": [],
     }
     mock_post.return_value = mock_response
 
