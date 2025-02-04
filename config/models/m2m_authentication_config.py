@@ -20,5 +20,4 @@ class M2MAuthenticationConfig(BaseModel):
     client_id: str
     token_url: str
     audience: str
-    # Some infrastructure deployments do not require a client secret.
-    client_secret: str = ""
+    client_secret: str
