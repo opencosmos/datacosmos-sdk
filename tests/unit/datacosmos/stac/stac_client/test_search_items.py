@@ -1,9 +1,10 @@
 from unittest.mock import MagicMock, patch
+
+from config.config import Config
+from config.models.m2m_authentication_config import M2MAuthenticationConfig
 from datacosmos.client import DatacosmosClient
 from datacosmos.stac.models.search_parameters import SearchParameters
 from datacosmos.stac.stac_client import STACClient
-from config.config import Config
-from config.models.m2m_authentication_config import M2MAuthenticationConfig
 
 
 @patch("requests_oauthlib.OAuth2Session.fetch_token")

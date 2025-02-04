@@ -1,8 +1,9 @@
 from unittest.mock import MagicMock, patch
-from datacosmos.client import DatacosmosClient
-from datacosmos.stac.stac_client import STACClient
+
 from config.config import Config
 from config.models.m2m_authentication_config import M2MAuthenticationConfig
+from datacosmos.client import DatacosmosClient
+from datacosmos.stac.stac_client import STACClient
 
 
 @patch("requests_oauthlib.OAuth2Session.fetch_token")
@@ -10,7 +11,7 @@ from config.models.m2m_authentication_config import M2MAuthenticationConfig
 def test_fetch_item(mock_get, mock_fetch_token):
     """Test fetching a single STAC item by ID."""
     mock_fetch_token.return_value = {"access_token": "mock-token", "expires_in": 3600}
-    
+
     mock_response = MagicMock()
     mock_response.json.return_value = {
         "id": "item-1",
