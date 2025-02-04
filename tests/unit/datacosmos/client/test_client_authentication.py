@@ -87,12 +87,15 @@ class TestClientAuthentication:
         # Ensure it was called exactly once after reset
         mock_from_yaml.assert_called_once()
 
-    @patch.dict(os.environ, {
-        "OC_AUTH_CLIENT_ID": "test-client-id",
-        "OC_AUTH_TOKEN_URL": "https://mock.token.url/oauth/token",
-        "OC_AUTH_AUDIENCE": "https://mock.audience",
-        "OC_AUTH_CLIENT_SECRET": "test-client-secret"
-    })
+    @patch.dict(
+        os.environ,
+        {
+            "OC_AUTH_CLIENT_ID": "test-client-id",
+            "OC_AUTH_TOKEN_URL": "https://mock.token.url/oauth/token",
+            "OC_AUTH_AUDIENCE": "https://mock.audience",
+            "OC_AUTH_CLIENT_SECRET": "test-client-secret",
+        },
+    )
     def test_authentication_from_env(self):
         """Test authentication when loading Config from environment variables."""
         client = DatacosmosClient()

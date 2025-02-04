@@ -45,14 +45,18 @@ class DatacosmosClient:
             try:
                 self.config = Config.from_yaml()
             except ValueError:
-                self.logger.info("No valid YAML config found, falling back to env vars.")
+                self.logger.info(
+                    "No valid YAML config found, falling back to env vars."
+                )
                 self.config = Config.from_env()
 
         self.token = None
         self.token_expiry = None
         self._http_client = self._authenticate_and_initialize_client()
 
-    def set_log_level(self, level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]):
+    def set_log_level(
+        self, level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+    ):
         """Set the logging level based on user input.
 
         Args:
