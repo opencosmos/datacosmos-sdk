@@ -1,7 +1,9 @@
-from unittest.mock import patch
 import os
+from unittest.mock import patch
+
 import pytest
 import yaml
+
 from config.config import Config
 from config.models.m2m_authentication_config import M2MAuthenticationConfig
 from datacosmos.client import DatacosmosClient
@@ -84,7 +86,6 @@ class TestClientAuthentication:
 
         # Ensure it was called exactly once after reset
         mock_from_yaml.assert_called_once()
-
 
     @patch.dict(os.environ, {
         "OC_AUTH_CLIENT_ID": "test-client-id",

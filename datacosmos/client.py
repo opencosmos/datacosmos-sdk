@@ -1,6 +1,12 @@
+"""DatacosmosClient handles authenticated interactions with the Datacosmos API.
+
+Automatically manages token refreshing and provides HTTP convenience
+methods.
+"""
+
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import Any, Optional, Literal
+from typing import Any, Literal, Optional
 
 import requests
 from oauthlib.oauth2 import BackendApplicationClient
