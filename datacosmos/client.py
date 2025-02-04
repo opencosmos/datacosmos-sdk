@@ -35,7 +35,15 @@ class DatacosmosClient:
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO)
 
-        self.config = config or Config.from_yaml()
+        if config:
+            self.config = config
+        else:
+            try:
+                self.config = Config.from_yaml()
+            except ValueError:
+                self.logger.info("No valid YAML config found, falling back to env vars.")
+                self.config = Config.from_env()
+
         self.token = None
         self.token_expiry = None
         self._http_client = self._authenticate_and_initialize_client()

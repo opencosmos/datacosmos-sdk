@@ -6,10 +6,10 @@ and supports environment variable-based overrides.
 """
 
 import os
-from typing import Literal
+from typing import Literal, Optional
 
 import yaml
-from pydantic import model_validator
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from config.models.m2m_authentication_config import M2MAuthenticationConfig
@@ -29,14 +29,8 @@ class Config(BaseSettings):
     log_format: Literal["json", "text"] = "text"
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
 
-    # Authentication configuration
-    authentication: M2MAuthenticationConfig = M2MAuthenticationConfig(
-        type="m2m",
-        client_id="zCeZWJamwnb8ZIQEK35rhx0hSAjsZI4D",
-        token_url="https://login.open-cosmos.com/oauth/token",
-        audience="https://test.beeapp.open-cosmos.com",
-        client_secret="tAeaSgLds7g535ofGq79Zm2DSbWMCOsuRyY5lbyObJe9eAeSN_fxoy-5kaXnVSYa",
-    )
+    # Authentication configuration (must be explicitly provided)
+    authentication: Optional[M2MAuthenticationConfig] = None
 
     # STAC API configuration
     stac: URL = URL(
@@ -64,24 +58,36 @@ class Config(BaseSettings):
                 config_data = {
                     k: v for k, v in yaml_data.items() if v not in [None, ""]
                 }
+
         return cls(**config_data)
 
-    @model_validator(mode="before")
     @classmethod
-    def merge_with_env(cls, values):
-        """Override settings with environment variables if set.
+    def from_env(cls) -> "Config":
+        """Load configuration from environment variables."""
+        env_auth = {
+            "type": "m2m",
+            "client_id": os.getenv("OC_AUTH_CLIENT_ID"),
+            "token_url": os.getenv("OC_AUTH_TOKEN_URL"),
+            "audience": os.getenv("OC_AUTH_AUDIENCE"),
+            "client_secret": os.getenv("OC_AUTH_CLIENT_SECRET"),
+        }
 
-        This method checks if any environment variables corresponding to the
-        config fields are set and updates their values accordingly.
+        if all(env_auth.values()):  # Ensure all values exist
+            env_auth_config = M2MAuthenticationConfig(**env_auth)
+        else:
+            env_auth_config = None  # If missing, let validation handle it
 
-        Args:
-            values (dict): The configuration values before validation.
+        return cls(authentication=env_auth_config)
 
-        Returns:
-            dict: The updated configuration values with environment variable overrides.
-        """
-        for field in cls.model_fields:
-            env_value = os.getenv(f"OC_{field.upper()}")
-            if env_value:
-                values[field] = env_value
-        return values
+    @field_validator("authentication", mode="before")
+    @classmethod
+    def validate_authentication(cls, v):
+        """Ensure authentication is provided through one of the allowed methods."""
+        if v is None:
+            raise ValueError(
+                "M2M authentication is required. Please provide it via:"
+                "\n1. Explicit instantiation (Config(authentication=...))"
+                "\n2. A YAML config file (config.yaml)"
+                "\n3. Environment variables (OC_AUTH_CLIENT_ID, OC_AUTH_TOKEN_URL, etc.)"
+            )
+        return v
