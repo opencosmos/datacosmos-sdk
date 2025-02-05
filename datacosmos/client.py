@@ -9,8 +9,7 @@ from typing import Any, Optional
 
 import requests
 from oauthlib.oauth2 import BackendApplicationClient
-from requests.exceptions import (ConnectionError, HTTPError, RequestException,
-                                 Timeout)
+from requests.exceptions import ConnectionError, HTTPError, RequestException, Timeout
 from requests_oauthlib import OAuth2Session
 
 from config.config import Config

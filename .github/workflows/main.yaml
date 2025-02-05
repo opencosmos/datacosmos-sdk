@@ -24,10 +24,10 @@ jobs:
         run: poetry config http-basic.gitlab __token__ ${{ secrets.GITLAB_PYPI_TOKEN }}
       - name: install dependencies
         run: poetry install --no-interaction
-      - name: run linters manually with poetry
+      - name: run isort before black
         run: |
-          poetry run black . --check
-          poetry run isort . --check-only
+          poetry run isort . --check-only  # Run isort first
+          poetry run black . --check       # Then black
           poetry run flake8 .
 
   bandit:
@@ -66,24 +66,6 @@ jobs:
       - name: cognitive
         run: poetry run flake8 . --max-cognitive-complexity=5 --ignore=E501
 
-  isort:
-    name: isort
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: set up python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-      - name: set up poetry
-        run: curl -sSL https://install.python-poetry.org | python3 -
-      - name: configure gitlab auth
-        run: poetry config http-basic.gitlab __token__ ${{ secrets.GITLAB_PYPI_TOKEN }}
-      - name: install dependencies
-        run: poetry install --no-interaction
-      - name: isort
-        uses: isort/isort-action@v1.1.0
-
   pydocstyle:
     name: pydocstyle
     runs-on: ubuntu-latest
@@ -105,7 +87,7 @@ jobs:
   test:
     name: test
     runs-on: ubuntu-latest
-    needs: [bandit, cognitive, isort, lint, pydocstyle]
+    needs: [bandit, cognitive, lint, pydocstyle]
     steps:
       - uses: actions/checkout@v3
       - name: set up python
