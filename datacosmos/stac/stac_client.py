@@ -1,5 +1,4 @@
-"""
-STAC Client module for interacting with a STAC (SpatioTemporal Asset Catalog) API.
+"""STAC Client module for interacting with a STAC (SpatioTemporal Asset Catalog) API.
 
 Provides methods for querying, fetching, creating, updating, and deleting STAC items.
 """

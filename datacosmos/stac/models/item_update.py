@@ -1,3 +1,5 @@
+"""Model representing a partial update for a STAC item."""
+
 from typing import Any, Optional
 
 from pydantic import BaseModel, Field
