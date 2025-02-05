@@ -96,38 +96,58 @@ class Config(BaseSettings):
             M2MAuthenticationConfig: The validated authentication configuration.
 
         Raises:
-            ValueError: If client_id or client_secret is missing.
+            ValueError: If authentication is missing or required fields are not set.
         """
         if not auth_data:
-            raise ValueError(
-                "M2M authentication is required. Provide it via:\n"
-                "1. Explicit instantiation (Config(authentication=...))\n"
-                "2. A YAML config file (config.yaml)\n"
-                "3. Environment variables (OC_AUTH_CLIENT_ID, OC_AUTH_CLIENT_SECRET, etc.)"
-            )
+            cls.raise_missing_auth_error()
 
-        # Convert dict to M2MAuthenticationConfig
-        auth = (
+        auth = cls.parse_auth_config(auth_data)
+        auth = cls.apply_auth_defaults(auth)
+
+        cls.check_required_auth_fields(auth)
+        return auth
+
+    @staticmethod
+    def raise_missing_auth_error():
+        """Raise an error when authentication is missing."""
+        raise ValueError(
+            "M2M authentication is required. Provide it via:\n"
+            "1. Explicit instantiation (Config(authentication=...))\n"
+            "2. A YAML config file (config.yaml)\n"
+            "3. Environment variables (OC_AUTH_CLIENT_ID, OC_AUTH_CLIENT_SECRET, etc.)"
+        )
+
+    @staticmethod
+    def parse_auth_config(auth_data: dict) -> M2MAuthenticationConfig:
+        """Convert dictionary input to M2MAuthenticationConfig object."""
+        return (
             M2MAuthenticationConfig(**auth_data)
             if isinstance(auth_data, dict)
             else auth_data
         )
 
-        # Apply defaults where necessary
+    @classmethod
+    def apply_auth_defaults(
+        cls, auth: M2MAuthenticationConfig
+    ) -> M2MAuthenticationConfig:
+        """Apply default authentication values if they are missing."""
         auth.type = auth.type or cls.DEFAULT_AUTH_TYPE
         auth.token_url = auth.token_url or cls.DEFAULT_AUTH_TOKEN_URL
         auth.audience = auth.audience or cls.DEFAULT_AUTH_AUDIENCE
+        return auth
 
-        # Validate required fields
+    @staticmethod
+    def check_required_auth_fields(auth: M2MAuthenticationConfig):
+        """Ensure required fields (client_id, client_secret) are provided."""
         missing_fields = [
             field
             for field in ("client_id", "client_secret")
             if not getattr(auth, field)
         ]
         if missing_fields:
-            raise ValueError(f"Missing required fields: {', '.join(missing_fields)}")
-
-        return auth
+            raise ValueError(
+                f"Missing required authentication fields: {', '.join(missing_fields)}"
+            )
 
     @field_validator("stac", mode="before")
     @classmethod
