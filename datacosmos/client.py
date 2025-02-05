@@ -110,6 +110,10 @@ class DatacosmosClient:
     def put(self, url: str, *args: Any, **kwargs: Any) -> requests.Response:
         """Send a PUT request using the authenticated session."""
         return self.request("PUT", url, *args, **kwargs)
+    
+    def patch(self, url: str, *args: Any, **kwargs: Any) -> requests.Response:
+        """Send a PATCH request using the authenticated session."""
+        return self.request("PATCH", url, *args, **kwargs)
 
     def delete(self, url: str, *args: Any, **kwargs: Any) -> requests.Response:
         """Send a DELETE request using the authenticated session."""

@@ -9,7 +9,8 @@ from typing import Generator, Optional
 from pystac import Item
 from datacosmos.client import DatacosmosClient
 from datacosmos.stac.models.search_parameters import SearchParameters
-from common.sdk.http_response import check_api_response
+from datacosmos.stac.models.item_update import ItemUpdate
+from common.sdk.http_response import check_api_response, InvalidRequest
 
 class STACClient:
     """Client for interacting with the STAC API."""
@@ -84,28 +85,39 @@ class STACClient:
             RequestError: If the API returns an error response.
         """
         url = self.base_url.with_suffix(f"/collections/{collection_id}/items")
-        item_json: dict = item.to_dict()  # Convert the STAC Item to JSON format
+        item_json: dict = item.to_dict()
 
         response = self.client.post(url, json=item_json)
         check_api_response(response)
 
         return Item.from_dict(response.json())
 
-    def update_item(self, item_id: str, collection_id: str, update_data: dict) -> Item:
-        """Update an existing STAC item.
+    def update_item(self, item_id: str, collection_id: str, update_data: ItemUpdate) -> Item:
+        """Partially update an existing STAC item.
 
         Args:
             item_id (str): The ID of the item to update.
             collection_id (str): The ID of the collection containing the item.
-            update_data (dict): The update data (partial or full).
+            update_data (ItemUpdate): The structured update payload.
 
         Returns:
             Item: The updated STAC item.
         """
         url = self.base_url.with_suffix(f"/collections/{collection_id}/items/{item_id}")
-        response = self.client.patch(url, json=update_data)
+
+        update_payload = update_data.model_dump(by_alias=True, exclude_none=True)
+
+        if "assets" in update_payload:
+            update_payload["assets"] = {
+                key: asset.to_dict() for key, asset in update_payload["assets"].items()
+            }
+        if "links" in update_payload:
+            update_payload["links"] = [link.to_dict() for link in update_payload["links"]]
+
+        response = self.client.patch(url, json=update_payload)
         check_api_response(response)
-        return Item.from_dict(response.json())
+
+        return Item.from_dict(response.json()) 
 
     def delete_item(self, item_id: str, collection_id: str) -> None:
         """Delete a STAC item by its ID.
@@ -157,9 +169,18 @@ class STACClient:
         return next_link.get("href", "") if next_link else None
 
     def _extract_pagination_token(self, next_href: str) -> Optional[str]:
-        """Extract the pagination token from the next link URL."""
+        """Extract the pagination token from the next link URL.
+
+        Args:
+            next_href (str): The next page URL.
+
+        Returns:
+            Optional[str]: The extracted token, or None if parsing fails.
+
+        Raises:
+            InvalidRequest: If pagination token extraction fails.
+        """
         try:
             return next_href.split("?")[1].split("=")[-1]
         except (IndexError, AttributeError):
-            self.client.logger.error(f"Failed to parse pagination token from {next_href}")
-            return None
+            raise InvalidRequest(f"Failed to parse pagination token from {next_href}")
