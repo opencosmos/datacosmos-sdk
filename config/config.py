@@ -6,7 +6,7 @@ and supports environment variable-based overrides.
 """
 
 import os
-from typing import Literal, Optional
+from typing import ClassVar, Literal, Optional
 
 import yaml
 from pydantic import field_validator
@@ -30,6 +30,10 @@ class Config(BaseSettings):
 
     authentication: Optional[M2MAuthenticationConfig] = None
     stac: Optional[URL] = None
+
+    DEFAULT_AUTH_TYPE: ClassVar[str] = "m2m"
+    DEFAULT_AUTH_TOKEN_URL: ClassVar[str] = "https://login.open-cosmos.com/oauth/token"
+    DEFAULT_AUTH_AUDIENCE: ClassVar[str] = "https://test.beeapp.open-cosmos.com"
 
     @classmethod
     def from_yaml(cls, file_path: str = "config/config.yaml") -> "Config":
@@ -61,21 +65,15 @@ class Config(BaseSettings):
         Returns:
             Config: An instance of the Config class with settings loaded from environment variables.
         """
-        auth_env_vars: dict[str, Optional[str]] = {
-            "type": "m2m",
-            "client_id": os.getenv("OC_AUTH_CLIENT_ID"),
-            "token_url": os.getenv("OC_AUTH_TOKEN_URL"),
-            "audience": os.getenv("OC_AUTH_AUDIENCE"),
-            "client_secret": os.getenv("OC_AUTH_CLIENT_SECRET"),
-        }
-
-        authentication_config: Optional[M2MAuthenticationConfig] = (
-            M2MAuthenticationConfig(**auth_env_vars)
-            if all(auth_env_vars.values())
-            else None
+        authentication_config = M2MAuthenticationConfig(
+            type=os.getenv("OC_AUTH_TYPE", cls.DEFAULT_AUTH_TYPE),
+            client_id=os.getenv("OC_AUTH_CLIENT_ID"),
+            client_secret=os.getenv("OC_AUTH_CLIENT_SECRET"),
+            token_url=os.getenv("OC_AUTH_TOKEN_URL", cls.DEFAULT_AUTH_TOKEN_URL),
+            audience=os.getenv("OC_AUTH_AUDIENCE", cls.DEFAULT_AUTH_AUDIENCE),
         )
 
-        stac_config: URL = URL(
+        stac_config = URL(
             protocol=os.getenv("OC_STAC_PROTOCOL", "https"),
             host=os.getenv("OC_STAC_HOST", "test.app.open-cosmos.com"),
             port=int(os.getenv("OC_STAC_PORT", "443")),
@@ -89,7 +87,7 @@ class Config(BaseSettings):
     def validate_authentication(
         cls, auth_config: Optional[M2MAuthenticationConfig]
     ) -> M2MAuthenticationConfig:
-        """Ensure authentication is provided through one of the allowed methods.
+        """Ensure authentication is provided and defaults are applied where necessary.
 
         Args:
             auth_config (Optional[M2MAuthenticationConfig]): The authentication config to validate.
@@ -98,15 +96,30 @@ class Config(BaseSettings):
             M2MAuthenticationConfig: The validated authentication configuration.
 
         Raises:
-            ValueError: If authentication is missing.
+            ValueError: If client_id or client_secret is missing.
         """
         if auth_config is None:
             raise ValueError(
                 "M2M authentication is required. Please provide it via:"
                 "\n1. Explicit instantiation (Config(authentication=...))"
                 "\n2. A YAML config file (config.yaml)"
-                "\n3. Environment variables (OC_AUTH_CLIENT_ID, OC_AUTH_TOKEN_URL, etc.)"
+                "\n3. Environment variables (OC_AUTH_CLIENT_ID, OC_AUTH_CLIENT_SECRET, etc.)"
             )
+
+        if isinstance(auth_config, dict):
+            auth_config = M2MAuthenticationConfig(**auth_config)
+
+        # Apply defaults for missing values
+        auth_config.type = auth_config.type or cls.DEFAULT_AUTH_TYPE
+        auth_config.token_url = auth_config.token_url or cls.DEFAULT_AUTH_TOKEN_URL
+        auth_config.audience = auth_config.audience or cls.DEFAULT_AUTH_AUDIENCE
+
+        # Ensure critical values are provided
+        if not auth_config.client_id or not auth_config.client_secret:
+            raise ValueError(
+                "client_id and client_secret are required for authentication."
+            )
+
         return auth_config
 
     @field_validator("stac", mode="before")
