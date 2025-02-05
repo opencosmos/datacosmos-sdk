@@ -7,14 +7,18 @@ from datacosmos.stac.stac_client import STACClient
 
 
 @patch("requests_oauthlib.OAuth2Session.fetch_token")
+@patch("datacosmos.stac.stac_client.check_api_response")
 @patch.object(STACClient, "search_items")
-def test_fetch_collection_items(mock_search_items, mock_fetch_token):
+def test_fetch_collection_items(mock_search_items, mock_check_api_response, mock_fetch_token):
     """Test fetching all items in a collection."""
     mock_fetch_token.return_value = {"access_token": "mock-token", "expires_in": 3600}
 
-    mock_search_items.return_value = iter(
-        [MagicMock(id="item-1"), MagicMock(id="item-2")]
-    )
+    mock_response_1 = MagicMock(id="item-1")
+    mock_response_2 = MagicMock(id="item-2")
+
+    mock_search_items.return_value = iter([mock_response_1, mock_response_2])
+
+    mock_check_api_response.return_value = None  
 
     config = Config(
         authentication=M2MAuthenticationConfig(
@@ -34,4 +38,6 @@ def test_fetch_collection_items(mock_search_items, mock_fetch_token):
     assert len(results) == 2
     assert results[0].id == "item-1"
     assert results[1].id == "item-2"
+    
     mock_search_items.assert_called_once()
+    mock_check_api_response.assert_not_called()

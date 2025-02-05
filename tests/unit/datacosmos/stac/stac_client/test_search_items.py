@@ -8,12 +8,14 @@ from datacosmos.stac.stac_client import STACClient
 
 
 @patch("requests_oauthlib.OAuth2Session.fetch_token")
+@patch("datacosmos.stac.stac_client.check_api_response")
 @patch.object(DatacosmosClient, "post")
-def test_search_items(mock_post, mock_fetch_token):
+def test_search_items(mock_post, mock_check_api_response, mock_fetch_token):
     """Test searching STAC items with filters and pagination."""
     mock_fetch_token.return_value = {"access_token": "mock-token", "expires_in": 3600}
 
     mock_response = MagicMock()
+    mock_response.status_code = 200  # Ensure the mock behaves like a real response
     mock_response.json.return_value = {
         "features": [
             {
@@ -30,6 +32,8 @@ def test_search_items(mock_post, mock_fetch_token):
         "links": [],
     }
     mock_post.return_value = mock_response
+
+    mock_check_api_response.return_value = None  
 
     config = Config(
         authentication=M2MAuthenticationConfig(
@@ -50,3 +54,4 @@ def test_search_items(mock_post, mock_fetch_token):
     assert len(results) == 1
     assert results[0].id == "item-1"
     mock_post.assert_called_once()
+    mock_check_api_response.assert_called_once_with(mock_response)  # Ensure the API check was called

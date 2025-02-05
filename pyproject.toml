@@ -14,7 +14,7 @@ classifiers = [
   "Programming Language :: Python :: 3",
   "Operating System :: OS Independent",
 ]
-dependencies = ["pydantic_settings>=2.7.0"
+dependencies = ["pydantic_settings>=2.7.0",
     "python-common==0.13.1",
     "black==22.3.0",
     "flake8==4.0.1",

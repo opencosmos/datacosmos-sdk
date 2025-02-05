@@ -7,12 +7,14 @@ from datacosmos.stac.stac_client import STACClient
 
 
 @patch("requests_oauthlib.OAuth2Session.fetch_token")
+@patch("datacosmos.stac.stac_client.check_api_response")
 @patch.object(DatacosmosClient, "get")
-def test_fetch_item(mock_get, mock_fetch_token):
+def test_fetch_item(mock_get, mock_check_api_response, mock_fetch_token):
     """Test fetching a single STAC item by ID."""
     mock_fetch_token.return_value = {"access_token": "mock-token", "expires_in": 3600}
 
     mock_response = MagicMock()
+    mock_response.status_code = 200
     mock_response.json.return_value = {
         "id": "item-1",
         "collection": "test-collection",
@@ -24,6 +26,8 @@ def test_fetch_item(mock_get, mock_fetch_token):
         "links": [],
     }
     mock_get.return_value = mock_response
+
+    mock_check_api_response.return_value = None  
 
     config = Config(
         authentication=M2MAuthenticationConfig(
@@ -43,3 +47,4 @@ def test_fetch_item(mock_get, mock_fetch_token):
     assert item.id == "item-1"
     assert item.properties["datetime"] == "2023-12-01T12:00:00Z"
     mock_get.assert_called_once()
+    mock_check_api_response.assert_called_once_with(mock_response)
