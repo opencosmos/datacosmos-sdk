@@ -6,11 +6,13 @@ Provides methods for querying, fetching, creating, updating, and deleting STAC i
 
 from typing import Generator, Optional
 
+from common.sdk.http_response import InvalidRequest, check_api_response
 from pystac import Item
+
 from datacosmos.client import DatacosmosClient
-from datacosmos.stac.models.search_parameters import SearchParameters
 from datacosmos.stac.models.item_update import ItemUpdate
-from common.sdk.http_response import check_api_response, InvalidRequest
+from datacosmos.stac.models.search_parameters import SearchParameters
+
 
 class STACClient:
     """Client for interacting with the STAC API."""
@@ -56,9 +58,7 @@ class STACClient:
 
         return self.search_items(parameters)
 
-    def search_items(
-        self, parameters: SearchParameters
-    ) -> Generator[Item, None, None]:
+    def search_items(self, parameters: SearchParameters) -> Generator[Item, None, None]:
         """Query the STAC catalog using the POST endpoint with filtering and pagination.
 
         Args:
@@ -92,7 +92,9 @@ class STACClient:
 
         return Item.from_dict(response.json())
 
-    def update_item(self, item_id: str, collection_id: str, update_data: ItemUpdate) -> Item:
+    def update_item(
+        self, item_id: str, collection_id: str, update_data: ItemUpdate
+    ) -> Item:
         """Partially update an existing STAC item.
 
         Args:
@@ -112,12 +114,14 @@ class STACClient:
                 key: asset.to_dict() for key, asset in update_payload["assets"].items()
             }
         if "links" in update_payload:
-            update_payload["links"] = [link.to_dict() for link in update_payload["links"]]
+            update_payload["links"] = [
+                link.to_dict() for link in update_payload["links"]
+            ]
 
         response = self.client.patch(url, json=update_payload)
         check_api_response(response)
 
-        return Item.from_dict(response.json()) 
+        return Item.from_dict(response.json())
 
     def delete_item(self, item_id: str, collection_id: str) -> None:
         """Delete a STAC item by its ID.
@@ -165,7 +169,9 @@ class STACClient:
 
     def _get_next_link(self, data: dict) -> Optional[str]:
         """Extract the next page link from the response."""
-        next_link = next((link for link in data.get("links", []) if link.get("rel") == "next"), None)
+        next_link = next(
+            (link for link in data.get("links", []) if link.get("rel") == "next"), None
+        )
         return next_link.get("href", "") if next_link else None
 
     def _extract_pagination_token(self, next_href: str) -> Optional[str]:

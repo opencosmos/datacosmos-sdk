@@ -1,10 +1,11 @@
 from unittest.mock import MagicMock, patch
+
 from pystac import Item
-from datacosmos.stac.models.item_update import ItemUpdate
 
 from config.config import Config
 from config.models.m2m_authentication_config import M2MAuthenticationConfig
 from datacosmos.client import DatacosmosClient
+from datacosmos.stac.models.item_update import ItemUpdate
 from datacosmos.stac.stac_client import STACClient
 
 

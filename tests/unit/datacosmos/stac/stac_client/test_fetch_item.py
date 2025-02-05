@@ -27,7 +27,7 @@ def test_fetch_item(mock_get, mock_check_api_response, mock_fetch_token):
     }
     mock_get.return_value = mock_response
 
-    mock_check_api_response.return_value = None  
+    mock_check_api_response.return_value = None
 
     config = Config(
         authentication=M2MAuthenticationConfig(

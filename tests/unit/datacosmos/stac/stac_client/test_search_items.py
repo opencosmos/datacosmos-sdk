@@ -33,7 +33,7 @@ def test_search_items(mock_post, mock_check_api_response, mock_fetch_token):
     }
     mock_post.return_value = mock_response
 
-    mock_check_api_response.return_value = None  
+    mock_check_api_response.return_value = None
 
     config = Config(
         authentication=M2MAuthenticationConfig(
@@ -54,4 +54,6 @@ def test_search_items(mock_post, mock_check_api_response, mock_fetch_token):
     assert len(results) == 1
     assert results[0].id == "item-1"
     mock_post.assert_called_once()
-    mock_check_api_response.assert_called_once_with(mock_response)  # Ensure the API check was called
+    mock_check_api_response.assert_called_once_with(
+        mock_response
+    )  # Ensure the API check was called
