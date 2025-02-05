@@ -1,7 +1,5 @@
 from unittest.mock import MagicMock, patch
 
-from pystac import Item
-
 from config.config import Config
 from config.models.m2m_authentication_config import M2MAuthenticationConfig
 from datacosmos.client import DatacosmosClient
