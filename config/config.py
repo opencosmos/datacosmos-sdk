@@ -6,7 +6,7 @@ and supports environment variable-based overrides.
 """
 
 import os
-from typing import ClassVar, Literal, Optional
+from typing import ClassVar, Optional
 
 import yaml
 from pydantic import field_validator
@@ -24,16 +24,12 @@ class Config(BaseSettings):
         nested_model_default_partial_update=True,
     )
 
-    environment: Literal["local", "test", "prod"] = "test"
-    log_format: Literal["json", "text"] = "text"
-    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
-
     authentication: Optional[M2MAuthenticationConfig] = None
     stac: Optional[URL] = None
 
     DEFAULT_AUTH_TYPE: ClassVar[str] = "m2m"
     DEFAULT_AUTH_TOKEN_URL: ClassVar[str] = "https://login.open-cosmos.com/oauth/token"
-    DEFAULT_AUTH_AUDIENCE: ClassVar[str] = "https://test.beeapp.open-cosmos.com"
+    DEFAULT_AUTH_AUDIENCE: ClassVar[str] = "https://beeapp.open-cosmos.com"
 
     @classmethod
     def from_yaml(cls, file_path: str = "config/config.yaml") -> "Config":
@@ -75,7 +71,7 @@ class Config(BaseSettings):
 
         stac_config = URL(
             protocol=os.getenv("OC_STAC_PROTOCOL", "https"),
-            host=os.getenv("OC_STAC_HOST", "test.app.open-cosmos.com"),
+            host=os.getenv("OC_STAC_HOST", "app.open-cosmos.com"),
             port=int(os.getenv("OC_STAC_PORT", "443")),
             path=os.getenv("OC_STAC_PATH", "/api/data/v0/stac"),
         )
@@ -163,7 +159,7 @@ class Config(BaseSettings):
         if stac_config is None:
             return URL(
                 protocol="https",
-                host="test.app.open-cosmos.com",
+                host="app.open-cosmos.com",
                 port=443,
                 path="/api/data/v0/stac",
             )
