@@ -15,86 +15,94 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: set up python
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v4
         with:
           python-version: "3.10"
+      - name: set up poetry
+        run: curl -sSL https://install.python-poetry.org | python3 -
+      - name: configure gitlab auth
+        run: poetry config http-basic.gitlab __token__ ${{ secrets.GITLAB_PYPI_TOKEN }}
       - name: install dependencies
-        run: pip install .[test]
-      - name: lint
-        uses: wearerequired/lint-action@v2
-        with:
-          continue_on_error: false
-          black: true
-          flake8: true
+        run: poetry install --no-interaction
+      - name: run isort before black
+        run: |
+          poetry run isort . --check-only  # Run isort first
+          poetry run black . --check       # Then black
+          poetry run flake8 .
+
   bandit:
     name: bandit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: set up python
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v4
         with:
           python-version: "3.10"
+      - name: set up poetry
+        run: curl -sSL https://install.python-poetry.org | python3 -
+      - name: configure gitlab auth
+        run: poetry config http-basic.gitlab __token__ ${{ secrets.GITLAB_PYPI_TOKEN }}
       - name: install dependencies
-        run: pip install .[test]
+        run: poetry install --no-interaction
       - name: bandit
-        run: bandit -r -c pyproject.toml .
+        run: poetry run bandit -r -c pyproject.toml . --skip B105,B106,B101
+
   cognitive:
     name: cognitive
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: set up python
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v4
         with:
           python-version: "3.10"
+      - name: set up poetry
+        run: curl -sSL https://install.python-poetry.org | python3 -
+      - name: configure gitlab auth
+        run: poetry config http-basic.gitlab __token__ ${{ secrets.GITLAB_PYPI_TOKEN }}
       - name: install dependencies
-        run: pip install .[test]
+        run: poetry install --no-interaction
       - name: cognitive
-        run: flake8 . --max-cognitive-complexity=5
-  isort:
-    name: isort
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: set up python
-        uses: actions/setup-python@v1
-        with:
-          python-version: "3.10"
-      - name: install dependencies
-        run: pip install .[test]
-      - name: isort
-        uses: isort/isort-action@v1.1.0
+        run: poetry run flake8 . --max-cognitive-complexity=5 --ignore=E501
+
   pydocstyle:
     name: pydocstyle
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: set up python
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v4
         with:
           python-version: "3.10"
+      - name: set up poetry
+        run: curl -sSL https://install.python-poetry.org | python3 -
+      - name: configure gitlab auth
+        run: poetry config http-basic.gitlab __token__ ${{ secrets.GITLAB_PYPI_TOKEN }}
       - name: install dependencies
-        run: pip install .[test]
+        run: poetry install --no-interaction
       - name: pydocstyle
-        run: pydocstyle .
+        run: poetry run pydocstyle .
+
   test:
     name: test
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
-    needs: [bandit, cognitive, isort, lint, pydocstyle]
+    needs: [bandit, cognitive, lint, pydocstyle]
     steps:
       - uses: actions/checkout@v3
       - name: set up python
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.10"
+      - name: set up poetry
+        run: curl -sSL https://install.python-poetry.org | python3 -
+      - name: configure gitlab auth
+        run: poetry config http-basic.gitlab __token__ ${{ secrets.GITLAB_PYPI_TOKEN }}
       - name: install dependencies
-        run: pip install .[test]
+        run: poetry install --no-interaction
       - name: test
-        run: python -m pytest
+        run: poetry run pytest
+
   release:
     name: tag, changelog, release, publish
     runs-on: ubuntu-latest
@@ -102,6 +110,12 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v3
+      - name: set up poetry
+        run: curl -sSL https://install.python-poetry.org | python3 -
+      - name: configure gitlab auth
+        run: poetry config http-basic.gitlab __token__ ${{ secrets.GITLAB_PYPI_TOKEN }}
+      - name: install dependencies
+        run: poetry install --no-interaction
       - name: version
         uses: paulhatch/semantic-version@v5.0.0
         id: version

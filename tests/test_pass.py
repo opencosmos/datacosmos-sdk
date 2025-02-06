@@ -1,7 +1,9 @@
-"""An example test to check pytest setup."""
+"""Test suite for basic functionality and CI setup."""
 
 
 class TestPass:
+    """A simple test class to validate the CI pipeline setup."""
+
     def test_pass(self):
-        """A passing test, to check the pytest CI setup."""
-        pass
+        """A passing test to ensure the CI pipeline is functional."""
+        assert True
