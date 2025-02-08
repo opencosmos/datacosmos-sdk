@@ -1,3 +1,5 @@
+"""Model representing a partial update for a STAC item."""
+
 from typing import Any, Optional
 
 from pydantic import BaseModel, Field, model_validator
@@ -23,16 +25,27 @@ class ItemUpdate(BaseModel):
         """Convert a shapely geometry to GeoJSON format."""
         self.geometry = mapping(geom)
 
+    @staticmethod
+    def has_valid_datetime(properties: dict[str, Any]) -> bool:
+        """Check if 'datetime' is present and not None."""
+        return properties.get("datetime") is not None
+
+    @staticmethod
+    def has_valid_datetime_range(properties: dict[str, Any]) -> bool:
+        """Check if both 'start_datetime' and 'end_datetime' are present and not None."""
+        return all(
+            properties.get(key) is not None
+            for key in ["start_datetime", "end_datetime"]
+        )
+
     @model_validator(mode="before")
     def validate_datetime_fields(cls, values):
         """Ensure at least one of 'datetime' or 'start_datetime'/'end_datetime' exists."""
         properties = values.get("properties", {})
-        has_datetime = "datetime" in properties and properties["datetime"] is not None
-        has_start_end = (
-            "start_datetime" in properties and properties["start_datetime"] is not None
-        ) and ("end_datetime" in properties and properties["end_datetime"] is not None)
 
-        if not has_datetime and not has_start_end:
+        if not cls.has_valid_datetime(properties) and not cls.has_valid_datetime_range(
+            properties
+        ):
             raise ValueError(
                 "Either 'datetime' or both 'start_datetime' and 'end_datetime' must be provided."
             )
