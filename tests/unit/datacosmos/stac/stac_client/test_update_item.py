@@ -36,14 +36,20 @@ def test_update_item(mock_check_api_response, mock_patch, mock_fetch_token):
             audience="https://mock.audience",
         )
     )
-
     client = DatacosmosClient(config=config)
     stac_client = STACClient(client)
 
-    update_data = ItemUpdate(properties={"new_property": "value"})
-    updated_item = stac_client.update_item("item-1", "test-collection", update_data)
+    update_data = ItemUpdate(
+        properties={"new_property": "value", "datetime": "2023-12-01T12:00:00Z"}
+    )
 
-    assert updated_item.id == "item-1"
-    assert updated_item.properties["new_property"] == "value"
+    stac_client.update_item("item-1", "test-collection", update_data)
+
     mock_patch.assert_called_once()
+
     mock_check_api_response.assert_called_once()
+
+    mock_patch.assert_called_with(
+        stac_client.base_url.with_suffix("/collections/test-collection/items/item-1"),
+        json=update_data.model_dump(by_alias=True, exclude_none=True),
+    )

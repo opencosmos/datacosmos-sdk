@@ -1,8 +1,6 @@
-"""Model representing a partial update for a STAC item."""
-
 from typing import Any, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from pystac import Asset, Link
 from shapely.geometry import mapping
 
@@ -24,3 +22,19 @@ class ItemUpdate(BaseModel):
     def set_geometry(self, geom) -> None:
         """Convert a shapely geometry to GeoJSON format."""
         self.geometry = mapping(geom)
+
+    @model_validator(mode="before")
+    def validate_datetime_fields(cls, values):
+        """Ensure at least one of 'datetime' or 'start_datetime'/'end_datetime' exists."""
+        properties = values.get("properties", {})
+        has_datetime = "datetime" in properties and properties["datetime"] is not None
+        has_start_end = (
+            "start_datetime" in properties and properties["start_datetime"] is not None
+        ) and ("end_datetime" in properties and properties["end_datetime"] is not None)
+
+        if not has_datetime and not has_start_end:
+            raise ValueError(
+                "Either 'datetime' or both 'start_datetime' and 'end_datetime' must be provided."
+            )
+
+        return values

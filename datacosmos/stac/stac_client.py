@@ -70,15 +70,12 @@ class STACClient:
         body = parameters.model_dump(by_alias=True, exclude_none=True)
         return self._paginate_items(url, body)
 
-    def create_item(self, collection_id: str, item: Item) -> Item:
+    def create_item(self, collection_id: str, item: Item) -> None:
         """Create a new STAC item in a specified collection.
 
         Args:
             collection_id (str): The ID of the collection where the item will be created.
             item (Item): The STAC Item to be created.
-
-        Returns:
-            Item: The created STAC Item.
 
         Raises:
             RequestError: If the API returns an error response.
@@ -89,20 +86,15 @@ class STACClient:
         response = self.client.post(url, json=item_json)
         check_api_response(response)
 
-        return Item.from_dict(response.json())
-
     def update_item(
         self, item_id: str, collection_id: str, update_data: ItemUpdate
-    ) -> Item:
+    ) -> None:
         """Partially update an existing STAC item.
 
         Args:
             item_id (str): The ID of the item to update.
             collection_id (str): The ID of the collection containing the item.
             update_data (ItemUpdate): The structured update payload.
-
-        Returns:
-            Item: The updated STAC item.
         """
         url = self.base_url.with_suffix(f"/collections/{collection_id}/items/{item_id}")
 
@@ -119,8 +111,6 @@ class STACClient:
 
         response = self.client.patch(url, json=update_payload)
         check_api_response(response)
-
-        return Item.from_dict(response.json())
 
     def delete_item(self, item_id: str, collection_id: str) -> None:
         """Delete a STAC item by its ID.

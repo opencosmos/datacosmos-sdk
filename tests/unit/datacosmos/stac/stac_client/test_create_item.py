@@ -37,14 +37,18 @@ def test_create_item(mock_check_api_response, mock_post, mock_fetch_token):
             audience="https://mock.audience",
         )
     )
-
     client = DatacosmosClient(config=config)
     stac_client = STACClient(client)
 
     item = Item.from_dict(mock_response.json())
-    created_item = stac_client.create_item("test-collection", item)
 
-    assert created_item.id == "item-1"
-    assert created_item.properties["datetime"] == "2023-12-01T12:00:00Z"
+    stac_client.create_item("test-collection", item)
+
     mock_post.assert_called_once()
+
     mock_check_api_response.assert_called_once()
+
+    mock_post.assert_called_with(
+        stac_client.base_url.with_suffix("/collections/test-collection/items"),
+        json=item.to_dict(),
+    )
