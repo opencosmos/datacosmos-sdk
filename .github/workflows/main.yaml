@@ -27,7 +27,6 @@ jobs:
           source .venv/bin/activate
           isort . --check-only
           black . --check
-          flake8 .
 
   bandit:
     name: bandit
@@ -60,6 +59,10 @@ jobs:
         run: uv venv
       - name: Install dependencies with GitLab token
         run: uv pip install --index-url "https://__token__:${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple" -r pyproject.toml
+      - name: Upgrade flake8 and importlib-metadata
+        run: |
+          source .venv/bin/activate
+          pip install --upgrade flake8 importlib-metadata
       - name: Activate virtual environment & run flake8
         run: |
           source .venv/bin/activate
