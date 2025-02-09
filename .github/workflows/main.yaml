@@ -62,7 +62,7 @@ jobs:
       - name: Upgrade flake8 and importlib-metadata
         run: |
           source .venv/bin/activate
-          pip install --upgrade flake8 importlib-metadata
+          pip install --upgrade flake8 importlib-metadata setuptools
       - name: Activate virtual environment & run flake8
         run: |
           source .venv/bin/activate
