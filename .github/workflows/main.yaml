@@ -61,7 +61,6 @@ jobs:
         run: uv pip install --index-url "https://__token__:${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple" -r pyproject.toml
       - name: Ensure correct importlib-metadata version
         run: |
-          source .venv/bin/activate
           pip install --force-reinstall "importlib-metadata==4.13.0"
           pip freeze | grep importlib-metadata  # Verify installed version
       - name: Activate virtual environment & run flake8
