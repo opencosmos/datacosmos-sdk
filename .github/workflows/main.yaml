@@ -14,6 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Set up uv environment
         run: uv venv
       - name: Install dependencies
@@ -30,6 +32,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Set up uv environment
         run: uv venv
       - name: Install dependencies
@@ -44,6 +48,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Set up uv environment
         run: uv venv
       - name: Install dependencies
@@ -58,6 +64,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Set up uv environment
         run: uv venv
       - name: Install dependencies
@@ -73,6 +81,8 @@ jobs:
     needs: [bandit, cognitive, lint, pydocstyle]
     steps:
       - uses: actions/checkout@v3
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Set up uv environment
         run: uv venv
       - name: Install dependencies
@@ -89,6 +99,8 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v3
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Set up uv environment
         run: uv venv
       - name: Install dependencies
