@@ -15,11 +15,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Install uv
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+        run: pip install uv
       - name: Set up uv environment
         run: uv venv
       - name: Install dependencies with GitLab token
-        run: uv pip install -r pyproject.toml --index-url "https://${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple"
+        run: uv pip install --index-url "https://__token__:${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple" -r pyproject.toml
       - name: Activate virtual environment & run linters
         run: |
           source .venv/bin/activate
@@ -33,11 +33,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Install uv
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+        run: pip install uv
       - name: Set up uv environment
         run: uv venv
       - name: Install dependencies with GitLab token
-        run: uv pip install -r pyproject.toml --index-url "https://${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple"
+        run: uv pip install --index-url "https://__token__:${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple" -r pyproject.toml
       - name: Activate virtual environment & run bandit
         run: |
           source .venv/bin/activate
@@ -49,11 +49,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Install uv
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+        run: pip install uv
       - name: Set up uv environment
         run: uv venv
       - name: Install dependencies with GitLab token
-        run: uv pip install -r pyproject.toml --index-url "https://${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple"
+        run: uv pip install --index-url "https://__token__:${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple" -r pyproject.toml
       - name: Activate virtual environment & run flake8
         run: |
           source .venv/bin/activate
@@ -65,11 +65,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Install uv
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+        run: pip install uv
       - name: Set up uv environment
         run: uv venv
       - name: Install dependencies with GitLab token
-        run: uv pip install -r pyproject.toml --index-url "https://${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple"
+        run: uv pip install --index-url "https://__token__:${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple" -r pyproject.toml
       - name: Activate virtual environment & run pydocstyle
         run: |
           source .venv/bin/activate
@@ -82,11 +82,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Install uv
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+        run: pip install uv
       - name: Set up uv environment
         run: uv venv
       - name: Install dependencies with GitLab token
-        run: uv pip install -r pyproject.toml --index-url "https://${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple"
+        run: uv pip install --index-url "https://__token__:${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple" -r pyproject.toml
       - name: Activate virtual environment & run tests
         run: |
           source .venv/bin/activate
@@ -100,11 +100,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Install uv
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+        run: pip install uv
       - name: Set up uv environment
         run: uv venv
       - name: Install dependencies with GitLab token
-        run: uv pip install -r pyproject.toml --index-url "https://${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple"
+        run: uv pip install --index-url "https://__token__:${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple" -r pyproject.toml
       - name: Version
         uses: paulhatch/semantic-version@v5.0.0
         id: version
