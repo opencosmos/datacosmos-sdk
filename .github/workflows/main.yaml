@@ -20,6 +20,8 @@ jobs:
           python-version: "3.10"
       - name: Install uv
         run: pip install uv
+      - name: Configure GitLab authentication for uv
+        run: uv pip config set global.index-url "https://__token__:${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple"
       - name: Set up uv environment
         run: |
           uv venv
@@ -41,6 +43,8 @@ jobs:
           python-version: "3.10"
       - name: Install uv
         run: pip install uv
+      - name: Configure GitLab authentication for uv
+        run: uv pip config set global.index-url "https://__token__:${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple"
       - name: Set up uv environment
         run: |
           uv venv
@@ -59,6 +63,8 @@ jobs:
           python-version: "3.10"
       - name: Install uv
         run: pip install uv
+      - name: Configure GitLab authentication for uv
+        run: uv pip config set global.index-url "https://__token__:${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple"
       - name: Set up uv environment
         run: |
           uv venv
@@ -77,6 +83,8 @@ jobs:
           python-version: "3.10"
       - name: Install uv
         run: pip install uv
+      - name: Configure GitLab authentication for uv
+        run: uv pip config set global.index-url "https://__token__:${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple"
       - name: Set up uv environment
         run: |
           uv venv
@@ -96,6 +104,8 @@ jobs:
           python-version: "3.10"
       - name: Install uv
         run: pip install uv
+      - name: Configure GitLab authentication for uv
+        run: uv pip config set global.index-url "https://__token__:${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple"
       - name: Set up uv environment
         run: |
           uv venv
@@ -112,6 +122,8 @@ jobs:
       - uses: actions/checkout@v3
       - name: Install uv
         run: pip install uv
+      - name: Configure GitLab authentication for uv
+        run: uv pip config set global.index-url "https://__token__:${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple"
       - name: Set up uv environment
         run: |
           uv venv
