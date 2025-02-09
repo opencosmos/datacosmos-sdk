@@ -3,7 +3,7 @@ name: main
 on:
   push:
     branches:
-      - "**"
+      - "**"  
   pull_request:
     branches:
       - "**"
@@ -14,19 +14,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-      - name: Install uv
-        run: pip install uv
       - name: Set up uv environment
         run: uv venv
-      - name: Install dependencies with GitLab authentication
+      - name: Install dependencies
+        run: uv pip install -r pyproject.toml
+      - name: Activate virtual environment & run linters
         run: |
-          uv pip install --index-url "https://__token__:${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple" -r pyproject.toml
-      - name: Run linters
-        run: |
+          source .venv/bin/activate
           isort . --check-only
           black . --check
           flake8 .
@@ -36,57 +30,42 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-      - name: Install uv
-        run: pip install uv
       - name: Set up uv environment
         run: uv venv
-      - name: Install dependencies with GitLab authentication
+      - name: Install dependencies
+        run: uv pip install -r pyproject.toml
+      - name: Activate virtual environment & run bandit
         run: |
-          uv pip install --index-url "https://__token__:${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple" -r pyproject.toml
-      - name: Run bandit
-        run: bandit -r -c pyproject.toml . --skip B105,B106,B101
+          source .venv/bin/activate
+          bandit -r -c pyproject.toml . --skip B105,B106,B101
 
   cognitive:
     name: cognitive
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-      - name: Install uv
-        run: pip install uv
       - name: Set up uv environment
         run: uv venv
-      - name: Install dependencies with GitLab authentication
+      - name: Install dependencies
+        run: uv pip install -r pyproject.toml
+      - name: Activate virtual environment & run flake8
         run: |
-          uv pip install --index-url "https://__token__:${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple" -r pyproject.toml
-      - name: Run cognitive complexity check
-        run: flake8 . --max-cognitive-complexity=5 --ignore=E501
+          source .venv/bin/activate
+          flake8 . --max-cognitive-complexity=5 --ignore=E501
 
   pydocstyle:
     name: pydocstyle
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-      - name: Install uv
-        run: pip install uv
       - name: Set up uv environment
         run: uv venv
-      - name: Install dependencies with GitLab authentication
+      - name: Install dependencies
+        run: uv pip install -r pyproject.toml
+      - name: Activate virtual environment & run pydocstyle
         run: |
-          uv pip install --index-url "https://__token__:${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple" -r pyproject.toml
-      - name: Run pydocstyle
-        run: pydocstyle .
+          source .venv/bin/activate
+          pydocstyle .
 
   test:
     name: test
@@ -94,19 +73,14 @@ jobs:
     needs: [bandit, cognitive, lint, pydocstyle]
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-      - name: Install uv
-        run: pip install uv
       - name: Set up uv environment
         run: uv venv
-      - name: Install dependencies with GitLab authentication
+      - name: Install dependencies
+        run: uv pip install -r pyproject.toml
+      - name: Activate virtual environment & run tests
         run: |
-          uv pip install --index-url "https://__token__:${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple" -r pyproject.toml
-      - name: Run tests
-        run: pytest
+          source .venv/bin/activate
+          pytest
 
   release:
     name: tag, changelog, release, publish
@@ -115,26 +89,25 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v3
-      - name: Install uv
-        run: pip install uv
       - name: Set up uv environment
         run: uv venv
-      - name: Install dependencies with GitLab authentication
-        run: |
-          uv pip install --index-url "https://__token__:${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple" -r pyproject.toml
-      - name: Determine version
+      - name: Install dependencies
+        run: uv pip install -r pyproject.toml
+      - name: Activate virtual environment
+        run: source .venv/bin/activate
+      - name: version
         uses: paulhatch/semantic-version@v5.0.0
         id: version
         with:
           major_pattern: "(feat!)"
           minor_pattern: "(feat)"
-      - name: Create changelog text
+      - name: create changelog text
         id: changelog
         uses: loopwerk/tag-changelog@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           exclude_types: other,doc,chore
-      - name: Create GitHub Release
+      - name: Create release
         uses: actions/create-release@latest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -142,7 +115,7 @@ jobs:
           tag_name: ${{ steps.version.outputs.version_tag }}
           release_name: Release ${{ steps.version.outputs.version_tag }}
           body: ${{ steps.changelog.outputs.changes }}
-      - name: Create changelog pull request
+      - name: create changelog pull request
         uses: peter-evans/create-pull-request@v2
         with:
           commit-message: "Release ${{ steps.version.outputs.version_tag }} [skip ci]"
