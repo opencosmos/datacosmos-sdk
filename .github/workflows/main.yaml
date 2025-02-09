@@ -3,7 +3,7 @@ name: main
 on:
   push:
     branches:
-      - "**"  
+      - "**"
   pull_request:
     branches:
       - "**"
@@ -20,12 +20,11 @@ jobs:
           python-version: "3.10"
       - name: Install uv
         run: pip install uv
-      - name: Configure GitLab authentication for uv
-        run: uv pip config set global.index-url "https://__token__:${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple"
       - name: Set up uv environment
+        run: uv venv
+      - name: Install dependencies with GitLab authentication
         run: |
-          uv venv
-          uv pip install -r pyproject.toml
+          uv pip install --index-url "https://__token__:${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple" -r pyproject.toml
       - name: Run isort before black
         run: |
           uv venv exec isort . --check-only
@@ -43,13 +42,12 @@ jobs:
           python-version: "3.10"
       - name: Install uv
         run: pip install uv
-      - name: Configure GitLab authentication for uv
-        run: uv pip config set global.index-url "https://__token__:${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple"
       - name: Set up uv environment
+        run: uv venv
+      - name: Install dependencies with GitLab authentication
         run: |
-          uv venv
-          uv pip install -r pyproject.toml
-      - name: Run Bandit security checks
+          uv pip install --index-url "https://__token__:${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple" -r pyproject.toml
+      - name: Run bandit
         run: uv venv exec bandit -r -c pyproject.toml . --skip B105,B106,B101
 
   cognitive:
@@ -63,13 +61,12 @@ jobs:
           python-version: "3.10"
       - name: Install uv
         run: pip install uv
-      - name: Configure GitLab authentication for uv
-        run: uv pip config set global.index-url "https://__token__:${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple"
       - name: Set up uv environment
+        run: uv venv
+      - name: Install dependencies with GitLab authentication
         run: |
-          uv venv
-          uv pip install -r pyproject.toml
-      - name: Run cognitive complexity check
+          uv pip install --index-url "https://__token__:${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple" -r pyproject.toml
+      - name: Run cognitive complexity checks
         run: uv venv exec flake8 . --max-cognitive-complexity=5 --ignore=E501
 
   pydocstyle:
@@ -83,12 +80,11 @@ jobs:
           python-version: "3.10"
       - name: Install uv
         run: pip install uv
-      - name: Configure GitLab authentication for uv
-        run: uv pip config set global.index-url "https://__token__:${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple"
       - name: Set up uv environment
+        run: uv venv
+      - name: Install dependencies with GitLab authentication
         run: |
-          uv venv
-          uv pip install -r pyproject.toml
+          uv pip install --index-url "https://__token__:${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple" -r pyproject.toml
       - name: Run pydocstyle
         run: uv venv exec pydocstyle .
 
@@ -104,12 +100,11 @@ jobs:
           python-version: "3.10"
       - name: Install uv
         run: pip install uv
-      - name: Configure GitLab authentication for uv
-        run: uv pip config set global.index-url "https://__token__:${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple"
       - name: Set up uv environment
+        run: uv venv
+      - name: Install dependencies with GitLab authentication
         run: |
-          uv venv
-          uv pip install -r pyproject.toml
+          uv pip install --index-url "https://__token__:${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple" -r pyproject.toml
       - name: Run tests
         run: uv venv exec pytest
 
@@ -122,13 +117,12 @@ jobs:
       - uses: actions/checkout@v3
       - name: Install uv
         run: pip install uv
-      - name: Configure GitLab authentication for uv
-        run: uv pip config set global.index-url "https://__token__:${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple"
       - name: Set up uv environment
+        run: uv venv
+      - name: Install dependencies with GitLab authentication
         run: |
-          uv venv
-          uv pip install -r pyproject.toml
-      - name: Determine new version
+          uv pip install --index-url "https://__token__:${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple" -r pyproject.toml
+      - name: Determine version
         uses: paulhatch/semantic-version@v5.0.0
         id: version
         with:
@@ -140,7 +134,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           exclude_types: other,doc,chore
-      - name: Create release
+      - name: Create GitHub Release
         uses: actions/create-release@latest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
