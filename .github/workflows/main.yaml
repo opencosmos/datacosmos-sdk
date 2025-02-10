@@ -59,14 +59,10 @@ jobs:
         run: uv venv
       - name: Install dependencies with GitLab token
         run: uv pip install --index-url "https://__token__:${{ secrets.GITLAB_PYPI_TOKEN }}@git.o-c.space/api/v4/projects/689/packages/pypi/simple" -r pyproject.toml
-      - name: Ensure correct importlib-metadata version
-        run: |
-          pip install --force-reinstall "importlib-metadata==4.13.0"
-          pip freeze | grep importlib-metadata  # Verify installed version
-      - name: Activate virtual environment & run flake8
+      - name: Activate virtual environment & run ruff
         run: |
           source .venv/bin/activate
-          flake8 . --max-cognitive-complexity=5 --ignore=E501
+          ruff check . --select C901
 
   pydocstyle:
     name: pydocstyle

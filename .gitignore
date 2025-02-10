@@ -138,3 +138,5 @@ config/config.yaml
 
 # Ignore .vscode
 .vscode/
+
+uv.lock
