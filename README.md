@@ -167,9 +167,6 @@ stac_client.update_item(item_id="new-item", collection_id="example-collection", 
 stac_client.delete_item(item_id="new-item", collection_id="example-collection")
 ```
 
-## Configuration
-The SDK supports configuration via **manual instantiation of `Config` (recommended)**, **YAML files**, and **environment variables**.
-
 ## Contributing
 If you would like to contribute:
 1. Fork the repository.
