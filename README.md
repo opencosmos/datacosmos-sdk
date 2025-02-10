@@ -42,6 +42,28 @@ password {provided_token}
 
 You will need to **request** the token from Open Cosmos.
 
+### Configuration Methods
+To instantiate the `DatacosmosClient`, it is **recommended** to pass a `Config` object directly:
+
+```python
+from datacosmos.client import DatacosmosClient
+from datacosmos.config import Config
+
+config = Config(
+    authentication={
+        "client_id": "your_client_id",
+        "client_secret": "your_client_secret",
+        "token_url": "https://login.open-cosmos.com/oauth/token",
+        "audience": "https://beeapp.open-cosmos.com"
+    }
+)
+client = DatacosmosClient(config=config)
+```
+
+Alternatively, the SDK can load configuration automatically from:
+- A YAML file (`config/config.yaml`)
+- Environment variables
+
 ## Using the SDK
 
 ### Initializing the Client
@@ -146,12 +168,7 @@ stac_client.delete_item(item_id="new-item", collection_id="example-collection")
 ```
 
 ## Configuration
-The SDK supports configuration via **YAML files** and **environment variables**.
-
-- **YAML Configuration** (default: `config/config.yaml`)
-- **Environment Variables** (e.g., `OC_AUTH_CLIENT_ID`, `OC_AUTH_CLIENT_SECRET`)
-
-The SDK loads configuration settings automatically.
+The SDK supports configuration via **manual instantiation of `Config` (recommended)**, **YAML files**, and **environment variables**.
 
 ## Contributing
 If you would like to contribute:
@@ -168,10 +185,9 @@ Before making changes, ensure that:
 ```sh
 black .
 isort .
-ruff .
+ruff check . --select C901
 pydocstyle .
-bandit -r .
+bandit -r -c pyproject.toml . --skip B105,B106,B101
 pytest
 ```
-
 
