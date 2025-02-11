@@ -2,14 +2,14 @@ from unittest.mock import MagicMock, patch
 
 from config.config import Config
 from config.models.m2m_authentication_config import M2MAuthenticationConfig
-from datacosmos.client import DatacosmosClient
-from datacosmos.stac.models.item_update import ItemUpdate
-from datacosmos.stac.stac_client import STACClient
+from datacosmos.datacosmos_client import DatacosmosClient
+from datacosmos.stac.item.item_client import ItemClient
+from datacosmos.stac.item.models.item_update import ItemUpdate
 
 
 @patch("requests_oauthlib.OAuth2Session.fetch_token")
 @patch.object(DatacosmosClient, "patch")
-@patch("datacosmos.stac.stac_client.check_api_response")
+@patch("datacosmos.stac.item.item_client.check_api_response")
 def test_update_item(mock_check_api_response, mock_patch, mock_fetch_token):
     """Test updating an existing STAC item."""
     mock_fetch_token.return_value = {"access_token": "mock-token", "expires_in": 3600}
@@ -37,7 +37,7 @@ def test_update_item(mock_check_api_response, mock_patch, mock_fetch_token):
         )
     )
     client = DatacosmosClient(config=config)
-    stac_client = STACClient(client)
+    stac_client = ItemClient(client)
 
     update_data = ItemUpdate(
         properties={"new_property": "value", "datetime": "2023-12-01T12:00:00Z"}
