@@ -24,7 +24,7 @@ class ItemClient:
     """Client for interacting with the STAC API."""
 
     def __init__(self, client: DatacosmosClient):
-        """Initialize the STACClient with a DatacosmosClient.
+        """Initialize the ItemClient with a DatacosmosClient.
 
         Args:
             client (DatacosmosClient): The authenticated Datacosmos client instance.
