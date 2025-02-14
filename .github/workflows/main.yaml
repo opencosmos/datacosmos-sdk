@@ -14,6 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Install GEOS
+        run: sudo apt update && sudo apt install libgeos-dev
       - name: Install uv
         run: pip install uv
       - name: Set up uv environment
@@ -31,6 +33,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Install GEOS
+        run: sudo apt update && sudo apt install libgeos-dev
       - name: Install uv
         run: pip install uv
       - name: Set up uv environment
@@ -47,6 +51,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Install GEOS
+        run: sudo apt update && sudo apt install libgeos-dev
       - name: Install uv
         run: pip install uv
       - name: Set up uv environment
@@ -63,6 +69,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Install GEOS
+        run: sudo apt update && sudo apt install libgeos-dev
       - name: Install uv
         run: pip install uv
       - name: Set up uv environment
@@ -80,6 +88,8 @@ jobs:
     needs: [bandit, cognitive, lint, pydocstyle]
     steps:
       - uses: actions/checkout@v3
+      - name: Install GEOS
+        run: sudo apt update && sudo apt install libgeos-dev
       - name: Install uv
         run: pip install uv
       - name: Set up uv environment
@@ -98,6 +108,8 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v3
+      - name: Install GEOS
+        run: sudo apt update && sudo apt install libgeos-dev
       - name: Install uv
         run: pip install uv
       - name: Set up uv environment
