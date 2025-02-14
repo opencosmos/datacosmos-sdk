@@ -1,49 +1,21 @@
 # DataCosmos SDK
 
 ## Overview
-The **DataCosmos SDK** allows Open Cosmos' customers to interact with the main APIs required for creating applications that integrate with **DataCosmos**. This SDK provides authentication handling, HTTP request utilities, and a client for interacting with the **STAC API** (SpatioTemporal Asset Catalog).
+The **DataCosmos SDK** allows Open Cosmos' customers to interact with the **DataCosmos APIs** for seamless data management and retrieval. It provides authentication handling, HTTP request utilities, and a client for interacting with the **STAC API** (SpatioTemporal Asset Catalog).
 
 ## Installation
 
-### Prerequisites
-The SDK uses **uv** as a dependency manager. To install it:
+### Install via PyPI
+The easiest way to install the SDK is via **pip**:
 
 ```sh
-pip install uv
+pip install datacosmos
 ```
 
-### Setting Up the SDK
-To install the SDK and its dependencies:
+## Getting Started
 
-```sh
-uv venv
-uv pip install -r pyproject.toml
-uv pip install -r pyproject.toml .[dev]
-source .venv/bin/activate
-```
-
-## Authentication
-The SDK requires authentication via a token stored in a `.netrc` file.
-
-### Setting Up Authentication
-Create the `.netrc` file:
-
-```sh
-touch ~/.netrc
-```
-
-Add the following content:
-
-```
-machine git.o-c.space
-login __token__
-password {provided_token}
-```
-
-You will need to **request** the token from Open Cosmos.
-
-### Configuration Methods
-To instantiate the `DatacosmosClient`, it is **recommended** to pass a `Config` object directly:
+### Initializing the Client
+The recommended way to initialize the SDK is by passing a `Config` object with authentication credentials:
 
 ```python
 from datacosmos.client import DatacosmosClient
@@ -64,19 +36,8 @@ Alternatively, the SDK can load configuration automatically from:
 - A YAML file (`config/config.yaml`)
 - Environment variables
 
-## Using the SDK
-
-### Initializing the Client
-The SDK provides the `DatacosmosClient` class to manage authentication and interact with the API.
-
-```python
-from datacosmos.client import DatacosmosClient
-
-client = DatacosmosClient()
-```
-
 ### STAC Client
-The **STACClient** allows interaction with the STAC API, enabling search, retrieval, creation, updating, and deletion of STAC items.
+The **STACClient** enables interaction with the STAC API, allowing for searching, retrieving, creating, updating, and deleting STAC items.
 
 #### Initialize STACClient
 
@@ -167,11 +128,27 @@ stac_client.update_item(item_id="new-item", collection_id="example-collection", 
 stac_client.delete_item(item_id="new-item", collection_id="example-collection")
 ```
 
+## Configuration Options
+- **Recommended:** Instantiate `DatacosmosClient` with a `Config` object.
+- Alternatively, use **YAML files** (`config/config.yaml`).
+- Or, use **environment variables**.
+
 ## Contributing
 If you would like to contribute:
 1. Fork the repository.
 2. Create a feature branch.
 3. Submit a pull request.
+
+### Development Setup
+If you are developing the SDK, you can use `uv` for dependency management:
+
+```sh
+pip install uv
+uv venv
+uv pip install -r pyproject.toml
+uv pip install -r pyproject.toml .[dev]
+source .venv/bin/activate
+```
 
 Before making changes, ensure that:
 - The code is formatted using **Black** and **isort**.
@@ -187,4 +164,3 @@ pydocstyle .
 bandit -r -c pyproject.toml . --skip B105,B106,B101
 pytest
 ```
-

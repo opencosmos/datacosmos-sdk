@@ -4,8 +4,9 @@ Ensures that URLs contain required components such as protocol, host,
 port, and path.
 """
 
-from common.domain.url import URL as DomainURL
 from pydantic import BaseModel
+
+from datacosmos.utils.url import URL as DomainURL
 
 
 class URL(BaseModel):

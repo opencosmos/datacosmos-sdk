@@ -5,12 +5,13 @@ Provides methods for querying, fetching, creating, updating, and deleting STAC i
 
 from typing import Generator, Optional
 
-from common.sdk.http_response import InvalidRequest, check_api_response
 from pystac import Item
 
 from datacosmos.client import DatacosmosClient
+from datacosmos.exceptions.datacosmos_exception import DatacosmosException
 from datacosmos.stac.models.item_update import ItemUpdate
 from datacosmos.stac.models.search_parameters import SearchParameters
+from datacosmos.utils.http_response import check_api_response
 
 
 class STACClient:
@@ -173,9 +174,12 @@ class STACClient:
             Optional[str]: The extracted token, or None if parsing fails.
 
         Raises:
-            InvalidRequest: If pagination token extraction fails.
+            DatacosmosException: If pagination token extraction fails.
         """
         try:
             return next_href.split("?")[1].split("=")[-1]
-        except (IndexError, AttributeError):
-            raise InvalidRequest(f"Failed to parse pagination token from {next_href}")
+        except (IndexError, AttributeError) as e:
+            raise DatacosmosException(
+                f"Failed to parse pagination token from {next_href}",
+                response=e.response,
+            ) from e
