@@ -7,24 +7,18 @@ from typing import Generator, Optional
 
 from pystac import Item
 
-<<<<<<< HEAD:datacosmos/stac/stac_client.py
-from datacosmos.client import DatacosmosClient
-from datacosmos.exceptions.datacosmos_exception import DatacosmosException
-from datacosmos.stac.models.item_update import ItemUpdate
-from datacosmos.stac.models.search_parameters import SearchParameters
-from datacosmos.utils.http_response import check_api_response
-=======
 from datacosmos.datacosmos_client import DatacosmosClient
+from datacosmos.exceptions.datacosmos_exception import DatacosmosException
 from datacosmos.stac.item.models.item_update import ItemUpdate
 from datacosmos.stac.item.models.search_parameters import SearchParameters
->>>>>>> 77a15fc (Rename client with datacosmos_client; Move current stac api functionalities to a item dedicated folder):datacosmos/stac/item/item_client.py
+from datacosmos.utils.http_response import check_api_response
 
 
 class ItemClient:
     """Client for interacting with the STAC API."""
 
     def __init__(self, client: DatacosmosClient):
-        """Initialize the ItemClient with a DatacosmosClient.
+        """Initialize the STACClient with a DatacosmosClient.
 
         Args:
             client (DatacosmosClient): The authenticated Datacosmos client instance.

@@ -18,7 +18,7 @@ pip install datacosmos
 The recommended way to initialize the SDK is by passing a `Config` object with authentication credentials:
 
 ```python
-from datacosmos.client import DatacosmosClient
+from datacosmos.datacosmos_client import DatacosmosClient
 from datacosmos.config import Config
 
 config = Config(

@@ -2,12 +2,12 @@
 
 from typing import Generator, Optional
 
-from common.sdk.http_response import check_api_response
 from pystac import Collection, Extent, SpatialExtent, TemporalExtent
 from pystac.utils import str_to_datetime
 
 from datacosmos.datacosmos_client import DatacosmosClient
 from datacosmos.stac.collection.models.collection_update import CollectionUpdate
+from datacosmos.utils.http_response import check_api_response
 
 
 class CollectionClient:
