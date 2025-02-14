@@ -4,7 +4,6 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, Field, model_validator
 from pystac import Asset, Link
-from shapely.geometry import mapping
 
 
 class ItemUpdate(BaseModel):
@@ -21,9 +20,14 @@ class ItemUpdate(BaseModel):
     assets: Optional[dict[str, Asset]] = None
     links: Optional[list[Link]] = None
 
-    def set_geometry(self, geom) -> None:
-        """Convert a shapely geometry to GeoJSON format."""
-        self.geometry = mapping(geom)
+    def set_geometry(self, geom_type: str, coordinates: list[Any]) -> None:
+        """Set the geometry manually without using shapely.
+
+        Args:
+            geom_type (str): The type of geometry (e.g., 'Point', 'Polygon').
+            coordinates (list[Any]): The coordinates defining the geometry.
+        """
+        self.geometry = {"type": geom_type, "coordinates": coordinates}
 
     @staticmethod
     def has_valid_datetime(properties: dict[str, Any]) -> bool:
