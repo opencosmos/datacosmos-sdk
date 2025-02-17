@@ -1,5 +1,7 @@
 from unittest.mock import MagicMock, patch
 
+from pystac import Item
+
 from config.config import Config
 from config.models.m2m_authentication_config import M2MAuthenticationConfig
 from datacosmos.client import DatacosmosClient
@@ -7,14 +9,13 @@ from datacosmos.stac.stac_client import STACClient
 
 
 @patch("requests_oauthlib.OAuth2Session.fetch_token")
+@patch.object(DatacosmosClient, "post")
 @patch("datacosmos.stac.stac_client.check_api_response")
-@patch.object(DatacosmosClient, "get")
-def test_fetch_item(mock_get, mock_check_api_response, mock_fetch_token):
-    """Test fetching a single STAC item by ID."""
+def test_create_item(mock_check_api_response, mock_post, mock_fetch_token):
+    """Test creating a new STAC item."""
     mock_fetch_token.return_value = {"access_token": "mock-token", "expires_in": 3600}
 
     mock_response = MagicMock()
-    mock_response.status_code = 200
     mock_response.json.return_value = {
         "id": "item-1",
         "collection": "test-collection",
@@ -25,9 +26,7 @@ def test_fetch_item(mock_get, mock_check_api_response, mock_fetch_token):
         "assets": {},
         "links": [],
     }
-    mock_get.return_value = mock_response
-
-    mock_check_api_response.return_value = None
+    mock_post.return_value = mock_response
 
     config = Config(
         authentication=M2MAuthenticationConfig(
@@ -38,13 +37,18 @@ def test_fetch_item(mock_get, mock_check_api_response, mock_fetch_token):
             audience="https://mock.audience",
         )
     )
-
     client = DatacosmosClient(config=config)
     stac_client = STACClient(client)
 
-    item = stac_client.fetch_item("item-1", "test-collection")
+    item = Item.from_dict(mock_response.json())
 
-    assert item.id == "item-1"
-    assert item.properties["datetime"] == "2023-12-01T12:00:00Z"
-    mock_get.assert_called_once()
-    mock_check_api_response.assert_called_once_with(mock_response)
+    stac_client.create_item("test-collection", item)
+
+    mock_post.assert_called_once()
+
+    mock_check_api_response.assert_called_once()
+
+    mock_post.assert_called_with(
+        stac_client.base_url.with_suffix("/collections/test-collection/items"),
+        json=item.to_dict(),
+    )

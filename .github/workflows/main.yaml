@@ -14,75 +14,73 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: set up python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-      - name: set up poetry
-        run: curl -sSL https://install.python-poetry.org | python3 -
-      - name: configure gitlab auth
-        run: poetry config http-basic.gitlab __token__ ${{ secrets.GITLAB_PYPI_TOKEN }}
-      - name: install dependencies
-        run: poetry install --no-interaction
-      - name: run isort before black
+      - name: Install GEOS
+        run: sudo apt update && sudo apt install libgeos-dev
+      - name: Install uv
+        run: pip install uv
+      - name: Set up uv environment
+        run: uv venv
+      - name: Install dependencies
+        run: uv pip install -r pyproject.toml .[dev]
+      - name: Activate virtual environment & run linters
         run: |
-          poetry run isort . --check-only  # Run isort first
-          poetry run black . --check       # Then black
-          poetry run flake8 .
+          source .venv/bin/activate
+          isort . --check-only
+          black . --check
 
   bandit:
     name: bandit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: set up python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-      - name: set up poetry
-        run: curl -sSL https://install.python-poetry.org | python3 -
-      - name: configure gitlab auth
-        run: poetry config http-basic.gitlab __token__ ${{ secrets.GITLAB_PYPI_TOKEN }}
-      - name: install dependencies
-        run: poetry install --no-interaction
-      - name: bandit
-        run: poetry run bandit -r -c pyproject.toml . --skip B105,B106,B101
+      - name: Install GEOS
+        run: sudo apt update && sudo apt install libgeos-dev
+      - name: Install uv
+        run: pip install uv
+      - name: Set up uv environment
+        run: uv venv
+      - name: Install dependencies
+        run: uv pip install -r pyproject.toml .[dev]
+      - name: Activate virtual environment & run bandit
+        run: |
+          source .venv/bin/activate
+          bandit -r -c pyproject.toml . --skip B105,B106,B101
 
   cognitive:
     name: cognitive
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: set up python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-      - name: set up poetry
-        run: curl -sSL https://install.python-poetry.org | python3 -
-      - name: configure gitlab auth
-        run: poetry config http-basic.gitlab __token__ ${{ secrets.GITLAB_PYPI_TOKEN }}
-      - name: install dependencies
-        run: poetry install --no-interaction
-      - name: cognitive
-        run: poetry run flake8 . --max-cognitive-complexity=5 --ignore=E501
+      - name: Install GEOS
+        run: sudo apt update && sudo apt install libgeos-dev
+      - name: Install uv
+        run: pip install uv
+      - name: Set up uv environment
+        run: uv venv
+      - name: Install dependencies
+        run: uv pip install -r pyproject.toml .[dev]
+      - name: Activate virtual environment & run ruff
+        run: |
+          source .venv/bin/activate
+          ruff check . --select C901
 
   pydocstyle:
     name: pydocstyle
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: set up python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-      - name: set up poetry
-        run: curl -sSL https://install.python-poetry.org | python3 -
-      - name: configure gitlab auth
-        run: poetry config http-basic.gitlab __token__ ${{ secrets.GITLAB_PYPI_TOKEN }}
-      - name: install dependencies
-        run: poetry install --no-interaction
-      - name: pydocstyle
-        run: poetry run pydocstyle .
+      - name: Install GEOS
+        run: sudo apt update && sudo apt install libgeos-dev
+      - name: Install uv
+        run: pip install uv
+      - name: Set up uv environment
+        run: uv venv
+      - name: Install dependencies
+        run: uv pip install -r pyproject.toml .[dev]
+      - name: Activate virtual environment & run pydocstyle
+        run: |
+          source .venv/bin/activate
+          pydocstyle .
 
   test:
     name: test
@@ -90,18 +88,18 @@ jobs:
     needs: [bandit, cognitive, lint, pydocstyle]
     steps:
       - uses: actions/checkout@v3
-      - name: set up python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-      - name: set up poetry
-        run: curl -sSL https://install.python-poetry.org | python3 -
-      - name: configure gitlab auth
-        run: poetry config http-basic.gitlab __token__ ${{ secrets.GITLAB_PYPI_TOKEN }}
-      - name: install dependencies
-        run: poetry install --no-interaction
-      - name: test
-        run: poetry run pytest
+      - name: Install GEOS
+        run: sudo apt update && sudo apt install libgeos-dev
+      - name: Install uv
+        run: pip install uv
+      - name: Set up uv environment
+        run: uv venv
+      - name: Install dependencies
+        run: uv pip install -r pyproject.toml .[dev]
+      - name: Activate virtual environment & run tests
+        run: |
+          source .venv/bin/activate
+          pytest
 
   release:
     name: tag, changelog, release, publish
@@ -110,19 +108,21 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v3
-      - name: set up poetry
-        run: curl -sSL https://install.python-poetry.org | python3 -
-      - name: configure gitlab auth
-        run: poetry config http-basic.gitlab __token__ ${{ secrets.GITLAB_PYPI_TOKEN }}
-      - name: install dependencies
-        run: poetry install --no-interaction
-      - name: version
+      - name: Install GEOS
+        run: sudo apt update && sudo apt install libgeos-dev
+      - name: Install uv
+        run: pip install uv
+      - name: Set up uv environment
+        run: uv venv
+      - name: Install dependencies
+        run: uv pip install -r pyproject.toml
+      - name: Version
         uses: paulhatch/semantic-version@v5.0.0
         id: version
         with:
           major_pattern: "(feat!)"
           minor_pattern: "(feat)"
-      - name: create changelog text
+      - name: Create changelog text
         id: changelog
         uses: loopwerk/tag-changelog@v1
         with:
@@ -136,7 +136,7 @@ jobs:
           tag_name: ${{ steps.version.outputs.version_tag }}
           release_name: Release ${{ steps.version.outputs.version_tag }}
           body: ${{ steps.changelog.outputs.changes }}
-      - name: create changelog pull request
+      - name: Create changelog pull request
         uses: peter-evans/create-pull-request@v2
         with:
           commit-message: "Release ${{ steps.version.outputs.version_tag }} [skip ci]"
