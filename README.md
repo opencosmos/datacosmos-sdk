@@ -1,11 +1,13 @@
 # DataCosmos SDK
 
 ## Overview
+
 The **DataCosmos SDK** allows Open Cosmos' customers to interact with the **DataCosmos APIs** for seamless data management and retrieval. It provides authentication handling, HTTP request utilities, and a client for interacting with the **STAC API** (SpatioTemporal Asset Catalog).
 
 ## Installation
 
 ### Install via PyPI
+
 The easiest way to install the SDK is via **pip**:
 
 ```sh
@@ -15,10 +17,11 @@ pip install datacosmos
 ## Getting Started
 
 ### Initializing the Client
+
 The recommended way to initialize the SDK is by passing a `Config` object with authentication credentials:
 
 ```python
-from datacosmos.client import DatacosmosClient
+from datacosmos.datacosmos_client import DatacosmosClient
 from datacosmos.config import Config
 
 config = Config(
@@ -33,11 +36,13 @@ client = DatacosmosClient(config=config)
 ```
 
 Alternatively, the SDK can load configuration automatically from:
+
 - A YAML file (`config/config.yaml`)
 - Environment variables
 
 ### STAC Client
-The **STACClient** enables interaction with the STAC API, allowing for searching, retrieving, creating, updating, and deleting STAC items.
+
+The STACClient enables interaction with the STAC API, allowing for searching, retrieving, creating, updating, and deleting STAC items and collections.
 
 #### Initialize STACClient
 
@@ -49,7 +54,65 @@ stac_client = STACClient(client)
 
 ### STACClient Methods
 
+#### 1. **Fetch a Collection**
+
+```python
+from datacosmos.stac.stac_client import STACClient
+from datacosmos.datacosmos_client import DatacosmosClient
+
+datacosmos_client = DatacosmosClient()
+stac_client = STACClient(datacosmos_client)
+
+collection = stac_client.fetch_collection("test-collection")
+```
+
+#### 2. **Fetch All Collections**
+
+```python
+collections = list(stac_client.fetch_all_collections())
+```
+
+#### 3. **Create a Collection**
+
+```python
+from pystac import Collection
+
+new_collection = Collection(
+    id="test-collection",
+    title="Test Collection",
+    description="This is a test collection",
+    license="proprietary",
+    extent={
+        "spatial": {"bbox": [[-180, -90, 180, 90]]},
+        "temporal": {"interval": [["2023-01-01T00:00:00Z", None]]},
+    },
+)
+
+stac_client.create_collection(new_collection)
+```
+
+#### 4. **Update a Collection**
+
+```python
+from datacosmos.stac.collection.models.collection_update import CollectionUpdate
+
+update_data = CollectionUpdate(
+    title="Updated Collection Title version 2",
+    description="Updated description version 2",
+)
+
+stac_client.update_collection("test-collection", update_data)
+```
+
+#### 5. **Delete a Collection**
+
+```python
+collection_id = "test-collection"
+stac_client.delete_collection(collection_id)
+```
+
 #### 1. **Search Items**
+
 ```python
 from datacosmos.stac.models.search_parameters import SearchParameters
 
@@ -58,16 +121,19 @@ items = list(stac_client.search_items(parameters=parameters))
 ```
 
 #### 2. **Fetch a Single Item**
+
 ```python
 item = stac_client.fetch_item(item_id="example-item", collection_id="example-collection")
 ```
 
 #### 3. **Fetch All Items in a Collection**
+
 ```python
 items = stac_client.fetch_collection_items(collection_id="example-collection")
 ```
 
 #### 4. **Create a New STAC Item**
+
 ```python
 from pystac import Item, Asset
 from datetime import datetime
@@ -95,6 +161,7 @@ stac_client.create_item(collection_id="example-collection", item=stac_item)
 ```
 
 #### 5. **Update an Existing STAC Item**
+
 ```python
 from datacosmos.stac.models.item_update import ItemUpdate
 from pystac import Asset, Link
@@ -124,22 +191,27 @@ stac_client.update_item(item_id="new-item", collection_id="example-collection", 
 ```
 
 #### 6. **Delete an Item**
+
 ```python
 stac_client.delete_item(item_id="new-item", collection_id="example-collection")
 ```
 
 ## Configuration Options
+
 - **Recommended:** Instantiate `DatacosmosClient` with a `Config` object.
 - Alternatively, use **YAML files** (`config/config.yaml`).
 - Or, use **environment variables**.
 
 ## Contributing
+
 If you would like to contribute:
+
 1. Fork the repository.
 2. Create a feature branch.
 3. Submit a pull request.
 
 ### Development Setup
+
 If you are developing the SDK, you can use `uv` for dependency management:
 
 ```sh
@@ -151,6 +223,7 @@ source .venv/bin/activate
 ```
 
 Before making changes, ensure that:
+
 - The code is formatted using **Black** and **isort**.
 - Static analysis and linting are performed using **ruff** and **pydocstyle**.
 - Security checks are performed using **bandit**.

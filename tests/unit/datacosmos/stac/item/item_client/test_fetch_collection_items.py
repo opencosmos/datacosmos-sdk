@@ -2,13 +2,13 @@ from unittest.mock import MagicMock, patch
 
 from config.config import Config
 from config.models.m2m_authentication_config import M2MAuthenticationConfig
-from datacosmos.client import DatacosmosClient
-from datacosmos.stac.stac_client import STACClient
+from datacosmos.datacosmos_client import DatacosmosClient
+from datacosmos.stac.item.item_client import ItemClient
 
 
 @patch("requests_oauthlib.OAuth2Session.fetch_token")
-@patch("datacosmos.stac.stac_client.check_api_response")
-@patch.object(STACClient, "search_items")
+@patch("datacosmos.stac.item.item_client.check_api_response")
+@patch.object(ItemClient, "search_items")
 def test_fetch_collection_items(
     mock_search_items, mock_check_api_response, mock_fetch_token
 ):
@@ -33,7 +33,7 @@ def test_fetch_collection_items(
     )
 
     client = DatacosmosClient(config=config)
-    stac_client = STACClient(client)
+    stac_client = ItemClient(client)
 
     results = list(stac_client.fetch_collection_items("test-collection"))
 

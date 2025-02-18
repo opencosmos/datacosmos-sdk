@@ -2,13 +2,13 @@ from unittest.mock import MagicMock, patch
 
 from config.config import Config
 from config.models.m2m_authentication_config import M2MAuthenticationConfig
-from datacosmos.client import DatacosmosClient
-from datacosmos.stac.models.search_parameters import SearchParameters
-from datacosmos.stac.stac_client import STACClient
+from datacosmos.datacosmos_client import DatacosmosClient
+from datacosmos.stac.item.item_client import ItemClient
+from datacosmos.stac.item.models.search_parameters import SearchParameters
 
 
 @patch("requests_oauthlib.OAuth2Session.fetch_token")
-@patch("datacosmos.stac.stac_client.check_api_response")
+@patch("datacosmos.stac.item.item_client.check_api_response")
 @patch.object(DatacosmosClient, "post")
 def test_search_items(mock_post, mock_check_api_response, mock_fetch_token):
     """Test searching STAC items with filters and pagination."""
@@ -46,7 +46,7 @@ def test_search_items(mock_post, mock_check_api_response, mock_fetch_token):
     )
 
     client = DatacosmosClient(config=config)
-    stac_client = STACClient(client)
+    stac_client = ItemClient(client)
     parameters = SearchParameters(collections=["test-collection"])
 
     results = list(stac_client.search_items(parameters))

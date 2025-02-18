@@ -2,13 +2,13 @@ from unittest.mock import MagicMock, patch
 
 from config.config import Config
 from config.models.m2m_authentication_config import M2MAuthenticationConfig
-from datacosmos.client import DatacosmosClient
-from datacosmos.stac.stac_client import STACClient
+from datacosmos.datacosmos_client import DatacosmosClient
+from datacosmos.stac.item.item_client import ItemClient
 
 
 @patch("requests_oauthlib.OAuth2Session.fetch_token")
 @patch.object(DatacosmosClient, "delete")
-@patch("datacosmos.stac.stac_client.check_api_response")
+@patch("datacosmos.stac.item.item_client.check_api_response")
 def test_delete_item(mock_check_api_response, mock_delete, mock_fetch_token):
     """Test deleting a STAC item."""
     mock_fetch_token.return_value = {"access_token": "mock-token", "expires_in": 3600}
@@ -28,7 +28,7 @@ def test_delete_item(mock_check_api_response, mock_delete, mock_fetch_token):
     )
 
     client = DatacosmosClient(config=config)
-    stac_client = STACClient(client)
+    stac_client = ItemClient(client)
 
     stac_client.delete_item("item-1", "test-collection")
 

@@ -6,7 +6,7 @@ import yaml
 
 from config.config import Config
 from config.models.m2m_authentication_config import M2MAuthenticationConfig
-from datacosmos.client import DatacosmosClient
+from datacosmos.datacosmos_client import DatacosmosClient
 
 
 @pytest.mark.usefixtures("mock_fetch_token", "mock_auth_client")
@@ -16,7 +16,7 @@ class TestClientAuthentication:
     @pytest.fixture
     def mock_fetch_token(self):
         """Fixture to mock OAuth2 token fetch."""
-        with patch("datacosmos.client.OAuth2Session.fetch_token") as mock:
+        with patch("datacosmos.datacosmos_client.OAuth2Session.fetch_token") as mock:
             mock.return_value = {
                 "access_token": "mock-access-token",
                 "expires_in": 3600,
@@ -27,7 +27,7 @@ class TestClientAuthentication:
     def mock_auth_client(self, mock_fetch_token):
         """Fixture to mock the authentication client initialization."""
         with patch(
-            "datacosmos.client.DatacosmosClient._authenticate_and_initialize_client",
+            "datacosmos.datacosmos_client.DatacosmosClient._authenticate_and_initialize_client",
             autospec=True,
         ) as mock:
 

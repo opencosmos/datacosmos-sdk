@@ -4,13 +4,13 @@ from pystac import Item
 
 from config.config import Config
 from config.models.m2m_authentication_config import M2MAuthenticationConfig
-from datacosmos.client import DatacosmosClient
-from datacosmos.stac.stac_client import STACClient
+from datacosmos.datacosmos_client import DatacosmosClient
+from datacosmos.stac.item.item_client import ItemClient
 
 
 @patch("requests_oauthlib.OAuth2Session.fetch_token")
 @patch.object(DatacosmosClient, "post")
-@patch("datacosmos.stac.stac_client.check_api_response")
+@patch("datacosmos.stac.item.item_client.check_api_response")
 def test_create_item(mock_check_api_response, mock_post, mock_fetch_token):
     """Test creating a new STAC item."""
     mock_fetch_token.return_value = {"access_token": "mock-token", "expires_in": 3600}
@@ -38,7 +38,7 @@ def test_create_item(mock_check_api_response, mock_post, mock_fetch_token):
         )
     )
     client = DatacosmosClient(config=config)
-    stac_client = STACClient(client)
+    stac_client = ItemClient(client)
 
     item = Item.from_dict(mock_response.json())
 

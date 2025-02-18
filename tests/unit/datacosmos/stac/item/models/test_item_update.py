@@ -1,6 +1,6 @@
 import pytest
 
-from datacosmos.stac.models.item_update import ItemUpdate
+from datacosmos.stac.item.models.item_update import ItemUpdate
 
 
 class TestItemUpdate:
