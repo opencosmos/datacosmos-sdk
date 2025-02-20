@@ -5,7 +5,7 @@ Provides methods for querying, fetching, creating, updating, and deleting STAC i
 
 from typing import Generator, Optional
 
-from pystac import Item
+from pystac import Asset, Item
 
 from datacosmos.datacosmos_client import DatacosmosClient
 from datacosmos.exceptions.datacosmos_exception import DatacosmosException
@@ -25,6 +25,7 @@ class ItemClient:
         """
         self.client = client
         self.base_url = client.config.stac.as_domain_url()
+        self.storage_client = StorageClient(client)
 
     def fetch_item(self, item_id: str, collection_id: str) -> Item:
         """Fetch a single STAC item by ID.
@@ -71,20 +72,38 @@ class ItemClient:
         body = parameters.model_dump(by_alias=True, exclude_none=True)
         return self._paginate_items(url, body)
 
-    def create_item(self, collection_id: str, item: Item) -> None:
-        """Create a new STAC item in a specified collection.
+    def create_item(
+        self, collection_id: str, item: Item, file_paths: Optional[list[str]] = None
+    ) -> None:
+        """Create a STAC item with optional file uploads.
 
         Args:
-            collection_id (str): The ID of the collection where the item will be created.
-            item (Item): The STAC Item to be created.
-
-        Raises:
-            RequestError: If the API returns an error response.
+            collection_id (str): The ID of the collection.
+            item (Item): The STAC item to create.
+            storage_client (StorageClient): The storage client for file uploads.
+            file_paths (Optional[List[str]]): Files to upload as assets.
         """
-        url = self.base_url.with_suffix(f"/collections/{collection_id}/items")
-        item_json: dict = item.to_dict()
+        assets: dict[str, Asset] = {}
 
-        response = self.client.post(url, json=item_json)
+        if file_paths:
+            uploaded_files = self.storage_client.upload_files(
+                file_paths, collection_id, item.id
+            )
+
+            for filename, file_url in uploaded_files.items():
+                mime_type = self.storage_client.get_mime_type(filename)
+
+                assets[filename] = Asset(
+                    href=file_url,
+                    media_type=mime_type,
+                    roles=["data"],
+                )
+
+        if assets:
+            item.assets.update(assets)
+
+        url = self.base_url.with_suffix(f"/collections/{collection_id}/items")
+        response = self.client.post(url, json=item.to_dict())
         check_api_response(response)
 
     def update_item(
