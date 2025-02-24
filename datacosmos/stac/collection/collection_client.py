@@ -7,7 +7,7 @@ from pystac.utils import str_to_datetime
 
 from datacosmos.datacosmos_client import DatacosmosClient
 from datacosmos.stac.collection.models.collection_update import CollectionUpdate
-from datacosmos.utils.http_response import check_api_response
+from datacosmos.utils.http_response.check_api_response import check_api_response
 
 
 class CollectionClient:
