@@ -11,7 +11,7 @@ from datacosmos.datacosmos_client import DatacosmosClient
 from datacosmos.exceptions.datacosmos_exception import DatacosmosException
 from datacosmos.stac.item.models.item_update import ItemUpdate
 from datacosmos.stac.item.models.search_parameters import SearchParameters
-from datacosmos.utils.http_response import check_api_response
+from datacosmos.utils.http_response.check_api_response import check_api_response
 
 
 class ItemClient:
