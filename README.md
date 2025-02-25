@@ -11,7 +11,7 @@ The **DataCosmos SDK** allows Open Cosmos' customers to interact with the **Data
 The easiest way to install the SDK is via **pip**:
 
 ```sh
-pip install datacosmos
+pip install datacosmos=={version}
 ```
 
 ## Getting Started
@@ -22,7 +22,7 @@ The recommended way to initialize the SDK is by passing a `Config` object with a
 
 ```python
 from datacosmos.datacosmos_client import DatacosmosClient
-from datacosmos.config import Config
+from config.config import Config
 
 config = Config(
     authentication={
@@ -114,7 +114,7 @@ stac_client.delete_collection(collection_id)
 #### 1. **Search Items**
 
 ```python
-from datacosmos.stac.models.search_parameters import SearchParameters
+from datacosmos.stac.item.models.search_parameters import SearchParameters
 
 parameters = SearchParameters(collections=["example-collection"], limit=1)
 items = list(stac_client.search_items(parameters=parameters))
@@ -135,35 +135,53 @@ items = stac_client.fetch_collection_items(collection_id="example-collection")
 #### 4. **Create a New STAC Item**
 
 ```python
-from pystac import Item, Asset
 from datetime import datetime
+from pystac import Item, Asset
+from pystac.utils import str_to_datetime
 
 stac_item = Item(
-    id="new-item",
-    geometry={"type": "Point", "coordinates": [102.0, 0.5]},
-    bbox=[101.0, 0.0, 103.0, 1.0],
-    datetime=datetime.utcnow(),
-    properties={},
-    collection="example-collection"
+    id="MENUT_000001418_20240211120920_20240211120932_new_release.tiff",
+    geometry={
+        "type": "Polygon",
+        "coordinates": [
+            [
+                [-24.937406454761664, 64.5931773445667],
+                [-19.6596824245997, 64.5931773445667],
+                [-19.6596824245997, 63.117895100111724],
+                [-24.937406454761664, 63.117895100111724],
+                [-24.937406454761664, 64.5931773445667]
+            ]
+        ]
+    },
+    bbox=[
+        -24.937406454761664,
+        63.117895100111724,
+        -19.6596824245997,
+        64.5931773445667
+    ],
+    datetime=str_to_datetime("2024-02-11T12:09:32Z"),
+    properties={"processing:level": "L0"},
+    collection="menut-l0",
 )
 
 stac_item.add_asset(
-    "image",
+    "thumbnail",
     Asset(
-        href="https://example.com/sample-image.tiff",
-        media_type="image/tiff",
-        roles=["data"],
-        title="Sample Image"
+        href="https://test.app.open-cosmos.com/api/data/v0/storage/full/menut/l0/2024/02/11/MENUT_000001418_20240211120920_20240211120932.tiff/thumbnail.webp",
+        media_type="image/webp",
+        roles=["thumbnail"],
+        title="Thumbnail",
+        description="Thumbnail of the image"
     )
 )
 
-stac_client.create_item(collection_id="example-collection", item=stac_item)
+stac_client.create_item(collection_id="menutl-l0", item=stac_item)
 ```
 
 #### 5. **Update an Existing STAC Item**
 
 ```python
-from datacosmos.stac.models.item_update import ItemUpdate
+from datacosmos.stac.item.models.item_update import ItemUpdate
 from pystac import Asset, Link
 
 update_payload = ItemUpdate(
