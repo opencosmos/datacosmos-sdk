@@ -22,6 +22,7 @@ class Config(BaseSettings):
     model_config = SettingsConfigDict(
         env_nested_delimiter="__",
         nested_model_default_partial_update=True,
+        extra="allow",
     )
 
     authentication: Optional[M2MAuthenticationConfig] = None
