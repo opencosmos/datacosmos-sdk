@@ -1,70 +1,55 @@
-"""Handles file uploads to DataCosmos storage."""
-
+from pathlib import Path
 import mimetypes
-import os
+from concurrent.futures import ThreadPoolExecutor
+import structlog
 
 from datacosmos.datacosmos_client import DatacosmosClient
-from datacosmos.storage.models.storage_path import StoragePath
-from datacosmos.utils.http_response import check_api_response
+from datacosmos.uploader.dataclasses.upload_path import UploadPath
 
+logger = structlog.get_logger()
 
 class StorageClient:
-    """Handles file uploads to DataCosmos storage."""
-
     def __init__(self, client: DatacosmosClient):
-        """Initialize the StorageClient with Datacosmos authentication.
+        self.datacosmos_client = client
+        self.base_url = client.config.datacosmos_cloud_storage.as_domain_url()
 
-        Args:
-            client (DatacosmosClient): Authenticated client for API calls.
-        """
-        self.client = client
-        self.storage_base_url = self.client.config.stac.as_domain_url()
-
-    def upload_file(self, file_path: str, storage_path: StoragePath) -> str:
-        """Uploads a file to storage and returns the file URL.
-
-        Args:
-            file_path (str): Path to the local file.
-            storage_path (StoragePath): Structured storage path.
-
-        Returns:
-            str: URL of the uploaded file.
-        """
-        url = self.storage_base_url.with_suffix(f"/upload/{storage_path.as_url_path()}")
-
-        with open(file_path, "rb") as file:
-            response = self.client.put(url, data=file)
-
-        check_api_response(response)
-        return f"{self.storage_base_url}/{storage_path.as_url_path()}"
-
-    def upload_files(
-        self, file_paths: list[str], collection_id: str, item_id: str
-    ) -> dict[str, str]:
-        """Uploads multiple files and returns a mapping of filenames to storage URLs.
-
-        Args:
-            file_paths (list[str]): list of local file paths to upload.
-            collection_id (str): The target collection ID.
-            item_id (str): The target item ID.
-
-        Returns:
-            dict[str, str]: Mapping of filenames to their storage URLs.
-        """
-        uploaded_files = {}
-        for file_path in file_paths:
-            storage_path = StoragePath(
-                collection_id=collection_id,
-                item_id=item_id,
-                filename=os.path.basename(file_path),
-            )
-            uploaded_files[storage_path.filename] = self.upload_file(
-                file_path, storage_path
-            )
-
-        return uploaded_files
+    def upload_file(self, src: str, dst: str):
+        """Uploads a single file to the specified destination path."""
+        url = self.base_url.with_suffix(str(dst))
+        logger.info(f"Uploading file {src} to {dst}")
+        with open(src, "rb") as f:
+            response = self.datacosmos_client.put(url, data=f)
+        response.raise_for_status()
+        logger.info(f"Upload complete for {src}")
 
     def get_mime_type(self, file_path: str) -> str:
-        """Determine the MIME type of a file."""
+        """Returns the MIME type of a given file based on its extension."""
         mime_type, _ = mimetypes.guess_type(file_path)
         return mime_type or "application/octet-stream"
+
+    def upload_from_folder(self, src: str, dst: UploadPath, workers: int = 4):
+        """Uploads all files from a folder to the destination path in parallel."""
+        if Path(dst.path).is_file():
+            raise ValueError(f"Destination path should not be a file path {dst}")
+
+        if Path(src).is_file():
+            raise ValueError(f"Source path should not be a file path {src}")
+
+        logger.info(f"Uploading folder {src} to {dst} with {workers} workers")
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            futures = []
+            for file in Path(src).rglob("*"):
+                if file.is_file():
+                    dst = UploadPath(
+                        mission=dst.mission,
+                        level=dst.level,
+                        day=dst.day,
+                        month=dst.month,
+                        year=dst.year,
+                        id=dst.id,
+                        path=str(file.relative_to(src)),
+                    )
+                    futures.append(executor.submit(self.upload_file, str(file), dst))
+            for future in futures:
+                future.result()
+
