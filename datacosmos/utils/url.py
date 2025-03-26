@@ -35,7 +35,7 @@ class URL:
         """
         base = self.string()
         return f"{base.rstrip('/')}/{suffix.lstrip('/')}"
-    
+
     def with_base(self, url: str) -> str:
         """Replaces the base of the url with the base stored in the URL object. (migrates url from one base to another).
 

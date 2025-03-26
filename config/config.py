@@ -86,9 +86,10 @@ class Config(BaseSettings):
         )
 
         return cls(
-            authentication=authentication_config, 
+            authentication=authentication_config,
             stac=stac_config,
-            datacosmos_cloud_storage_config=datacosmos_cloud_storage_config)
+            datacosmos_cloud_storage_config=datacosmos_cloud_storage_config,
+        )
 
     @field_validator("authentication", mode="before")
     @classmethod
@@ -179,7 +180,9 @@ class Config(BaseSettings):
 
     @field_validator("datacosmos_cloud_storage", mode="before")
     @classmethod
-    def validate_datacosmos_cloud_storage(cls, datacosmos_cloud_storage_config: Optional[URL]) -> URL:
+    def validate_datacosmos_cloud_storage(
+        cls, datacosmos_cloud_storage_config: Optional[URL]
+    ) -> URL:
         """Ensure datacosmos cloud storage configuration has a default if not explicitly set.
 
         Args:

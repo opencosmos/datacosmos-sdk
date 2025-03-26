@@ -1,12 +1,14 @@
-from pathlib import Path
+"""Dataclass for retrieving the upload path of a file."""
+
 from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
 
 import structlog
 
 from datacosmos.stac.enums.level import Level
+from datacosmos.stac.item.models.datacosmos_item import DatacosmosItem
 from datacosmos.utils.missions import get_mission_id
-from pystac import Item
 
 logger = structlog.get_logger()
 
@@ -14,6 +16,7 @@ logger = structlog.get_logger()
 @dataclass
 class UploadPath:
     """Dataclass for retrieving the upload path of a file."""
+
     mission: str
     level: Level
     day: int
@@ -28,7 +31,10 @@ class UploadPath:
         return path.removesuffix("/")
 
     @classmethod
-    def from_item_path(cls, item: Item, mission: str, item_path: str) -> "Path":
+    def from_item_path(
+        cls, item: DatacosmosItem, mission: str, item_path: str
+    ) -> "Path":
+        """Create a Path instance from a DatacosmosItem and a path."""
         for asset in item.assets.values():
             if mission == "":
                 mission = cls._get_mission_name(asset.href)
@@ -45,9 +51,10 @@ class UploadPath:
             path=item_path,
         )
         return cls(**path.__dict__)
-    
+
     @classmethod
     def from_path(cls, path: str) -> "Path":
+        """Create a Path instance from a string path."""
         parts = path.split("/")
         if len(parts) < 7:
             raise ValueError(f"Invalid path {path}")
@@ -70,7 +77,9 @@ class UploadPath:
         for idx, part in enumerate(href_parts):
             try:
                 # when an id is found, then the mission name is valid
-                get_mission_id(part, "test")  # using test as it is more wide and anything on prod should exists on test
+                get_mission_id(
+                    part, "test"
+                )  # using test as it is more wide and anything on prod should exists on test
             except KeyError:
                 continue
             # validate the mission name by checking if the path is correct
@@ -82,6 +91,3 @@ class UploadPath:
                 raise ValueError(f"Could not find mission name in asset path {href}")
             break
         return mission
-
-
-
