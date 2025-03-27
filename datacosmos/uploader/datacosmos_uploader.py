@@ -16,7 +16,7 @@ class DatacosmosUploader:
     """Handles uploading files to Datacosmos storage and registering STAC items."""
 
     def __init__(self, client: DatacosmosClient):
-        """Initialize the uploader with required clients and mission info."""
+        """Initialize the uploader with DatacosmosClient"""
         mission_id = client.config.mission_id
         environment = client.config.environment
 
@@ -53,7 +53,6 @@ class DatacosmosUploader:
             response = self.datacosmos_client.put(url, data=f)
         response.raise_for_status()
 
-
     def upload_from_folder(self, src: str, dst: UploadPath, workers: int = 4) -> None:
         """Uploads all files from a folder to the destination path in parallel."""
         if Path(dst.path).is_file():
@@ -61,7 +60,6 @@ class DatacosmosUploader:
 
         if Path(src).is_file():
             raise ValueError(f"Source path should not be a file path {src}")
-
 
         with ThreadPoolExecutor(max_workers=workers) as executor:
             futures = []

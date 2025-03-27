@@ -8,8 +8,8 @@ from typing import Generator, Optional
 from pystac import Item
 
 from datacosmos.datacosmos_client import DatacosmosClient
-from datacosmos.stac.item.models.datacosmos_item import DatacosmosItem
 from datacosmos.exceptions.datacosmos_exception import DatacosmosException
+from datacosmos.stac.item.models.datacosmos_item import DatacosmosItem
 from datacosmos.stac.item.models.item_update import ItemUpdate
 from datacosmos.stac.item.models.search_parameters import SearchParameters
 from datacosmos.utils.http_response.check_api_response import check_api_response

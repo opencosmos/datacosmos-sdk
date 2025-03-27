@@ -6,7 +6,7 @@ and supports environment variable-based overrides.
 """
 
 import os
-from typing import ClassVar, Optional, Literal
+from typing import ClassVar, Literal, Optional
 
 import yaml
 from pydantic import field_validator
