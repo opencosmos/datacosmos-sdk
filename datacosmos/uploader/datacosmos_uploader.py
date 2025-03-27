@@ -16,7 +16,7 @@ class DatacosmosUploader:
     """Handles uploading files to Datacosmos storage and registering STAC items."""
 
     def __init__(self, client: DatacosmosClient):
-        """Initialize the uploader with DatacosmosClient"""
+        """Initialize the uploader with DatacosmosClient."""
         mission_id = client.config.mission_id
         environment = client.config.environment
 
