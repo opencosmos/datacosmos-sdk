@@ -14,7 +14,6 @@ class DatacosmosItem(BaseModel):
     id: str
     type: str
     stac_version: str
-    # Required as some bad data is present in the STAC catalogue currently
     stac_extensions: list | None
     geometry: dict
     properties: dict
