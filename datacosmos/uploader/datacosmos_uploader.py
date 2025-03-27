@@ -3,7 +3,6 @@
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-import structlog
 from pydantic import TypeAdapter
 
 from datacosmos.datacosmos_client import DatacosmosClient
@@ -12,14 +11,15 @@ from datacosmos.stac.item.models.datacosmos_item import DatacosmosItem
 from datacosmos.uploader.dataclasses.upload_path import UploadPath
 from datacosmos.utils.missions import get_mission_name
 
-logger = structlog.get_logger()
-
 
 class DatacosmosUploader:
     """Handles uploading files to Datacosmos storage and registering STAC items."""
 
-    def __init__(self, client: DatacosmosClient, mission_id: int, environment: str):
+    def __init__(self, client: DatacosmosClient):
         """Initialize the uploader with required clients and mission info."""
+        mission_id = client.config.mission_id
+        environment = client.config.environment
+
         self.datacosmos_client = client
         self.item_client = ItemClient(client)
         self.mission_name = (
@@ -43,17 +43,16 @@ class DatacosmosUploader:
 
         self._update_item_assets(item)
 
-        logger.info(f"Registering item...")
         self.item_client.create_item(collection_id, item)
 
     def upload_file(self, src: str, dst: str) -> None:
         """Uploads a single file to the specified destination path."""
         url = self.base_url.with_suffix(str(dst))
-        logger.info(f"Uploading file {src} to {dst}")
+
         with open(src, "rb") as f:
             response = self.datacosmos_client.put(url, data=f)
         response.raise_for_status()
-        logger.info(f"Upload complete for {src}")
+
 
     def upload_from_folder(self, src: str, dst: UploadPath, workers: int = 4) -> None:
         """Uploads all files from a folder to the destination path in parallel."""
@@ -63,7 +62,7 @@ class DatacosmosUploader:
         if Path(src).is_file():
             raise ValueError(f"Source path should not be a file path {src}")
 
-        logger.info(f"Uploading folder {src} to {dst} with {workers} workers")
+
         with ThreadPoolExecutor(max_workers=workers) as executor:
             futures = []
             for file in Path(src).rglob("*"):

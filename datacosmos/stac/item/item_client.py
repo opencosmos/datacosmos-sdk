@@ -8,6 +8,7 @@ from typing import Generator, Optional
 from pystac import Item
 
 from datacosmos.datacosmos_client import DatacosmosClient
+from datacosmos.stac.item.models.datacosmos_item import DatacosmosItem
 from datacosmos.exceptions.datacosmos_exception import DatacosmosException
 from datacosmos.stac.item.models.item_update import ItemUpdate
 from datacosmos.stac.item.models.search_parameters import SearchParameters
@@ -71,7 +72,7 @@ class ItemClient:
         body = parameters.model_dump(by_alias=True, exclude_none=True)
         return self._paginate_items(url, body)
 
-    def create_item(self, collection_id: str, item: Item) -> None:
+    def create_item(self, collection_id: str, item: Item | DatacosmosItem) -> None:
         """Create a new STAC item in a specified collection.
 
         Args:

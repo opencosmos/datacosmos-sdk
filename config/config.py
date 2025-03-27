@@ -6,7 +6,7 @@ and supports environment variable-based overrides.
 """
 
 import os
-from typing import ClassVar, Optional
+from typing import ClassVar, Optional, Literal
 
 import yaml
 from pydantic import field_validator
@@ -28,6 +28,8 @@ class Config(BaseSettings):
     authentication: Optional[M2MAuthenticationConfig] = None
     stac: Optional[URL] = None
     datacosmos_cloud_storage: Optional[URL] = None
+    mission_id: int = 0
+    environment: Literal["local", "test", "prod"] = "test"
 
     DEFAULT_AUTH_TYPE: ClassVar[str] = "m2m"
     DEFAULT_AUTH_TOKEN_URL: ClassVar[str] = "https://login.open-cosmos.com/oauth/token"
@@ -88,7 +90,9 @@ class Config(BaseSettings):
         return cls(
             authentication=authentication_config,
             stac=stac_config,
-            datacosmos_cloud_storage_config=datacosmos_cloud_storage_config,
+            datacosmos_cloud_storage=datacosmos_cloud_storage_config,
+            mission_id=int(os.getenv("MISSION_ID", "0")),
+            environment=os.getenv("ENVIRONMENT", "test"),
         )
 
     @field_validator("authentication", mode="before")
