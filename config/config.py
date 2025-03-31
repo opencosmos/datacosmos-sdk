@@ -6,7 +6,7 @@ and supports environment variable-based overrides.
 """
 
 import os
-from typing import ClassVar, Optional
+from typing import ClassVar, Literal, Optional
 
 import yaml
 from pydantic import field_validator
@@ -27,6 +27,9 @@ class Config(BaseSettings):
 
     authentication: Optional[M2MAuthenticationConfig] = None
     stac: Optional[URL] = None
+    datacosmos_cloud_storage: Optional[URL] = None
+    mission_id: int = 0
+    environment: Literal["local", "test", "prod"] = "test"
 
     DEFAULT_AUTH_TYPE: ClassVar[str] = "m2m"
     DEFAULT_AUTH_TOKEN_URL: ClassVar[str] = "https://login.open-cosmos.com/oauth/token"
@@ -77,7 +80,20 @@ class Config(BaseSettings):
             path=os.getenv("OC_STAC_PATH", "/api/data/v0/stac"),
         )
 
-        return cls(authentication=authentication_config, stac=stac_config)
+        datacosmos_cloud_storage_config = URL(
+            protocol=os.getenv("DC_CLOUD_STORAGE_PROTOCOL", "https"),
+            host=os.getenv("DC_CLOUD_STORAGE_HOST", "app.open-cosmos.com"),
+            port=int(os.getenv("DC_CLOUD_STORAGE_PORT", "443")),
+            path=os.getenv("DC_CLOUD_STORAGE_PATH", "/api/data/v0/storage"),
+        )
+
+        return cls(
+            authentication=authentication_config,
+            stac=stac_config,
+            datacosmos_cloud_storage=datacosmos_cloud_storage_config,
+            mission_id=int(os.getenv("MISSION_ID", "0")),
+            environment=os.getenv("ENVIRONMENT", "test"),
+        )
 
     @field_validator("authentication", mode="before")
     @classmethod
@@ -165,3 +181,25 @@ class Config(BaseSettings):
                 path="/api/data/v0/stac",
             )
         return stac_config
+
+    @field_validator("datacosmos_cloud_storage", mode="before")
+    @classmethod
+    def validate_datacosmos_cloud_storage(
+        cls, datacosmos_cloud_storage_config: Optional[URL]
+    ) -> URL:
+        """Ensure datacosmos cloud storage configuration has a default if not explicitly set.
+
+        Args:
+            datacosmos_cloud_storage_config (Optional[URL]): The datacosmos cloud storage config to validate.
+
+        Returns:
+            URL: The validated datacosmos cloud storage configuration.
+        """
+        if datacosmos_cloud_storage_config is None:
+            return URL(
+                protocol="https",
+                host="app.open-cosmos.com",
+                port=443,
+                path="/api/data/v0/storage",
+            )
+        return datacosmos_cloud_storage_config

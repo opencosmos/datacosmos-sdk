@@ -1,0 +1,1 @@
+"""Enums for STAC."""
