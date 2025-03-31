@@ -35,3 +35,26 @@ class URL:
         """
         base = self.string()
         return f"{base.rstrip('/')}/{suffix.lstrip('/')}"
+
+    def with_base(self, url: str) -> str:
+        """Replaces the base of the url with the base stored in the URL object. (migrates url from one base to another).
+
+        Args:
+            url (str): url to migrate to the base of the URL object
+
+        Returns (str):
+            url with the base of the URL object
+        """
+        split_url = url.split("/")
+        if len(split_url) < 3 or url.find("://") == -1:
+            raise ValueError(f"URL '{url}' does not meet the minimum requirements")
+        # get the whole path
+        url_path = "/".join(split_url[3:])
+        # simple case, matching self.base at url
+        b = self.base.lstrip("/")
+        if (base_pos := url_path.find(b)) != -1:
+            # remove the base from the url
+            url_suffix = url_path[len(b) + base_pos :]
+        else:
+            url_suffix = url_path
+        return self.with_suffix(url_suffix)
