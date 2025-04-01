@@ -1,79 +1,120 @@
-
 # DataCosmos SDK
 
 ## Overview
 
-The **DataCosmos SDK** allows Open Cosmos' customers to interact with the **DataCosmos APIs** for seamless data management and retrieval. It provides authentication handling, HTTP request utilities, and a client for interacting with the **STAC API** (SpatioTemporal Asset Catalog).
+The **DataCosmos SDK** enables Open Cosmos customers to interact with the **DataCosmos APIs** for efficient data management and retrieval. It provides authentication handling, HTTP request utilities, and a client for interacting with the **STAC API** (SpatioTemporal Asset Catalog).
 
 ## Installation
 
-### Install via PyPI
-
-The easiest way to install the SDK is via **pip**:
+Install the SDK using **pip**:
 
 ```sh
 pip install datacosmos=={version}
 ```
 
-## Getting Started
+## Initializing the Client
 
-### Initializing the Client
+To start using the SDK, initialize the client. The easiest way to do this is by loading the configuration from a YAML file. Alternatively, you can manually instantiate the Config object or use environment variables.
 
-The recommended way to initialize the SDK is by passing a `Config` object with authentication credentials:
+### Default Initialization (Recommended)
+
+By default, the client loads configuration from a YAML file (`config/config.yaml`).
 
 ```python
 from datacosmos.datacosmos_client import DatacosmosClient
+
+client = DatacosmosClient()
+```
+
+### Loading from YAML (Recommended)
+
+Create a YAML file (`config/config.yaml`) with the following content:
+
+```yaml
+authentication:
+    client_id: {client_id}  
+    client_secret: {client_secret}
+```
+
+The client will automatically read this file when initialized.
+
+### Loading from Environment Variables
+
+Set the following environment variables:
+
+```sh
+export OC_AUTH_CLIENT_ID={client_id}
+export OC_AUTH_CLIENT_SECRET={client_secret}
+```
+
+The client will automatically read these values when initialized.
+
+### Manual Instantiation
+
+If manually instantiating `Config`, default values are now applied where possible.
+
+```python
 from config.config import Config
+from config.models.m2m_authentication_config import M2MAuthenticationConfig
+from config.models.url import URL
 
 config = Config(
-    authentication={
-        "client_id": "your_client_id",
-        "client_secret": "your_client_secret",
-        "token_url": "https://login.open-cosmos.com/oauth/token",
-        "audience": "https://beeapp.open-cosmos.com"
-    }
+    authentication=M2MAuthenticationConfig(
+        client_id="your-client-id",
+        client_secret="your-client-secret"
+    )
 )
+
 client = DatacosmosClient(config=config)
 ```
 
-Alternatively, the SDK can load configuration automatically from:
+### Configuration Options and Defaults
 
-- A YAML file (`config/config.yaml`)
-- Environment variables
+| Setting                      | Default Value                                     | Override Method |
+|------------------------------|-------------------------------------------------|----------------|
+| `authentication.type`        | `m2m`                                           | YAML / ENV     |
+| `authentication.client_id`   | _Required in manual instantiation_              | YAML / ENV     |
+| `authentication.client_secret` | _Required in manual instantiation_            | YAML / ENV     |
+| `stac.protocol`              | `https`                                         | YAML / ENV     |
+| `stac.host`                  | `app.open-cosmos.com`                           | YAML / ENV     |
+| `stac.port`                  | `443`                                           | YAML / ENV     |
+| `stac.path`                  | `/api/data/v0/stac`                             | YAML / ENV     |
+| `datacosmos_cloud_storage.protocol` | `https`                                 | YAML / ENV     |
+| `datacosmos_cloud_storage.host`     | `app.open-cosmos.com`                   | YAML / ENV     |
+| `datacosmos_cloud_storage.port`     | `443`                                   | YAML / ENV     |
+| `datacosmos_cloud_storage.path`     | `/api/data/v0/storage`                 | YAML / ENV     |
+| `mission_id`                | `0`                                             | YAML / ENV     |
+| `environment`               | `test`                                          | YAML / ENV     |
 
-### STAC Client
+## STAC Client
 
-The STACClient enables interaction with the STAC API, allowing for searching, retrieving, creating, updating, and deleting STAC items and collections.
+The `STACClient` enables interaction with the STAC API, allowing for searching, retrieving, creating, updating, and deleting STAC items and collections.
 
-#### Initialize STACClient
+### Initialize STACClient
 
 ```python
+from datacosmos.datacosmos_client import DatacosmosClient
 from datacosmos.stac.stac_client import STACClient
 
+client = DatacosmosClient()
 stac_client = STACClient(client)
 ```
 
 ### STACClient Methods
 
-#### 1. **Fetch a Collection**
+#### 1. Fetch a Collection
 
 ```python
-from datacosmos.stac.stac_client import STACClient
-from datacosmos.datacosmos_client import DatacosmosClient
-
-datacosmos_client = DatacosmosClient()
-stac_client = STACClient(datacosmos_client)
-
 collection = stac_client.fetch_collection("test-collection")
 ```
 
-#### 2. **Fetch All Collections**
+#### 2. Fetch All Collections
 
 ```python
 collections = list(stac_client.fetch_all_collections())
 ```
 
-#### 3. **Create a Collection**
+#### 3. Create a Collection
 
 ```python
 from pystac import Collection
@@ -92,183 +133,54 @@ new_collection = Collection(
 stac_client.create_collection(new_collection)
 ```
 
-#### 4. **Update a Collection**
+#### 4. Update a Collection
 
 ```python
 from datacosmos.stac.collection.models.collection_update import CollectionUpdate
 
 update_data = CollectionUpdate(
-    title="Updated Collection Title version 2",
-    description="Updated description version 2",
+    title="Updated Collection Title",
+    description="Updated description",
 )
 
 stac_client.update_collection("test-collection", update_data)
 ```
 
-#### 5. **Delete a Collection**
+#### 5. Delete a Collection
 
 ```python
-collection_id = "test-collection"
-stac_client.delete_collection(collection_id)
+stac_client.delete_collection("test-collection")
 ```
 
-#### 1. **Search Items**
+### Uploading Files and Registering STAC Items
+
+You can use the `DatacosmosUploader` class to upload files to the DataCosmos cloud storage and register a STAC item.
+
+#### Upload Files and Register STAC Item
 
 ```python
-from datacosmos.stac.item.models.search_parameters import SearchParameters
-
-parameters = SearchParameters(collections=["example-collection"], limit=1)
-items = list(stac_client.search_items(parameters=parameters))
-```
-
-#### 2. **Fetch a Single Item**
-
-```python
-item = stac_client.fetch_item(item_id="example-item", collection_id="example-collection")
-```
-
-#### 3. **Fetch All Items in a Collection**
-
-```python
-items = stac_client.fetch_collection_items(collection_id="example-collection")
-```
-
-#### 4. **Create a New STAC Item**
-
-```python
-from datetime import datetime
-from pystac import Item, Asset
-from pystac.utils import str_to_datetime
-
-stac_item = Item(
-    id="MENUT_000001418_20240211120920_20240211120932_new_release.tiff",
-    geometry={
-        "type": "Polygon",
-        "coordinates": [
-            [
-                [-24.937406454761664, 64.5931773445667],
-                [-19.6596824245997, 64.5931773445667],
-                [-19.6596824245997, 63.117895100111724],
-                [-24.937406454761664, 63.117895100111724],
-                [-24.937406454761664, 64.5931773445667]
-            ]
-        ]
-    },
-    bbox=[
-        -24.937406454761664,
-        63.117895100111724,
-        -19.6596824245997,
-        64.5931773445667
-    ],
-    datetime=str_to_datetime("2024-02-11T12:09:32Z"),
-    properties={"processing:level": "L0"},
-    collection="menut-l0",
-)
-
-stac_item.add_asset(
-    "thumbnail",
-    Asset(
-        href="https://test.app.open-cosmos.com/api/data/v0/storage/full/menut/l0/2024/02/11/MENUT_000001418_20240211120920_20240211120932.tiff/thumbnail.webp",
-        media_type="image/webp",
-        roles=["thumbnail"],
-        title="Thumbnail",
-        description="Thumbnail of the image"
-    )
-)
-
-stac_client.create_item(collection_id="menutl-l0", item=stac_item)
-```
-
-#### 5. **Update an Existing STAC Item**
-
-```python
-from datacosmos.stac.item.models.item_update import ItemUpdate
-from pystac import Asset, Link
-
-update_payload = ItemUpdate(
-    properties={
-        "new_property": "updated_value",
-        "datetime": "2024-11-10T14:58:00Z"
-    },
-    assets={
-        "image": Asset(
-            href="https://example.com/updated-image.tiff",
-            media_type="image/tiff"
-        )
-    },
-    links=[
-        Link(rel="self", target="https://example.com/updated-image.tiff")
-    ],
-    geometry={
-        "type": "Point",
-        "coordinates": [10, 20]
-    },
-    bbox=[10.0, 20.0, 30.0, 40.0]
-)
-
-stac_client.update_item(item_id="new-item", collection_id="example-collection", update_data=update_payload)
-```
-
-#### 6. **Delete an Item**
-
-```python
-stac_client.delete_item(item_id="new-item", collection_id="example-collection")
-```
-
-## Uploading Files and Registering STAC Items
-
-You can use the `DatacosmosUploader` class to upload files to the DataCosmos cloud storage and register a STAC item. The `upload_and_register_item` method will take care of both uploading files and creating the STAC item.
-
-### **Upload Files and Register STAC Item**
-
-1. Make sure you have a directory with the same name as your STAC item JSON file (this directory should contain the files you want to upload).
-2. Call the `upload_and_register_item` method, providing the path to the STAC item JSON file.
-
-```python
-from datacosmos.datacosmos_client import DatacosmosClient
 from datacosmos.uploader.datacosmos_uploader import DatacosmosUploader
 
-# Initialize the client with the configuration
-client = DatacosmosClient(config=config)
-
-# Create the uploader instance
 uploader = DatacosmosUploader(client)
-
-# Path to your STAC item JSON file
-item_json_file_path = "/home/peres/repos/datacosmos-sdk/MENUT_L1A_000001943_20250304134812_20250304134821_49435814.json"
-
-# Upload the item and its assets, and register it in the STAC API
+item_json_file_path = "/path/to/stac_item.json"
 uploader.upload_and_register_item(item_json_file_path)
 ```
 
-### **Folder Structure**
+## Error Handling
 
-For the `upload_and_register_item` method to work correctly, ensure that the directory structure matches the name of the STAC item JSON file. For example:
+Use `try-except` blocks to handle API errors gracefully:
 
+```python
+try:
+    data = client.get_data("dataset_id")
+    print(data)
+except Exception as e:
+    print(f"An error occurred: {e}")
 ```
-/home/peres/repos/datacosmos-sdk/MENUT_L1A_000001943_20250304134812_20250304134821_49435814.json
-/home/peres/repos/datacosmos-sdk/MENUT_L1A_000001943_20250304134812_20250304134821_49435814/
-    ├── asset1.tiff
-    ├── asset2.tiff
-    └── ...
-```
-
-The folder `MENUT_L1A_000001943_20250304134812_20250304134821_49435814` should contain the assets (files) for upload.
-
-The `upload_and_register_item` method will:
-1. Delete any existing item with the same ID (if it exists).
-2. Upload the assets in the folder to DataCosmos cloud storage.
-3. Register the item in the STAC API.
-
-## Configuration Options
-
-- **Recommended:** Instantiate `DatacosmosClient` with a `Config` object.
-- Alternatively, use **YAML files** (`config/config.yaml`).
-- Or, use **environment variables**.
 
 ## Contributing
 
-If you would like to contribute:
+To contribute:
 
 1. Fork the repository.
 2. Create a feature branch.
@@ -276,28 +188,22 @@ If you would like to contribute:
 
 ### Development Setup
 
-If you are developing the SDK, you can use `uv` for dependency management:
+Use `uv` for dependency management:
 
 ```sh
 pip install uv
 uv venv
-uv pip install -r pyproject.toml
 uv pip install -r pyproject.toml .[dev]
 source .venv/bin/activate
 ```
 
-Before making changes, ensure that:
-
-- The code is formatted using **Black** and **isort**.
-- Static analysis and linting are performed using **ruff** and **pydocstyle**.
-- Security checks are performed using **bandit**.
-- Tests are executed with **pytest**.
+Before making changes, run:
 
 ```sh
 black .
 isort .
-ruff check . --select C901
+ruff check .
 pydocstyle .
-bandit -r -c pyproject.toml . --skip B105,B106,B101
+bandit -r -c pyproject.toml .
 pytest
 ```
