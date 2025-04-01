@@ -112,7 +112,7 @@ class Config(BaseSettings):
             ValueError: If authentication is missing or required fields are not set.
         """
         if not auth_data:
-            cls.raise_missing_auth_error()
+            return cls.apply_auth_defaults(M2MAuthenticationConfig())
 
         auth = cls.parse_auth_config(auth_data)
         auth = cls.apply_auth_defaults(auth)
@@ -121,33 +121,23 @@ class Config(BaseSettings):
         return auth
 
     @staticmethod
-    def raise_missing_auth_error():
-        """Raise an error when authentication is missing."""
-        raise ValueError(
-            "M2M authentication is required. Provide it via:\n"
-            "1. Explicit instantiation (Config(authentication=...))\n"
-            "2. A YAML config file (config.yaml)\n"
-            "3. Environment variables (OC_AUTH_CLIENT_ID, OC_AUTH_CLIENT_SECRET, etc.)"
-        )
-
-    @staticmethod
-    def parse_auth_config(auth_data: dict) -> M2MAuthenticationConfig:
-        """Convert dictionary input to M2MAuthenticationConfig object."""
-        return (
-            M2MAuthenticationConfig(**auth_data)
-            if isinstance(auth_data, dict)
-            else auth_data
-        )
+    def apply_auth_defaults(auth: M2MAuthenticationConfig) -> M2MAuthenticationConfig:
+        """Apply default authentication values if they are missing."""
+        auth.type = auth.type or Config.DEFAULT_AUTH_TYPE
+        auth.token_url = auth.token_url or Config.DEFAULT_AUTH_TOKEN_URL
+        auth.audience = auth.audience or Config.DEFAULT_AUTH_AUDIENCE
+        return auth
 
     @classmethod
-    def apply_auth_defaults(
-        cls, auth: M2MAuthenticationConfig
-    ) -> M2MAuthenticationConfig:
-        """Apply default authentication values if they are missing."""
-        auth.type = auth.type or cls.DEFAULT_AUTH_TYPE
-        auth.token_url = auth.token_url or cls.DEFAULT_AUTH_TOKEN_URL
-        auth.audience = auth.audience or cls.DEFAULT_AUTH_AUDIENCE
-        return auth
+    def parse_auth_config(cls, auth_data: dict) -> M2MAuthenticationConfig:
+        """Parse authentication config from a dictionary."""
+        return M2MAuthenticationConfig(
+            type=auth_data.get("type", cls.DEFAULT_AUTH_TYPE),
+            token_url=auth_data.get("token_url", cls.DEFAULT_AUTH_TOKEN_URL),
+            audience=auth_data.get("audience", cls.DEFAULT_AUTH_AUDIENCE),
+            client_id=auth_data.get("client_id"),
+            client_secret=auth_data.get("client_secret"),
+        )
 
     @staticmethod
     def check_required_auth_fields(auth: M2MAuthenticationConfig):
