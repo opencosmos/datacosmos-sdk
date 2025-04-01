@@ -68,7 +68,7 @@ config = Config(
 client = DatacosmosClient(config=config)
 ```
 
-### Configuration Options and Defaults (Applied for the yaml or env variables option)
+### Configuration Options and Defaults
 
 | Setting                      | Default Value                                     | Override Method |
 |------------------------------|-------------------------------------------------|----------------|
