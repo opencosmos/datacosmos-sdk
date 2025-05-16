@@ -102,22 +102,164 @@ stac_client = STACClient(client)
 
 ### STACClient Methods
 
-#### 1. Fetch a Collection
+#### 1. **Search Items**
+```python
+from datacosmos.stac.item.models.catalog_search_parameters import CatalogSearchParameters
+from datacosmos.datacosmos_client import DatacosmosClient
+from datacosmos.stac.stac_client import STACClient
+
+client = DatacosmosClient()
+stac_client = STACClient(client)
+
+params = CatalogSearchParameters(
+     start_date="2/9/2025",
+     end_date="2/9/2025",
+     satellite=["MANTIS"],
+     product_type=["Satellite"],
+     processing_level=["L1A"]
+)
+
+items = list(stac_client.search_items(parameters=params, project_id="acb6961f-5a53-4010-8dac-bfc541614cdb"))
+```
+
+#### 2. **Fetch a Single Item**
+```python
+from datacosmos.datacosmos_client import DatacosmosClient
+from datacosmos.stac.stac_client import STACClient
+
+client = DatacosmosClient()
+stac_client = STACClient(client)
+
+item = stac_client.fetch_item(item_id="example-item", collection_id="example-collection")
+```
+
+#### 3. **Fetch All Items in a Collection**
+```python
+from datacosmos.datacosmos_client import DatacosmosClient
+from datacosmos.stac.stac_client import STACClient
+
+client = DatacosmosClient()
+stac_client = STACClient(client)
+
+items = stac_client.fetch_collection_items(collection_id="example-collection")
+```
+
+#### 4. **Create a New STAC Item**
+```python
+from pystac import Item, Asset
+from datetime import datetime
+
+from datacosmos.datacosmos_client import DatacosmosClient
+from datacosmos.stac.stac_client import STACClient
+
+client = DatacosmosClient()
+stac_client = STACClient(client)
+
+stac_item = Item(
+    id="new-item",
+    geometry={"type": "Point", "coordinates": [102.0, 0.5]},
+    bbox=[101.0, 0.0, 103.0, 1.0],
+    datetime=datetime.utcnow(),
+    properties={},
+    collection="example-collection"
+)
+
+stac_item.add_asset(
+    "image",
+    Asset(
+        href="https://example.com/sample-image.tiff",
+        media_type="image/tiff",
+        roles=["data"],
+        title="Sample Image"
+    )
+)
+
+stac_client.create_item(collection_id="example-collection", item=stac_item)
+```
+
+#### 5. **Update an Existing STAC Item**
+```python
+from datacosmos.stac.models.item_update import ItemUpdate
+from pystac import Asset, Link
+
+from datacosmos.datacosmos_client import DatacosmosClient
+from datacosmos.stac.stac_client import STACClient
+
+client = DatacosmosClient()
+stac_client = STACClient(client)
+
+update_payload = ItemUpdate(
+    properties={
+        "new_property": "updated_value",
+        "datetime": "2024-11-10T14:58:00Z"
+    },
+    assets={
+        "image": Asset(
+            href="https://example.com/updated-image.tiff",
+            media_type="image/tiff"
+        )
+    },
+    links=[
+        Link(rel="self", target="https://example.com/updated-image.tiff")
+    ],
+    geometry={
+        "type": "Point",
+        "coordinates": [10, 20]
+    },
+    bbox=[10.0, 20.0, 30.0, 40.0]
+)
+
+stac_client.update_item(item_id="new-item", collection_id="example-collection", update_data=update_payload)
+```
+
+#### 6. **Delete an Item**
+```python
+
+from datacosmos.datacosmos_client import DatacosmosClient
+from datacosmos.stac.stac_client import STACClient
+
+client = DatacosmosClient()
+stac_client = STACClient(client)
+
+stac_client.delete_item(item_id="new-item", collection_id="example-collection")
+```
+
+#### 7. Fetch a Collection
 
 ```python
+
+from datacosmos.datacosmos_client import DatacosmosClient
+from datacosmos.stac.stac_client import STACClient
+
+client = DatacosmosClient()
+stac_client = STACClient(client)
+
 collection = stac_client.fetch_collection("test-collection")
 ```
 
-#### 2. Fetch All Collections
+#### 8. Fetch All Collections
 
 ```python
+
+from datacosmos.datacosmos_client import DatacosmosClient
+from datacosmos.stac.stac_client import STACClient
+
+client = DatacosmosClient()
+stac_client = STACClient(client)
+
 collections = list(stac_client.fetch_all_collections())
 ```
 
-#### 3. Create a Collection
+#### 9. Create a Collection
 
 ```python
 from pystac import Collection
+
+from datacosmos.datacosmos_client import DatacosmosClient
+from datacosmos.stac.stac_client import STACClient
+
+client = DatacosmosClient()
+stac_client = STACClient(client)
 
 new_collection = Collection(
     id="test-collection",
@@ -133,10 +275,16 @@ new_collection = Collection(
 stac_client.create_collection(new_collection)
 ```
 
-#### 4. Update a Collection
+#### 10. Update a Collection
 
 ```python
 from datacosmos.stac.collection.models.collection_update import CollectionUpdate
+
+from datacosmos.datacosmos_client import DatacosmosClient
+from datacosmos.stac.stac_client import STACClient
+
+client = DatacosmosClient()
+stac_client = STACClient(client)
 
 update_data = CollectionUpdate(
     title="Updated Collection Title",
@@ -146,9 +294,16 @@ update_data = CollectionUpdate(
 stac_client.update_collection("test-collection", update_data)
 ```
 
-#### 5. Delete a Collection
+#### 11. Delete a Collection
 
 ```python
+
+from datacosmos.datacosmos_client import DatacosmosClient
+from datacosmos.stac.stac_client import STACClient
+
+client = DatacosmosClient()
+stac_client = STACClient(client)
+
 stac_client.delete_collection("test-collection")
 ```
 
@@ -160,6 +315,10 @@ You can use the `DatacosmosUploader` class to upload files to the DataCosmos clo
 
 ```python
 from datacosmos.uploader.datacosmos_uploader import DatacosmosUploader
+
+from datacosmos.datacosmos_client import DatacosmosClient
+
+client = DatacosmosClient()
 
 uploader = DatacosmosUploader(client)
 item_json_file_path = "/path/to/stac_item.json"
