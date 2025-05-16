@@ -2,6 +2,7 @@
 
 Allows partial updates where only the provided fields are modified.
 """
+
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field

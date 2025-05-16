@@ -9,6 +9,9 @@ from pystac import Item
 
 from datacosmos.datacosmos_client import DatacosmosClient
 from datacosmos.exceptions.datacosmos_exception import DatacosmosException
+from datacosmos.stac.item.models.catalog_search_parameters import (
+    CatalogSearchParameters,
+)
 from datacosmos.stac.item.models.datacosmos_item import DatacosmosItem
 from datacosmos.stac.item.models.item_update import ItemUpdate
 from datacosmos.stac.item.models.search_parameters import SearchParameters
@@ -59,17 +62,20 @@ class ItemClient:
 
         return self.search_items(parameters)
 
-    def search_items(self, parameters: SearchParameters) -> Generator[Item, None, None]:
+    def search_items(
+        self, parameters: CatalogSearchParameters, project_id: str
+    ) -> Generator[Item, None, None]:
         """Query the STAC catalog using the POST endpoint with filtering and pagination.
 
         Args:
-            parameters (SearchParameters): The search parameters.
+            parameters (CatalogSearchParameters): The search parameters.
 
         Yields:
             Item: Parsed STAC item.
         """
         url = self.base_url.with_suffix("/search")
-        body = parameters.model_dump(by_alias=True, exclude_none=True)
+        parameters_query = parameters.to_query()
+        body = {"project": project_id, "limit": 50, "query": parameters_query}
         return self._paginate_items(url, body)
 
     def create_item(self, collection_id: str, item: Item | DatacosmosItem) -> None:
