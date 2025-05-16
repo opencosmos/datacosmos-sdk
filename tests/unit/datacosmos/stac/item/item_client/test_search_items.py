@@ -69,5 +69,7 @@ def test_search_items(mock_post, mock_check_api_response, mock_fetch_token):
     mock_post.assert_called_once()
     mock_check_api_response.assert_called_once_with(mock_response)
     mock_post.assert_called_with(
-        stac_client.base_url.with_suffix("/search"), json=expected_body
+        stac_client.base_url.with_suffix("/search"),
+        json=expected_body,
+        params={"limit": 50},
     )
