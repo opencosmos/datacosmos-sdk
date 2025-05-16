@@ -119,7 +119,7 @@ params = CatalogSearchParameters(
      processing_level=["L1A"]
 )
 
-items = list(stac_client.search_items(parameters=params, project_id="acb6961f-5a53-4010-8dac-bfc541614cdb"))
+items = list(stac_client.search_items(parameters=params, project_id="your-project-id"))
 ```
 
 #### 2. **Fetch a Single Item**
