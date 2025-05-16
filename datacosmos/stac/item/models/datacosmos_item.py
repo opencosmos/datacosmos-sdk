@@ -4,7 +4,7 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
-from datacosmos.stac.enums.level import Level
+from datacosmos.stac.enums.processing_level import ProcessingLevel
 from datacosmos.stac.item.models.asset import Asset
 
 
@@ -36,9 +36,9 @@ class DatacosmosItem(BaseModel):
         return datetime.strptime(self.properties["datetime"], "%Y-%m-%dT%H:%M:%SZ")
 
     @property
-    def level(self) -> Level:
+    def level(self) -> ProcessingLevel:
         """Get the processing level of the Datacosmos item."""
-        return Level(self.properties["processing:level"].lower())
+        return ProcessingLevel(self.properties["processing:level"].lower())
 
     @property
     def sat_int_designator(self) -> str:
