@@ -1,4 +1,3 @@
-
 import pytest
 
 from config.config import Config
