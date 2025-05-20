@@ -6,7 +6,7 @@ from pathlib import Path
 
 import structlog
 
-from datacosmos.stac.enums.level import Level
+from datacosmos.stac.enums.processing_level import ProcessingLevel
 from datacosmos.stac.item.models.datacosmos_item import DatacosmosItem
 from datacosmos.utils.missions import get_mission_id
 
@@ -18,7 +18,7 @@ class UploadPath:
     """Dataclass for retrieving the upload path of a file."""
 
     mission: str
-    level: Level
+    level: ProcessingLevel
     day: int
     month: int
     year: int
@@ -43,7 +43,7 @@ class UploadPath:
         dt = datetime.strptime(item.properties["datetime"], "%Y-%m-%dT%H:%M:%SZ")
         path = UploadPath(
             mission=mission,
-            level=Level(item.properties["processing:level"].lower()),
+            level=ProcessingLevel(item.properties["processing:level"].upper()),
             day=dt.day,
             month=dt.month,
             year=dt.year,
@@ -60,7 +60,7 @@ class UploadPath:
             raise ValueError(f"Invalid path {path}")
         return cls(
             mission=parts[0],
-            level=Level(parts[1]),
+            level=ProcessingLevel(parts[1]),
             day=int(parts[4]),
             month=int(parts[3]),
             year=int(parts[2]),

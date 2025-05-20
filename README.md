@@ -54,6 +54,7 @@ The client will automatically read these values when initialized.
 If manually instantiating `Config`, default values are now applied where possible.
 
 ```python
+from datacosmos.datacosmos_client import DatacosmosClient
 from config.config import Config
 from config.models.m2m_authentication_config import M2MAuthenticationConfig
 from config.models.url import URL
