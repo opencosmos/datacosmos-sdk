@@ -3,7 +3,7 @@
 from datetime import datetime, timedelta
 from typing import Any, List, Optional
 
-from pydantic import BaseModel, field_validator, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from datacosmos.stac.constants.satellite_name_mapping import SATELLITE_NAME_MAPPING
 from datacosmos.stac.enums.processing_level import ProcessingLevel
@@ -20,6 +20,11 @@ class CatalogSearchParameters(BaseModel):
     satellite: Optional[List[str]] = None
     product_type: Optional[List[ProductType]] = None
     processing_level: Optional[List[ProcessingLevel]] = None
+    collections: Optional[list[str]] = Field(
+        None,
+        description="Array of collection IDs to filter by.",
+        example=["collection1", "collection2"],
+    )
 
     # --- Field Validators ---
 
