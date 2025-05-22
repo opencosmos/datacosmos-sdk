@@ -63,13 +63,13 @@ class CatalogSearchParameters(BaseModel):
             return None
         try:
             dt = datetime.strptime(value, "%m/%d/%Y")
-            if dt < datetime(2015, 5, 15):
-                raise ValueError("Date must be 5/15/2015 or later.")
-            return dt.isoformat() + "Z"
-        except ValueError:
+        except Exception as e:
             raise ValueError(
                 "Invalid start_date format. Use mm/dd/yyyy (e.g., 05/15/2024)"
-            )
+            ) from e
+        if dt < datetime(2015, 5, 15):
+            raise ValueError("Date must be 5/15/2015 or later.")
+        return dt.isoformat() + "Z"
 
     @field_validator("end_date", mode="before")
     @classmethod
@@ -79,14 +79,15 @@ class CatalogSearchParameters(BaseModel):
             return None
         try:
             dt = datetime.strptime(value, "%m/%d/%Y")
-            if dt < datetime(2015, 5, 15):
-                raise ValueError("Date must be 5/15/2015 or later.")
-            dt = dt + timedelta(days=1) - timedelta(milliseconds=1)
-            return dt.isoformat() + "Z"
         except ValueError:
             raise ValueError(
                 "Invalid end_date format. Use mm/dd/yyyy (e.g., 05/15/2024)"
             )
+
+        if dt < datetime(2015, 5, 15):
+            raise ValueError("Date must be 5/15/2015 or later.")
+        dt = dt + timedelta(days=1) - timedelta(milliseconds=1)
+        return dt.isoformat() + "Z"
 
     # --- Model Validator ---
 
