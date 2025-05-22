@@ -118,7 +118,7 @@ params = CatalogSearchParameters(
      satellite=["MANTIS"],
      product_type=["Satellite"],
      processing_level=["L1A"],
-     collection_id="mantis_l1a"
+     collections=["mantis-l1a"]
 )
 
 items = list(stac_client.search_items(parameters=params, project_id="your-project-id"))
