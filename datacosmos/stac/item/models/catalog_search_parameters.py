@@ -3,7 +3,7 @@
 from datetime import datetime, timedelta
 from typing import Any, List, Optional
 
-from pydantic import BaseModel, field_validator, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from datacosmos.stac.constants.satellite_name_mapping import SATELLITE_NAME_MAPPING
 from datacosmos.stac.enums.processing_level import ProcessingLevel
@@ -20,6 +20,11 @@ class CatalogSearchParameters(BaseModel):
     satellite: Optional[List[str]] = None
     product_type: Optional[List[ProductType]] = None
     processing_level: Optional[List[ProcessingLevel]] = None
+    collections: Optional[list[str]] = Field(
+        None,
+        description="Array of collection IDs to filter by.",
+        example=["collection1", "collection2"],
+    )
 
     # --- Field Validators ---
 
@@ -58,13 +63,13 @@ class CatalogSearchParameters(BaseModel):
             return None
         try:
             dt = datetime.strptime(value, "%m/%d/%Y")
-            if dt < datetime(2015, 5, 15):
-                raise ValueError("Date must be 5/15/2015 or later.")
-            return dt.isoformat() + "Z"
-        except ValueError:
+        except Exception as e:
             raise ValueError(
                 "Invalid start_date format. Use mm/dd/yyyy (e.g., 05/15/2024)"
-            )
+            ) from e
+        if dt < datetime(2015, 5, 15):
+            raise ValueError("Date must be 5/15/2015 or later.")
+        return dt.isoformat() + "Z"
 
     @field_validator("end_date", mode="before")
     @classmethod
@@ -74,14 +79,15 @@ class CatalogSearchParameters(BaseModel):
             return None
         try:
             dt = datetime.strptime(value, "%m/%d/%Y")
-            if dt < datetime(2015, 5, 15):
-                raise ValueError("Date must be 5/15/2015 or later.")
-            dt = dt + timedelta(days=1) - timedelta(milliseconds=1)
-            return dt.isoformat() + "Z"
         except ValueError:
             raise ValueError(
                 "Invalid end_date format. Use mm/dd/yyyy (e.g., 05/15/2024)"
             )
+
+        if dt < datetime(2015, 5, 15):
+            raise ValueError("Date must be 5/15/2015 or later.")
+        dt = dt + timedelta(days=1) - timedelta(milliseconds=1)
+        return dt.isoformat() + "Z"
 
     # --- Model Validator ---
 

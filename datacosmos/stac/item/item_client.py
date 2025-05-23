@@ -14,7 +14,6 @@ from datacosmos.stac.item.models.catalog_search_parameters import (
 )
 from datacosmos.stac.item.models.datacosmos_item import DatacosmosItem
 from datacosmos.stac.item.models.item_update import ItemUpdate
-from datacosmos.stac.item.models.search_parameters import SearchParameters
 from datacosmos.utils.http_response.check_api_response import check_api_response
 
 
@@ -45,23 +44,6 @@ class ItemClient:
         check_api_response(response)
         return Item.from_dict(response.json())
 
-    def fetch_collection_items(
-        self, collection_id: str, parameters: Optional[SearchParameters] = None
-    ) -> Generator[Item, None, None]:
-        """Fetch all items in a collection with optional filtering.
-
-        Args:
-            collection_id (str): The ID of the collection.
-            parameters (Optional[SearchParameters]): Filtering parameters (spatial, temporal, etc.).
-
-        Yields:
-            Item: Parsed STAC item.
-        """
-        if parameters is None:
-            parameters = SearchParameters(collections=[collection_id])
-
-        return self.search_items(parameters)
-
     def search_items(
         self, parameters: CatalogSearchParameters, project_id: str
     ) -> Generator[Item, None, None]:
@@ -76,6 +58,8 @@ class ItemClient:
         url = self.base_url.with_suffix("/search")
         parameters_query = parameters.to_query()
         body = {"project": project_id, "limit": 50, "query": parameters_query}
+        if parameters.collections is not None:
+            body = body | {"collections": parameters.collections}
         return self._paginate_items(url, body)
 
     def create_item(self, collection_id: str, item: Item | DatacosmosItem) -> None:
@@ -90,7 +74,6 @@ class ItemClient:
         """
         url = self.base_url.with_suffix(f"/collections/{collection_id}/items")
         item_json: dict = item.to_dict()
-
         response = self.client.post(url, json=item_json)
         check_api_response(response)
 

@@ -1,5 +1,7 @@
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from config.config import Config
 from config.models.m2m_authentication_config import M2MAuthenticationConfig
 from datacosmos.datacosmos_client import DatacosmosClient
@@ -9,11 +11,14 @@ from datacosmos.stac.item.models.catalog_search_parameters import (
 )
 
 
+@pytest.mark.parametrize("collections", [None, ["my-collection"]])
 @patch("requests_oauthlib.OAuth2Session.fetch_token")
 @patch("datacosmos.stac.item.item_client.check_api_response")
 @patch.object(DatacosmosClient, "post")
-def test_search_items(mock_post, mock_check_api_response, mock_fetch_token):
-    """Test searching STAC items with CatalogSearchParameters."""
+def test_search_items(
+    mock_post, mock_check_api_response, mock_fetch_token, collections
+):
+    """Test STAC item search with and without collections specified."""
     mock_fetch_token.return_value = {"access_token": "mock-token", "expires_in": 3600}
 
     mock_response = MagicMock()
@@ -55,6 +60,7 @@ def test_search_items(mock_post, mock_check_api_response, mock_fetch_token):
         satellite=["MANTIS"],
         product_type=["Satellite"],
         processing_level=["L1A"],
+        collections=collections,
     )
 
     project_id = "mock-project"
@@ -66,10 +72,12 @@ def test_search_items(mock_post, mock_check_api_response, mock_fetch_token):
 
     expected_body = {"project": project_id, "limit": 50, "query": parameters.to_query()}
 
-    mock_post.assert_called_once()
-    mock_check_api_response.assert_called_once_with(mock_response)
-    mock_post.assert_called_with(
+    if collections is not None:
+        expected_body["collections"] = collections
+
+    mock_post.assert_called_once_with(
         stac_client.base_url.with_suffix("/search"),
         json=expected_body,
         params={"limit": 50},
     )
+    mock_check_api_response.assert_called_once_with(mock_response)

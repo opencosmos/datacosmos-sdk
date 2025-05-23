@@ -26,6 +26,8 @@ python-dateutil==2.9.0.post0
     # via pystac
 python-dotenv==1.0.1
     # via pydantic-settings
+pyyaml==6.0.2
+    # via datacosmos (pyproject.toml)
 requests==2.31.0
     # via
     #   datacosmos (pyproject.toml)
@@ -34,6 +36,8 @@ requests-oauthlib==1.3.1
     # via datacosmos (pyproject.toml)
 six==1.17.0
     # via python-dateutil
+structlog==25.3.0
+    # via datacosmos (pyproject.toml)
 typing-extensions==4.12.2
     # via
     #   pydantic
