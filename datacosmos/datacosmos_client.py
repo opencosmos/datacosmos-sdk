@@ -12,7 +12,7 @@ from oauthlib.oauth2 import BackendApplicationClient
 from requests.exceptions import ConnectionError, HTTPError, RequestException, Timeout
 from requests_oauthlib import OAuth2Session
 
-from config.config import Config
+from datacosmos.config.config import Config
 from datacosmos.exceptions.datacosmos_exception import DatacosmosException
 
 

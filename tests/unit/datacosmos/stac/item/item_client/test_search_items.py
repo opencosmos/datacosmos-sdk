@@ -2,8 +2,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from config.config import Config
-from config.models.m2m_authentication_config import M2MAuthenticationConfig
+from datacosmos.config.config import Config
+from datacosmos.config.models.m2m_authentication_config import M2MAuthenticationConfig
 from datacosmos.datacosmos_client import DatacosmosClient
 from datacosmos.stac.item.item_client import ItemClient
 from datacosmos.stac.item.models.catalog_search_parameters import (

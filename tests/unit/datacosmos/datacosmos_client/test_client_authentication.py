@@ -4,8 +4,8 @@ from unittest.mock import patch
 import pytest
 import yaml
 
-from config.config import Config
-from config.models.m2m_authentication_config import M2MAuthenticationConfig
+from datacosmos.config.config import Config
+from datacosmos.config.models.m2m_authentication_config import M2MAuthenticationConfig
 from datacosmos.datacosmos_client import DatacosmosClient
 
 
@@ -57,7 +57,7 @@ class TestClientAuthentication:
         assert client.token == "mock-access-token"
         assert client.token_expiry == "mock-expiry"
 
-    @patch("config.config.Config.from_yaml")
+    @patch("datacosmos.config.config.Config.from_yaml")
     def test_authentication_from_yaml(self, mock_from_yaml, tmp_path):
         """Test authentication when loading Config from YAML file."""
         config_path = tmp_path / "config.yaml"

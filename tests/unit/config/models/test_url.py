@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from config.models.url import URL
+from datacosmos.config.models.url import URL
 from datacosmos.utils.url import URL as DomainURL
 
 

@@ -55,9 +55,8 @@ If manually instantiating `Config`, default values are now applied where possibl
 
 ```python
 from datacosmos.datacosmos_client import DatacosmosClient
-from config.config import Config
-from config.models.m2m_authentication_config import M2MAuthenticationConfig
-from config.models.url import URL
+from datacosmos.config.config import Config
+from datacosmos.config.models.m2m_authentication_config import M2MAuthenticationConfig
 
 config = Config(
     authentication=M2MAuthenticationConfig(
