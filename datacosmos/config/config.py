@@ -12,8 +12,9 @@ import yaml
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from config.models.m2m_authentication_config import M2MAuthenticationConfig
-from config.models.url import URL
+from datacosmos.config.models.authentication_config import AuthenticationConfig
+from datacosmos.config.models.m2m_authentication_config import M2MAuthenticationConfig
+from datacosmos.config.models.url import URL
 
 
 class Config(BaseSettings):
@@ -25,7 +26,7 @@ class Config(BaseSettings):
         extra="allow",
     )
 
-    authentication: Optional[M2MAuthenticationConfig] = None
+    authentication: Optional[AuthenticationConfig] = None
     stac: Optional[URL] = None
     datacosmos_cloud_storage: Optional[URL] = None
     mission_id: int = 0
@@ -94,15 +95,15 @@ class Config(BaseSettings):
             environment=os.getenv("ENVIRONMENT", "test"),
         )
 
-    @field_validator("authentication", mode="before")
+    @field_validator("authentication", mode="after")
     @classmethod
     def validate_authentication(
-        cls, auth_data: Optional[dict]
+        cls, auth: Optional[M2MAuthenticationConfig]
     ) -> M2MAuthenticationConfig:
         """Ensure authentication is provided and apply defaults.
 
         Args:
-            auth_data (Optional[dict]): The authentication config as a dictionary.
+            auth (Optional[M2MAuthenticationConfig]): The authentication config.
 
         Returns:
             M2MAuthenticationConfig: The validated authentication configuration.
@@ -110,11 +111,10 @@ class Config(BaseSettings):
         Raises:
             ValueError: If authentication is missing or required fields are not set.
         """
-        if not auth_data:
-            return cls.apply_auth_defaults(M2MAuthenticationConfig())
-
-        auth = cls.parse_auth_config(auth_data)
-        auth = cls.apply_auth_defaults(auth)
+        if auth is None:
+            auth = cls.apply_auth_defaults(M2MAuthenticationConfig())
+        else:
+            auth = cls.apply_auth_defaults(auth)
 
         cls.check_required_auth_fields(auth)
         return auth

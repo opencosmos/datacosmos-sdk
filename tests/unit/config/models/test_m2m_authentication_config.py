@@ -1,4 +1,4 @@
-from config.models.m2m_authentication_config import M2MAuthenticationConfig
+from datacosmos.config.models.m2m_authentication_config import M2MAuthenticationConfig
 
 
 class TestM2MAuthenticationConfig:

@@ -1,8 +1,8 @@
 import pytest
 
-from config.config import Config
-from config.models.m2m_authentication_config import M2MAuthenticationConfig
-from config.models.url import URL
+from datacosmos.config.config import Config
+from datacosmos.config.models.m2m_authentication_config import M2MAuthenticationConfig
+from datacosmos.config.models.url import URL
 
 
 class TestConfig:
@@ -70,15 +70,12 @@ class TestConfig:
     def test_validate_authentication_applies_defaults_and_raises_value_error(self):
         # Missing client_id and client_secret should raise
         with pytest.raises(ValueError):
-            Config.validate_authentication({})
+            Config.validate_authentication(M2MAuthenticationConfig())
 
         # Partial input applies defaults
-        auth = Config.validate_authentication(
-            {
-                "client_id": "id",
-                "client_secret": "secret",
-            }
-        )
+        auth_input = M2MAuthenticationConfig(client_id="id", client_secret="secret")
+        auth = Config.validate_authentication(auth_input)
+
         assert auth.type == Config.DEFAULT_AUTH_TYPE
         assert auth.token_url == Config.DEFAULT_AUTH_TOKEN_URL
         assert auth.audience == Config.DEFAULT_AUTH_AUDIENCE
@@ -86,7 +83,7 @@ class TestConfig:
         assert auth.client_secret == "secret"
 
     def test_invalid_authentication_raises_validation_error(self):
-        # Passing invalid type should raise pydantic ValidationError
+        # Missing client_secret should raise ValueError from the validator
         with pytest.raises(ValueError):
             Config(authentication={"client_id": "some-client"})
 

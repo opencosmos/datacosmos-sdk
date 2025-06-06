@@ -3,8 +3,8 @@ from unittest.mock import MagicMock, patch
 from pystac import Collection
 from pystac.utils import datetime_to_str
 
-from config.config import Config
-from config.models.m2m_authentication_config import M2MAuthenticationConfig
+from datacosmos.config.config import Config
+from datacosmos.config.models.m2m_authentication_config import M2MAuthenticationConfig
 from datacosmos.datacosmos_client import DatacosmosClient
 from datacosmos.stac.collection.collection_client import CollectionClient
 
