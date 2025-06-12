@@ -29,7 +29,6 @@ class Config(BaseSettings):
     authentication: Optional[AuthenticationConfig] = None
     stac: Optional[URL] = None
     datacosmos_cloud_storage: Optional[URL] = None
-    mission_id: int = 0
 
     DEFAULT_AUTH_TYPE: ClassVar[str] = "m2m"
     DEFAULT_AUTH_TOKEN_URL: ClassVar[str] = "https://login.open-cosmos.com/oauth/token"

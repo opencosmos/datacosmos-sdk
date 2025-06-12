@@ -35,8 +35,6 @@ class TestConfig:
         assert config.stac.port == 443
         assert config.stac.path == "/api/data/v0/stac"
 
-        assert config.mission_id == 0
-
     def test_from_yaml_ignores_missing_file(self):
         # If file doesn't exist, returns default config with required fields missing, so should raise error
         with pytest.raises(ValueError):
