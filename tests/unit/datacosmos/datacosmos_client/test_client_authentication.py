@@ -1,7 +1,8 @@
 import os
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
+import requests
 import yaml
 
 from datacosmos.config.config import Config
@@ -102,3 +103,27 @@ class TestClientAuthentication:
 
         assert client.token == "mock-access-token"
         assert client.token_expiry == "mock-expiry"
+
+    def test_injected_http_session_is_used_and_not_reauthenticated(self):
+        """Test that providing a pre-authenticated session skips SDK auth flow."""
+        session = requests.Session()
+        session.headers.update({"Authorization": "Bearer injected-token"})
+
+        # 2) Patch the SDK's internal auth method to fail if called
+        with patch.object(
+            DatacosmosClient,
+            "_authenticate_and_initialize_client",
+            side_effect=AssertionError("Should not re-authenticate"),
+        ):
+            client = DatacosmosClient(http_session=session)
+
+        assert client._owns_session is False
+        assert client.token == "injected-token"
+        assert client.token_expiry is None
+
+        mock_response = Mock(spec=requests.Response)
+        mock_response.raise_for_status.return_value = None
+        session.request = Mock(return_value=mock_response)
+
+        result = client.request("GET", "https://example.com")
+        assert result is mock_response

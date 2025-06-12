@@ -17,14 +17,10 @@ class DatacosmosUploader:
 
     def __init__(self, client: DatacosmosClient):
         """Initialize the uploader with DatacosmosClient."""
-        mission_id = client.config.mission_id
-        environment = client.config.environment
+        self.environment = client.config.environment
 
         self.datacosmos_client = client
         self.item_client = ItemClient(client)
-        self.mission_name = (
-            get_mission_name(mission_id, environment) if mission_id != 0 else ""
-        )
         self.base_url = client.config.datacosmos_cloud_storage.as_domain_url()
 
     def upload_and_register_item(self, item_json_file_path: str) -> None:
@@ -92,9 +88,12 @@ class DatacosmosUploader:
         except Exception:  # nosec
             pass  # Ignore if item doesn't exist
 
-    def _get_upload_path(self, item: DatacosmosItem) -> str:
+    def _get_upload_path(self, item: DatacosmosItem, mission_id: int = 0) -> str:
         """Constructs the storage upload path based on the item and mission name."""
-        return UploadPath.from_item_path(item, self.mission_name, "")
+        mission_name = (
+            get_mission_name(mission_id, self.environment) if mission_id != 0 else ""
+        )
+        return UploadPath.from_item_path(item, mission_name, "")
 
     def _update_item_assets(self, item: DatacosmosItem) -> None:
         """Updates the item's assets with uploaded file URLs."""
