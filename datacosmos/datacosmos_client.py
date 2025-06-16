@@ -44,9 +44,13 @@ class DatacosmosClient:
                 )
             try:
                 self.token = token_data.get("access_token")
-                self.token_expiry = token_data.get("expires_at") or token_data.get("expires_in")
+                self.token_expiry = token_data.get("expires_at") or token_data.get(
+                    "expires_in"
+                )
             except Exception:
-                raise DatacosmosException("Failed to extract token from injected session")
+                raise DatacosmosException(
+                    "Failed to extract token from injected session"
+                )
 
             self.config = config
         else:

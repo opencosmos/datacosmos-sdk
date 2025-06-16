@@ -61,4 +61,3 @@ class UploadPath:
             id=parts[5],
             path="/".join(parts[6:]),
         )
-

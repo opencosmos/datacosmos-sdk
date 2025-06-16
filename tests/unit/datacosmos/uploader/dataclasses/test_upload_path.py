@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -45,7 +45,6 @@ class TestUploadPath:
         assert up.year == 2023
         assert up.id == "item123"
         assert up.path == "file.tif"
-
 
     def test_from_path_valid(self):
         path_str = "missionx/L1A/2023/05/09/item123/file.tif"
