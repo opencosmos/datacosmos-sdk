@@ -9,7 +9,6 @@ from datacosmos.datacosmos_client import DatacosmosClient
 from datacosmos.stac.item.item_client import ItemClient
 from datacosmos.stac.item.models.datacosmos_item import DatacosmosItem
 from datacosmos.uploader.dataclasses.upload_path import UploadPath
-from datacosmos.utils.missions import get_mission_name
 
 
 class DatacosmosUploader:
@@ -88,11 +87,8 @@ class DatacosmosUploader:
         except Exception:  # nosec
             pass  # Ignore if item doesn't exist
 
-    def _get_upload_path(self, item: DatacosmosItem, mission_id: int = 0) -> str:
+    def _get_upload_path(self, item: DatacosmosItem, mission_name: str = "") -> str:
         """Constructs the storage upload path based on the item and mission name."""
-        mission_name = (
-            get_mission_name(mission_id, self.environment) if mission_id != 0 else ""
-        )
         return UploadPath.from_item_path(item, mission_name, "")
 
     def _update_item_assets(self, item: DatacosmosItem) -> None:

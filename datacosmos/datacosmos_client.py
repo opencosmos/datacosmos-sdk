@@ -18,7 +18,7 @@ class DatacosmosClient:
     def __init__(
         self,
         config: Optional[Config | Any] = None,
-        http_session: Optional[requests.Session] = None,
+        http_session: Optional[requests.Session | OAuth2Session] = None,
     ):
         """Initialize the DatacosmosClient.
 
@@ -27,16 +27,27 @@ class DatacosmosClient:
             http_session (Optional[requests.Session]): Pre-authenticated session.
         """
         if http_session is not None:
-            auth_header = http_session.headers.get("Authorization", "")
-            if not auth_header.startswith("Bearer "):
-                raise DatacosmosException(
-                    "Injected session must include a 'Bearer' token in its headers"
-                )
             self._http_client = http_session
             self._owns_session = False
-            self.token = auth_header.split(" ", 1)[1]
-            self.token_expiry = None
-            # config will be provided by the same service that provides the http_session
+            if isinstance(http_session, OAuth2Session):
+                token_data = http_session.token
+            elif isinstance(http_session, requests.Session):
+                auth_header = http_session.headers.get("Authorization", "")
+                if not auth_header.startswith("Bearer "):
+                    raise DatacosmosException(
+                        "Injected requests.Session must include a 'Bearer' token in its headers"
+                    )
+                token_data = {"access_token": auth_header.split(" ", 1)[1]}
+            else:
+                raise DatacosmosException(
+                    f"Unsupported session type: {type(http_session)}"
+                )
+            try:
+                self.token = token_data.get("access_token")
+                self.token_expiry = token_data.get("expires_at") or token_data.get("expires_in")
+            except Exception:
+                raise DatacosmosException("Failed to extract token from injected session")
+
             self.config = config
         else:
             if config:

@@ -75,7 +75,7 @@ class TestDatacosmosUploader:
         uploader = DatacosmosUploader(mock_client)
 
         # Patch _load_item to return a valid DatacosmosItem
-        mock_item = DatacosmosItem.parse_obj(dummy_item_data)
+        mock_item = DatacosmosItem.model_validate(dummy_item_data)
 
         with patch.object(uploader, "_load_item", return_value=mock_item), patch.object(
             uploader, "_delete_existing_item"

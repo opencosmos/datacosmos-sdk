@@ -46,20 +46,6 @@ class TestUploadPath:
         assert up.id == "item123"
         assert up.path == "file.tif"
 
-    @patch("datacosmos.uploader.dataclasses.upload_path.UploadPath._get_mission_name")
-    def test_from_item_path_without_mission_calls_get_mission_name(
-        self, mock_get_mission_name
-    ):
-        mock_get_mission_name.return_value = "missiony"
-        item = DummyItem(
-            id_="item123",
-            datetime_str="2023-05-09T12:00:00Z",
-            level_str="L1A",
-            assets={"asset1": MagicMock(href="path/to/asset")},
-        )
-        up = UploadPath.from_item_path(item, "", "file.tif")
-        mock_get_mission_name.assert_called_once()
-        assert up.mission == "missiony"
 
     def test_from_path_valid(self):
         path_str = "missionx/L1A/2023/05/09/item123/file.tif"
