@@ -21,16 +21,11 @@ class TestDatacosmosUploader:
         return mock
 
     def test_init_sets_attributes(self, mock_client):
-        with patch(
-            "datacosmos.uploader.datacosmos_uploader.get_mission_name"
-        ) as mock_get_mission_name:
-            mock_get_mission_name.return_value = "mockmission"
-            uploader = DatacosmosUploader(mock_client)
+        uploader = DatacosmosUploader(mock_client)
 
-            assert uploader.datacosmos_client == mock_client
-            assert uploader.item_client is not None
-            assert uploader.mission_name == "mockmission"
-            assert uploader.base_url.startswith("https://mockstorage.com/")
+        assert uploader.datacosmos_client == mock_client
+        assert uploader.item_client is not None
+        assert uploader.base_url.startswith("https://mockstorage.com/")
 
     @patch("datacosmos.datacosmos_client.DatacosmosClient.put")
     @patch(
@@ -80,7 +75,7 @@ class TestDatacosmosUploader:
         uploader = DatacosmosUploader(mock_client)
 
         # Patch _load_item to return a valid DatacosmosItem
-        mock_item = DatacosmosItem.parse_obj(dummy_item_data)
+        mock_item = DatacosmosItem.model_validate(dummy_item_data)
 
         with patch.object(uploader, "_load_item", return_value=mock_item), patch.object(
             uploader, "_delete_existing_item"

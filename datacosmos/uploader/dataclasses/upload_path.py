@@ -8,7 +8,6 @@ import structlog
 
 from datacosmos.stac.enums.processing_level import ProcessingLevel
 from datacosmos.stac.item.models.datacosmos_item import DatacosmosItem
-from datacosmos.utils.missions import get_mission_id
 
 logger = structlog.get_logger()
 
@@ -35,11 +34,6 @@ class UploadPath:
         cls, item: DatacosmosItem, mission: str, item_path: str
     ) -> "Path":
         """Create a Path instance from a DatacosmosItem and a path."""
-        for asset in item.assets.values():
-            if mission == "":
-                mission = cls._get_mission_name(asset.href)
-            else:
-                break
         dt = datetime.strptime(item.properties["datetime"], "%Y-%m-%dT%H:%M:%SZ")
         path = UploadPath(
             mission=mission,
@@ -67,27 +61,3 @@ class UploadPath:
             id=parts[5],
             path="/".join(parts[6:]),
         )
-
-    @classmethod
-    def _get_mission_name(cls, href: str) -> str:
-        mission = ""
-        # bruteforce mission name from asset path
-        # traverse the path and check if any part is a mission name (generates a mission id)
-        href_parts = href.split("/")
-        for idx, part in enumerate(href_parts):
-            try:
-                # when an id is found, then the mission name is valid
-                get_mission_id(
-                    part, "test"
-                )  # using test as it is more wide and anything on prod should exists on test
-            except KeyError:
-                continue
-            # validate the mission name by checking if the path is correct
-            # using the same logic as the __str__ method
-            mission = part.lower()
-            h = "/".join(["full", *href_parts[idx:]])
-            p = UploadPath.from_path("/".join([mission, *href_parts[idx + 1 :]]))
-            if str(p) != h:
-                raise ValueError(f"Could not find mission name in asset path {href}")
-            break
-        return mission
