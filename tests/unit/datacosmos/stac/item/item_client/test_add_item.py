@@ -9,9 +9,9 @@ from datacosmos.stac.item.item_client import ItemClient
 
 
 @patch("requests_oauthlib.OAuth2Session.fetch_token")
-@patch.object(DatacosmosClient, "post")
+@patch.object(DatacosmosClient, "put")
 @patch("datacosmos.stac.item.item_client.check_api_response")
-def test_create_item(mock_check_api_response, mock_post, mock_fetch_token):
+def test_add_item(mock_check_api_response, mock_post, mock_fetch_token):
     """Test creating a new STAC item."""
     mock_fetch_token.return_value = {"access_token": "mock-token", "expires_in": 3600}
 
@@ -42,13 +42,13 @@ def test_create_item(mock_check_api_response, mock_post, mock_fetch_token):
 
     item = Item.from_dict(mock_response.json())
 
-    stac_client.create_item(item)
+    stac_client.add_item(item)
 
     mock_post.assert_called_once()
 
     mock_check_api_response.assert_called_once()
 
     mock_post.assert_called_with(
-        stac_client.base_url.with_suffix("/collections/test-collection/items"),
+        stac_client.base_url.with_suffix("/collections/test-collection/items/item-1"),
         json=item.to_dict(),
     )

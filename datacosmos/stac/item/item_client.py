@@ -62,19 +62,58 @@ class ItemClient:
             body = body | {"collections": parameters.collections}
         return self._paginate_items(url, body)
 
-    def create_item(self, collection_id: str, item: Item | DatacosmosItem) -> None:
-        """Create a new STAC item in a specified collection.
+    def create_item(self, item: Item | DatacosmosItem) -> None:
+        """Create a new STAC item in its own collection.
+
+        The collection ID is inferred from the item.
 
         Args:
-            collection_id (str): The ID of the collection where the item will be created.
-            item (Item): The STAC Item to be created.
+            item (Item | DatacosmosItem): The STAC item to be created.
 
         Raises:
+            ValueError: If the item has no collection set.
             RequestError: If the API returns an error response.
         """
+        if isinstance(item, Item):
+            collection_id = item.collection_id or (
+                item.get_collection().id if item.get_collection() else None
+            )
+        else:
+            collection_id = item.collection
+
+        if not collection_id:
+            raise ValueError("Cannot create item: no collection_id found on item")
+
         url = self.base_url.with_suffix(f"/collections/{collection_id}/items")
         item_json: dict = item.to_dict()
         response = self.client.post(url, json=item_json)
+        check_api_response(response)
+
+    def add_item(self, item: Item | DatacosmosItem) -> None:
+        """Adds item to catalog.
+
+        The collection ID is inferred from the item.
+
+        Args:
+            item (Item | DatacosmosItem): The STAC item to be created.
+
+        Raises:
+            ValueError: If the item has no collection set.
+            RequestError: If the API returns an error response.
+        """
+        if isinstance(item, Item):
+            collection_id = item.collection_id or (
+                item.get_collection().id if item.get_collection() else None
+            )
+        else:
+            collection_id = item.collection
+
+        if not collection_id:
+            raise ValueError("Cannot create item: no collection_id found on item")
+
+        url = self.base_url.with_suffix(f"/collections/{collection_id}/items/{item.id}")
+        item_json: dict = item.to_dict()
+        response = self.client.put(url, json=item_json)
         check_api_response(response)
 
     def update_item(
