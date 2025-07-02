@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from datacosmos.stac.item.models.asset import Asset
-from datacosmos.uploader.datacosmos_uploader import DatacosmosUploader
+from datacosmos.uploader.datacosmos_uploader import DatacosmosUploader, UploadPath
 
 
 class DummyClient:
@@ -16,6 +16,7 @@ class DummyClient:
         self.config.datacosmos_public_cloud_storage.as_domain_url.return_value = Path(
             "http://publiccloud/"
         )
+        self.put = MagicMock()
 
 
 class DummyItem:
@@ -28,9 +29,11 @@ def uploader_and_dir(tmp_path, monkeypatch):
     client = DummyClient()
     uploader = DatacosmosUploader(client)
     monkeypatch.setattr(
-        "datacosmos.uploader.datacosmos_uploader.UploadPath.from_item_path",
-        lambda *args, **kwargs: Path("destination/path.txt"),
+        UploadPath,
+        "from_item_path",
+        classmethod(lambda cls, item, mission_name, filename: Path(filename).suffix),
     )
+
     monkeypatch.setattr(
         DatacosmosUploader, "_update_asset_href", lambda self, asset: None
     )
@@ -41,8 +44,6 @@ class TestDatacosmosUploader:
     def test_upload_item_with_local_asset(self, uploader_and_dir):
         uploader, assets_dir = uploader_and_dir
         # Prepare a local asset file
-        file_path = assets_dir / "asset1.txt"
-        file_path.write_text("dummy")
         asset = Asset(
             type="test_type",
             href="https://example.com/sample-image.tiff",
@@ -50,6 +51,10 @@ class TestDatacosmosUploader:
             title="Sample Image",
             roles=["data"],
         )
+
+        filename = Path(asset.href).name
+        file_path = assets_dir / filename
+        file_path.write_text("dummy")
         item = DummyItem({"a1": asset})
 
         uploader.item_client.add_item = MagicMock()
@@ -69,7 +74,8 @@ class TestDatacosmosUploader:
             title="Sample Image",
             roles=["data"],
         )
-        file_path = assets_dir / "remote.txt"
+        filename = Path(asset.href).name
+        file_path = assets_dir / filename
         file_path.write_text("dummy")
         item = DummyItem({"r1": asset})
 

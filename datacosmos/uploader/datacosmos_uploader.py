@@ -1,5 +1,6 @@
 """Module for uploading files to Datacosmos cloud storage and registering STAC items."""
 
+import mimetypes
 from concurrent.futures import ThreadPoolExecutor, wait
 from pathlib import Path
 from typing import Any
@@ -27,7 +28,6 @@ class DatacosmosUploader:
         item: Any,
         assets_path: str | None = None,
         included_assets: list[str] | bool = True,
-        overwrite: bool = True,
         max_workers: int = 4,
         time_out: float = 60 * 60 * 1,
     ) -> Any:
@@ -43,7 +43,6 @@ class DatacosmosUploader:
             item: The item to upload (if it is a string it will load from the file pointed by the string)
             assets_path: The path to the assets (if None, current working directory is used)
             included_assets: Either a list of asset keys to include or True to include all
-            overwrite: Whether to overwrite existing files
             max_workers: Max workers to use in multithreading
             time_out: time out value to be used
         Returns:
@@ -76,13 +75,7 @@ class DatacosmosUploader:
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             for asset_key in upload_assets:
                 futures.append(
-                    executor.submit(
-                        self._upload_asset,
-                        item,
-                        asset_key,
-                        assets_path,
-                        overwrite=overwrite,
-                    )
+                    executor.submit(self._upload_asset, item, asset_key, assets_path)
                 )
 
         done, not_done = wait(futures, timeout=time_out)
@@ -94,12 +87,22 @@ class DatacosmosUploader:
 
         return item
 
-    def upload_file(self, src: str, dst: str) -> None:
+    def upload_from_file(
+        self, src: str, dst: str, mime_type: str | None = None
+    ) -> None:
         """Uploads a single file to the specified destination path."""
         url = self.base_url.with_suffix(dst)
 
+        if not mime_type:
+            mime_type, _ = (
+                mimetypes.guess_type(src) if mime_type else "application/octet-stream",
+                "",
+            )
+
+        headers = {"Content-Type": mime_type}
+
         with open(src, "rb") as f:
-            response = self.datacosmos_client.put(url, data=f)
+            response = self.datacosmos_client.put(url, data=f, headers=headers)
         response.raise_for_status()
 
     @staticmethod
@@ -132,9 +135,7 @@ class DatacosmosUploader:
             future.cancel()
         # Raise the first error if any
         if errors:
-            if errors is None:
-                raise errors[0]
-            errors = errors
+            raise errors[0]
 
     def _upload_asset(
         self, item: DatacosmosItem, asset_key: str, assets_path: str
@@ -162,7 +163,7 @@ class DatacosmosUploader:
         else:
             src = str(Path(assets_path) / Path(asset.href).name)
         self._update_asset_href(asset)
-        self.upload_file(src, upload_path, mime_type=asset.type)
+        self.upload_from_file(src, str(upload_path), mime_type=asset.type)
 
     def _update_asset_href(self, asset: Asset) -> None:
         try:
