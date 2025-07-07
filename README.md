@@ -334,7 +334,7 @@ stac_client.delete_collection("test-collection")
 
 ## Uploading Files and Registering STAC Items
 
-You can use the `DatacosmosUploader` class to upload files to the DataCosmos cloud storage and register a STAC item.
+You can use the `STACClient` class to upload files to the DataCosmos cloud storage and register a STAC item.
 
 ### **Upload and add STAC Item**
 
@@ -342,13 +342,11 @@ You can use the `DatacosmosUploader` class to upload files to the DataCosmos clo
 from pystac import Item, Asset
 
 from datacosmos.datacosmos_client import DatacosmosClient
-from datacosmos.uploader.datacosmos_uploader import DatacosmosUploader
+from datacosmos.stac.stac_client import STACClient
 
-# Initialize the client with the configuration
-client = DatacosmosClient(config=config)
+client = DatacosmosClient()
 
-# Create the uploader instance
-uploader = DatacosmosUploader(client)
+stac_client = STACClient(client)
 
 stac_item = Item(
     id="new-item",
@@ -372,7 +370,7 @@ stac_item.add_asset(
 assets_path = "path/to/assets"
 
 # Upload the item and its assets, and register it in the STAC API
-uploader.upload_item(stac_item, assets_path)
+stac_client.upload_item(stac_item, assets_path)
 ```
 
 ## Error Handling
