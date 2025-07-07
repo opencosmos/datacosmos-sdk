@@ -29,6 +29,7 @@ class Config(BaseSettings):
     authentication: Optional[AuthenticationConfig] = None
     stac: Optional[URL] = None
     datacosmos_cloud_storage: Optional[URL] = None
+    datacosmos_public_cloud_storage: Optional[URL] = None
 
     DEFAULT_AUTH_TYPE: ClassVar[str] = "m2m"
     DEFAULT_AUTH_TOKEN_URL: ClassVar[str] = "https://login.open-cosmos.com/oauth/token"
@@ -86,12 +87,18 @@ class Config(BaseSettings):
             path=os.getenv("DC_CLOUD_STORAGE_PATH", "/api/data/v0/storage"),
         )
 
+        datacosmos_public_cloud_storage_config = URL(
+            protocol=os.getenv("DC_PUBLIC_CLOUD_STORAGE_PROTOCOL", "https"),
+            host=os.getenv("DC_PUBLIC_CLOUD_STORAGE_HOST", "app.open-cosmos.com"),
+            port=int(os.getenv("DC_PUBLIC_CLOUD_STORAGE_PORT", "443")),
+            path=os.getenv("DC_PUBLIC_CLOUD_STORAGE_PATH", "/api/data/v0/storage"),
+        )
+
         return cls(
             authentication=authentication_config,
             stac=stac_config,
             datacosmos_cloud_storage=datacosmos_cloud_storage_config,
-            mission_id=int(os.getenv("MISSION_ID", "0")),
-            environment=os.getenv("ENVIRONMENT", "test"),
+            datacosmos_public_cloud_storage=datacosmos_public_cloud_storage_config,
         )
 
     @field_validator("authentication", mode="after")
@@ -191,3 +198,25 @@ class Config(BaseSettings):
                 path="/api/data/v0/storage",
             )
         return datacosmos_cloud_storage_config
+
+    @field_validator("datacosmos_public_cloud_storage", mode="before")
+    @classmethod
+    def validate_datacosmos_public_cloud_storage(
+        cls, datacosmos_public_cloud_storage_config: Optional[URL]
+    ) -> URL:
+        """Ensure datacosmos cloud storage configuration has a default if not explicitly set.
+
+        Args:
+            datacosmos_public_cloud_storage_config (Optional[URL]): The datacosmos public cloud storage config to validate.
+
+        Returns:
+            URL: The validated datacosmos public cloud storage configuration.
+        """
+        if datacosmos_public_cloud_storage_config is None:
+            return URL(
+                protocol="https",
+                host="app.open-cosmos.com",
+                port=443,
+                path="/api/data/v0/storage",
+            )
+        return datacosmos_public_cloud_storage_config
