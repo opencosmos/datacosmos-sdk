@@ -1,7 +1,6 @@
 """Handles uploading files to Datacosmos storage and registering STAC items."""
 
 from pathlib import Path
-from typing import Any
 
 from pydantic import TypeAdapter
 
@@ -23,12 +22,12 @@ class Uploader(StorageBase):
 
     def upload_item(
         self,
-        item: Any,
+        item: DatacosmosItem,
         assets_path: str | None = None,
         included_assets: list[str] | bool = True,
         max_workers: int = 4,
         time_out: float = 60 * 60 * 1,
-    ) -> Any:
+    ) -> DatacosmosItem:
         """Upload a STAC item and its assets to Datacosmos."""
         if not assets_path and not isinstance(item, str):
             raise ValueError(
@@ -46,9 +45,7 @@ class Uploader(StorageBase):
         upload_assets = (
             included_assets
             if isinstance(included_assets, list)
-            else item.assets.keys()
-            if included_assets is True
-            else []
+            else item.assets.keys() if included_assets is True else []
         )
 
         jobs = [(item, asset_key, assets_path) for asset_key in upload_assets]

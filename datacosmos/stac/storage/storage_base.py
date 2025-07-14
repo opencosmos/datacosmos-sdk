@@ -18,14 +18,14 @@ class StorageBase:
         mime, _ = mimetypes.guess_type(src)
         return mime or "application/octet-stream"
 
-    def _run_in_threads(self, fn, jobs, max_workers: int, timeout: float):
+    def _run_in_threads(self, fn, fn_args, max_workers: int, timeout: float):
         """Run the callable `fn(*args)` over the iterable of jobs in parallel threads.
 
         `jobs` should be a list of tuples, each tuple unpacked as fn(*args).
         """
         futures = []
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            for args in jobs:
+            for args in fn_args:
                 futures.append(executor.submit(fn, *args))
         done, not_done = wait(futures, timeout=timeout)
         errors = []
