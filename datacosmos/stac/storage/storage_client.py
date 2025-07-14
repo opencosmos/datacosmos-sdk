@@ -1,6 +1,5 @@
 """Generic StorageClient for all storage operations (upload, download, etc.)."""
 
-
 from datacosmos.datacosmos_client import DatacosmosClient
 from datacosmos.stac.item.models.datacosmos_item import DatacosmosItem
 from datacosmos.stac.storage.uploader import Uploader
