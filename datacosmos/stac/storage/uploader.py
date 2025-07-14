@@ -45,7 +45,9 @@ class Uploader(StorageBase):
         upload_assets = (
             included_assets
             if isinstance(included_assets, list)
-            else item.assets.keys() if included_assets is True else []
+            else item.assets.keys()
+            if included_assets is True
+            else []
         )
 
         jobs = [(item, asset_key, assets_path) for asset_key in upload_assets]

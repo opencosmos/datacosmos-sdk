@@ -24,10 +24,10 @@ def test_storage_client_upload_item(monkeypatch):
     assert result == "uploaded"
     # Check that uploader.upload_item was called with correct args
     uploader_instance = storage.uploader
-    # The first positional arg passed to upload_item should be 'item'
-    assert uploader_instance.upload_called_with[0] == ("item",)
-    # The keyword args should include assets_path and max_workers
     assert uploader_instance.upload_called_with[1] == {
+        "item": "item",
         "assets_path": "path",
+        "included_assets": True,
         "max_workers": 2,
+        "time_out": 3600,
     }
