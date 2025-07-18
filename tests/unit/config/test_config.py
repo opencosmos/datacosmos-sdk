@@ -49,7 +49,6 @@ class TestConfig:
         monkeypatch.setenv("OC_STAC_HOST", "env-stac-host")
         monkeypatch.setenv("OC_STAC_PORT", "8080")
         monkeypatch.setenv("OC_STAC_PATH", "/env/stac")
-        monkeypatch.setenv("MISSION_ID", "99")
 
         config = Config.from_env()
 
@@ -62,8 +61,6 @@ class TestConfig:
         assert config.stac.host == "env-stac-host"
         assert config.stac.port == 8080
         assert config.stac.path == "/env/stac"
-
-        assert config.mission_id == 99
 
     def test_validate_authentication_applies_defaults_and_raises_value_error(self):
         # Missing client_id and client_secret should raise
@@ -94,6 +91,13 @@ class TestConfig:
 
     def test_datacosmos_cloud_storage_defaults_applied_when_none(self):
         storage = Config.validate_datacosmos_cloud_storage(None)
+        assert storage.protocol == "https"
+        assert storage.host == "app.open-cosmos.com"
+        assert storage.port == 443
+        assert storage.path == "/api/data/v0/storage"
+
+    def test_datacosmos_public_cloud_storage_defaults_applied_when_none(self):
+        storage = Config.validate_datacosmos_public_cloud_storage(None)
         assert storage.protocol == "https"
         assert storage.host == "app.open-cosmos.com"
         assert storage.port == 443

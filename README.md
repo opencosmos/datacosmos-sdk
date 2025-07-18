@@ -83,8 +83,10 @@ client = DatacosmosClient(config=config)
 | `datacosmos_cloud_storage.host`     | `app.open-cosmos.com`                   | YAML / ENV     |
 | `datacosmos_cloud_storage.port`     | `443`                                   | YAML / ENV     |
 | `datacosmos_cloud_storage.path`     | `/api/data/v0/storage`                 | YAML / ENV     |
-| `mission_id`                | `0`                                             | YAML / ENV     |
-| `environment`               | `test`                                          | YAML / ENV     |
+| `datacosmos_public_cloud_storage.protocol` | `https`                                 | YAML / ENV     |
+| `datacosmos_public_cloud_storage.host`     | `app.open-cosmos.com`                   | YAML / ENV     |
+| `datacosmos_public_cloud_storage.port`     | `443`                                   | YAML / ENV     |
+| `datacosmos_public_cloud_storage.path`     | `/api/data/v0/storage`                 | YAML / ENV     |
 
 ## STAC Client
 
@@ -163,7 +165,41 @@ stac_item.add_asset(
     )
 )
 
-stac_client.create_item(collection_id="example-collection", item=stac_item)
+# this will raise an error if the stac item already exists. Use the add_item method in that case
+stac_client.create_item(item=stac_item)
+```
+
+#### 4. **Add a STAC Item**
+```python
+from pystac import Item, Asset
+from datetime import datetime
+
+from datacosmos.datacosmos_client import DatacosmosClient
+from datacosmos.stac.stac_client import STACClient
+
+client = DatacosmosClient()
+stac_client = STACClient(client)
+
+stac_item = Item(
+    id="new-item",
+    geometry={"type": "Point", "coordinates": [102.0, 0.5]},
+    bbox=[101.0, 0.0, 103.0, 1.0],
+    datetime=datetime.utcnow(),
+    properties={"datetime": datetime.utcnow(), "processing:level": "example-processing-level"},
+    collection="example-collection"
+)
+
+stac_item.add_asset(
+    "image",
+    Asset(
+        href="https://example.com/sample-image.tiff",
+        media_type="image/tiff",
+        roles=["data"],
+        title="Sample Image"
+    )
+)
+
+stac_client.add_item(item=stac_item)
 ```
 
 #### 4. **Update an Existing STAC Item**
@@ -298,48 +334,44 @@ stac_client.delete_collection("test-collection")
 
 ## Uploading Files and Registering STAC Items
 
-You can use the `DatacosmosUploader` class to upload files to the DataCosmos cloud storage and register a STAC item. The `upload_and_register_item` method will take care of both uploading files and creating the STAC item.
+You can use the `STACClient` class to upload files to the DataCosmos cloud storage and register a STAC item.
 
-### **Upload Files and Register STAC Item**
-
-1. Make sure you have a directory with the same name as your STAC item JSON file (this directory should contain the files you want to upload).
-2. Call the `upload_and_register_item` method, providing the path to the STAC item JSON file.
+### **Upload and add STAC Item**
 
 ```python
+from pystac import Item, Asset
+
 from datacosmos.datacosmos_client import DatacosmosClient
-from datacosmos.uploader.datacosmos_uploader import DatacosmosUploader
+from datacosmos.stac.stac_client import STACClient
 
-# Initialize the client with the configuration
-client = DatacosmosClient(config=config)
+client = DatacosmosClient()
 
-# Create the uploader instance
-uploader = DatacosmosUploader(client)
+stac_client = STACClient(client)
 
-# Path to your STAC item JSON file
-item_json_file_path = "/home/peres/repos/datacosmos-sdk/MENUT_L1A_000001943_20250304134812_20250304134821_49435814.json"
+stac_item = Item(
+    id="new-item",
+    geometry={"type": "Point", "coordinates": [102.0, 0.5]},
+    bbox=[101.0, 0.0, 103.0, 1.0],
+    datetime=datetime.utcnow(),
+    properties={"datetime": datetime.utcnow(), "processing:level": "example-processing-level"},
+    collection="example-collection"
+)
+
+stac_item.add_asset(
+    "image",
+    Asset(
+        href="https://example.com/sample-image.tiff",
+        media_type="image/tiff",
+        roles=["data"],
+        title="Sample Image"
+    )
+)
+
+assets_path = "path/to/assets"
 
 # Upload the item and its assets, and register it in the STAC API
-uploader.upload_and_register_item(item_json_file_path)
+stac_client.upload_item(stac_item, assets_path)
 ```
-
-### **Folder Structure**
-
-For the `upload_and_register_item` method to work correctly, ensure that the directory structure matches the name of the STAC item JSON file. For example:
-
-```
-/home/peres/repos/datacosmos-sdk/MENUT_L1A_000001943_20250304134812_20250304134821_49435814.json
-/home/peres/repos/datacosmos-sdk/MENUT_L1A_000001943_20250304134812_20250304134821_49435814/
-    ├── asset1.tiff
-    ├── asset2.tiff
-    └── ...
-```
-
-The folder `MENUT_L1A_000001943_20250304134812_20250304134821_49435814` should contain the assets (files) for upload.
-
-The `upload_and_register_item` method will:
-1. Delete any existing item with the same ID (if it exists).
-2. Upload the assets in the folder to DataCosmos cloud storage.
-3. Register the item in the STAC API.
 
 ## Error Handling
 

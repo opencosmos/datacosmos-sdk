@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from datacosmos.stac.enums.processing_level import ProcessingLevel
-from datacosmos.uploader.dataclasses.upload_path import UploadPath
+from datacosmos.stac.storage.dataclasses.upload_path import UploadPath
 
 
 class DummyItem:
