@@ -17,7 +17,7 @@ class TestCatalogSearchParameters:
             seasons=["Winter"],
             satellite=["MANTIS"],
             product_type=["Satellite"],
-            processing_level=["L1A"],
+            processing_level=["l1A"],
             collections=["collection1"],
         )
 
@@ -51,7 +51,7 @@ class TestCatalogSearchParameters:
             seasons=["Summer"],
             satellite=["MANTIS"],
             product_type=["Satellite"],
-            processing_level=["L1A"],
+            processing_level=["l1A"],
         )
 
         query = params.to_query()
@@ -62,7 +62,7 @@ class TestCatalogSearchParameters:
         }
         assert query["opencosmos:season"] == {"in": ["Summer"]}
         assert query["opencosmos:product_type"] == {"in": ["Satellite"]}
-        assert query["processing:level"] == {"in": ["L1A"]}
+        assert query["processing:level"] == {"in": ["l1A"]}
         assert query["sat:platform_international_designator"] == {
             "in": [SATELLITE_NAME_MAPPING["MANTIS"]]
         }

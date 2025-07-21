@@ -34,7 +34,7 @@ class TestUploadPath:
         item = DummyItem(
             id_="item123",
             datetime_str="2023-05-09T12:00:00Z",
-            level_str="L1A",
+            level_str="l1A",
             assets={"asset1": MagicMock(href="some/href")},
         )
         up = UploadPath.from_item_path(item, "MissionX", "file.tif")
