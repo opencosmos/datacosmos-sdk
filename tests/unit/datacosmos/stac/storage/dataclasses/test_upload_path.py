@@ -47,7 +47,7 @@ class TestUploadPath:
         assert up.path == "file.tif"
 
     def test_from_path_valid(self):
-        path_str = "missionx/L1A/2023/05/09/item123/file.tif"
+        path_str = "missionx/l1A/2023/05/09/item123/file.tif"
         up = UploadPath.from_path(path_str)
         assert up.mission == "missionx"
         assert up.level == ProcessingLevel.L1A
