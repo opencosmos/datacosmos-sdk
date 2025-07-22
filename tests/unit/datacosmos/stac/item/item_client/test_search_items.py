@@ -59,7 +59,7 @@ def test_search_items(
         end_date="2/9/2025",
         satellite=["MANTIS"],
         product_type=["Satellite"],
-        processing_level=["L1A"],
+        processing_level=["l1A"],
         collections=collections,
     )
 

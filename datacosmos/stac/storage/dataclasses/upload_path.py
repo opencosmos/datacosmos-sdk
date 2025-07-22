@@ -37,7 +37,7 @@ class UploadPath:
         dt = datetime.strptime(item.properties["datetime"], "%Y-%m-%dT%H:%M:%SZ")
         path = UploadPath(
             mission=mission,
-            level=ProcessingLevel(item.properties["processing:level"].upper()),
+            level=ProcessingLevel(item.properties["processing:level"]),
             day=dt.day,
             month=dt.month,
             year=dt.year,

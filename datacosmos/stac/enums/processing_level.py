@@ -6,10 +6,11 @@ from enum import Enum
 class ProcessingLevel(Enum):
     """Enum class for the processing levels of the data."""
 
-    L0 = "L0"
-    L1A = "L1A"
-    L2A = "L2A"
-    L1B = "L1B"
-    L1C = "L1C"
-    L1D = "L1D"
-    L3 = "L3"
+    RAW = "RAW"
+    L0 = "l0"
+    L1A = "l1A"
+    L2A = "l2A"
+    L1B = "l1B"
+    L1C = "l1C"
+    L1D = "l1D"
+    L3 = "l3"
