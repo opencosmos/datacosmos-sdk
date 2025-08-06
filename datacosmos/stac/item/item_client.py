@@ -3,6 +3,7 @@
 Provides methods for querying, fetching, creating, updating, and deleting STAC items.
 """
 
+import os
 from typing import Generator, Optional
 
 from pystac import Item
@@ -27,7 +28,11 @@ class ItemClient:
             client (DatacosmosClient): The authenticated Datacosmos client instance.
         """
         self.client = client
-        self.base_url = client.config.stac.as_domain_url()
+        if hasattr(client, "config") and client.config:
+            self.base_url = client.config.stac.as_domain_url()
+        else:
+            self.base_url = None
+        self.stac_api = os.getenv("STAC_API_HOST")
 
     def fetch_item(self, item_id: str, collection_id: str) -> Item:
         """Fetch a single STAC item by ID.
@@ -39,7 +44,12 @@ class ItemClient:
         Returns:
             Item: The fetched STAC item.
         """
-        url = self.base_url.with_suffix(f"/collections/{collection_id}/items/{item_id}")
+        suffix = f"collections/{collection_id}/items/{item_id}"
+        url = (
+            self.base_url.with_suffix(f"/{suffix}")
+            if self.base_url
+            else self.stac_api + suffix
+        )
         response = self.client.get(url)
         check_api_response(response)
         return Item.from_dict(response.json())
@@ -55,7 +65,12 @@ class ItemClient:
         Yields:
             Item: Parsed STAC item.
         """
-        url = self.base_url.with_suffix("/search")
+        suffix = "search"
+        url = (
+            self.base_url.with_suffix(f"/{suffix}")
+            if self.base_url
+            else self.stac_api + suffix
+        )
         parameters_query = parameters.to_query()
         body = {"project": project_id, "limit": 50, "query": parameters_query}
         if parameters.collections is not None:
@@ -84,7 +99,12 @@ class ItemClient:
         if not collection_id:
             raise ValueError("Cannot create item: no collection_id found on item")
 
-        url = self.base_url.with_suffix(f"/collections/{collection_id}/items")
+        suffix = f"collections/{collection_id}/items"
+        url = (
+            self.base_url.with_suffix(f"/{suffix}")
+            if self.base_url
+            else self.stac_api + suffix
+        )
         item_json: dict = item.to_dict()
         response = self.client.post(url, json=item_json)
         check_api_response(response)
@@ -111,7 +131,12 @@ class ItemClient:
         if not collection_id:
             raise ValueError("Cannot create item: no collection_id found on item")
 
-        url = self.base_url.with_suffix(f"/collections/{collection_id}/items/{item.id}")
+        suffix = f"collections/{collection_id}/items/{item.id}"
+        url = (
+            self.base_url.with_suffix(f"/{suffix}")
+            if self.base_url
+            else self.stac_api + suffix
+        )
         item_json: dict = item.to_dict()
         response = self.client.put(url, json=item_json)
         check_api_response(response)
@@ -126,7 +151,12 @@ class ItemClient:
             collection_id (str): The ID of the collection containing the item.
             update_data (ItemUpdate): The structured update payload.
         """
-        url = self.base_url.with_suffix(f"/collections/{collection_id}/items/{item_id}")
+        suffix = f"collections/{collection_id}/items/{item_id}"
+        url = (
+            self.base_url.with_suffix(f"/{suffix}")
+            if self.base_url
+            else self.stac_api + suffix
+        )
 
         update_payload = update_data.model_dump(by_alias=True, exclude_none=True)
 
@@ -152,7 +182,13 @@ class ItemClient:
         Raises:
             OCError: If the item is not found or deletion is forbidden.
         """
-        url = self.base_url.with_suffix(f"/collections/{collection_id}/items/{item_id}")
+        suffix = f"collections/{collection_id}/items/{item_id}"
+
+        url = (
+            self.base_url.with_suffix(f"/{suffix}")
+            if self.base_url
+            else self.stac_api + suffix
+        )
         response = self.client.delete(url)
         check_api_response(response)
 

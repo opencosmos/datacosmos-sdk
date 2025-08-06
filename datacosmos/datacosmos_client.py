@@ -19,12 +19,14 @@ class DatacosmosClient:
         self,
         config: Optional[Config | Any] = None,
         http_session: Optional[requests.Session | OAuth2Session] = None,
+        token: Optional[str] = None,
     ):
         """Initialize the DatacosmosClient.
 
         Args:
             config (Optional[Config]): Configuration object (only needed when SDK creates its own session).
             http_session (Optional[requests.Session]): Pre-authenticated session.
+            token: (Optional[str]): raw bearer token string.
         """
         if http_session is not None:
             self._http_client = http_session
@@ -53,6 +55,11 @@ class DatacosmosClient:
                 )
 
             self.config = config
+        elif token is not None:
+            self._owns_session = False
+            new_session = requests.Session()
+            new_session.headers.update({"Authorization": f"Bearer {token}"})
+            self._http_client = new_session
         else:
             if config:
                 self.config = config

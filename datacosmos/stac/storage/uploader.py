@@ -62,7 +62,12 @@ class Uploader(StorageBase):
         self, src: str, dst: str, mime_type: str | None = None
     ) -> None:
         """Uploads a single file to the specified destination path."""
-        url = self.base_url.with_suffix(dst)
+        suffix = dst[1:]
+        url = (
+            self.base_url.with_suffix(f"/{suffix}")
+            if self.base_url
+            else self.datacosmos_file_storage + suffix
+        )
         mime = mime_type or self._guess_mime(src)
         headers = {"Content-Type": mime}
         with open(src, "rb") as f:
