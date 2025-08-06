@@ -5,6 +5,7 @@ from typing import Generator, Optional
 from pystac import Collection, Extent, SpatialExtent, TemporalExtent
 from pystac.utils import str_to_datetime
 
+from datacosmos.config.models.url import URL
 from datacosmos.datacosmos_client import DatacosmosClient
 from datacosmos.exceptions.datacosmos_exception import DatacosmosException
 from datacosmos.stac.collection.models.collection_update import CollectionUpdate
@@ -17,7 +18,11 @@ class CollectionClient:
     def __init__(self, client: DatacosmosClient):
         """Initialize the CollectionClient with a DatacosmosClient."""
         self.client = client
-        self.base_url = client.config.stac.as_domain_url()
+        self.base_url = (
+            client.config.stac.as_domain_url()
+            if isinstance(client.config.stac, URL)
+            else client.config.stac
+        )
 
     def fetch_collection(self, collection_id: str) -> Collection:
         """Fetch details of an existing STAC collection."""

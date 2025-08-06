@@ -7,6 +7,7 @@ from typing import Generator, Optional
 
 from pystac import Item
 
+from datacosmos.config.models.url import URL
 from datacosmos.datacosmos_client import DatacosmosClient
 from datacosmos.exceptions.datacosmos_exception import DatacosmosException
 from datacosmos.stac.item.models.catalog_search_parameters import (
@@ -27,7 +28,11 @@ class ItemClient:
             client (DatacosmosClient): The authenticated Datacosmos client instance.
         """
         self.client = client
-        self.base_url = client.config.stac.as_domain_url()
+        self.base_url = (
+            client.config.stac.as_domain_url()
+            if isinstance(client.config.stac, URL)
+            else client.config.stac
+        )
 
     def fetch_item(self, item_id: str, collection_id: str) -> Item:
         """Fetch a single STAC item by ID.

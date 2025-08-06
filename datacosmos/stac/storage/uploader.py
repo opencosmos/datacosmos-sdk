@@ -4,6 +4,7 @@ from pathlib import Path
 
 from pydantic import TypeAdapter
 
+from datacosmos.config.models.url import URL
 from datacosmos.datacosmos_client import DatacosmosClient
 from datacosmos.stac.item.item_client import ItemClient
 from datacosmos.stac.item.models.asset import Asset
@@ -91,7 +92,11 @@ class Uploader(StorageBase):
 
     def _update_asset_href(self, asset: Asset) -> None:
         try:
-            url = self.client.config.datacosmos_public_cloud_storage.as_domain_url()
+            url = (
+                self.client.config.datacosmos_public_cloud_storage.as_domain_url()
+                if isinstance(self.client.config.datacosmos_public_cloud_storage, URL)
+                else self.client.config.datacosmos_public_cloud_storage
+            )
             new_href = url.with_base(asset.href)  # type: ignore
             asset.href = str(new_href)
         except ValueError:
