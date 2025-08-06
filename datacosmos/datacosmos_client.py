@@ -56,7 +56,7 @@ class DatacosmosClient:
 
             self.config = config
         elif token is not None:
-            self._owns_session = False
+            self._owns_session = True
             new_session = requests.Session()
             new_session.headers.update({"Authorization": f"Bearer {token}"})
             self._http_client = new_session

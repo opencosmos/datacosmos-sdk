@@ -27,11 +27,14 @@ class CollectionClient:
     def fetch_collection(self, collection_id: str) -> Collection:
         """Fetch details of an existing STAC collection."""
         suffix = f"collections/{collection_id}"
-        url = (
-            self.base_url.with_suffix(f"/{suffix}")
-            if self.base_url
-            else self.stac_api + suffix
-        )
+        if self.base_url:
+            url = self.base_url.with_suffix(f"/{suffix}")
+        elif self.stac_api is not None:
+            url = self.stac_api + suffix
+        else:
+            raise ValueError(
+                "STAC_API environment variable is not set and base_url is not available"
+            )
         response = self.client.get(url)
         check_api_response(response)
         return Collection.from_dict(response.json())
@@ -65,11 +68,14 @@ class CollectionClient:
                 temporal=TemporalExtent(parsed_temporal),
             )
         suffix = "collections"
-        url = (
-            self.base_url.with_suffix(f"/{suffix}")
-            if self.base_url
-            else self.stac_api + suffix
-        )
+        if self.base_url:
+            url = self.base_url.with_suffix(f"/{suffix}")
+        elif self.stac_api is not None:
+            url = self.stac_api + suffix
+        else:
+            raise ValueError(
+                "STAC_API environment variable is not set and base_url is not available"
+            )
         response = self.client.post(url, json=collection.to_dict())
         check_api_response(response)
 
@@ -78,11 +84,14 @@ class CollectionClient:
     ) -> None:
         """Update an existing STAC collection."""
         suffix = f"collections/{collection_id}"
-        url = (
-            self.base_url.with_suffix(f"/{suffix}")
-            if self.base_url
-            else self.stac_api + suffix
-        )
+        if self.base_url:
+            url = self.base_url.with_suffix(f"/{suffix}")
+        elif self.stac_api is not None:
+            url = self.stac_api + suffix
+        else:
+            raise ValueError(
+                "STAC_API environment variable is not set and base_url is not available"
+            )
         response = self.client.patch(
             url, json=update_data.model_dump(by_alias=True, exclude_none=True)
         )
@@ -91,22 +100,28 @@ class CollectionClient:
     def delete_collection(self, collection_id: str) -> None:
         """Delete a STAC collection by its ID."""
         suffix = f"collections/{collection_id}"
-        url = (
-            self.base_url.with_suffix(f"/{suffix}")
-            if self.base_url
-            else self.stac_api + suffix
-        )
+        if self.base_url:
+            url = self.base_url.with_suffix(f"/{suffix}")
+        elif self.stac_api is not None:
+            url = self.stac_api + suffix
+        else:
+            raise ValueError(
+                "STAC_API environment variable is not set and base_url is not available"
+            )
         response = self.client.delete(url)
         check_api_response(response)
 
     def fetch_all_collections(self) -> Generator[Collection, None, None]:
         """Fetch all STAC collections with pagination support."""
         suffix = "collections"
-        url = (
-            self.base_url.with_suffix(f"/{suffix}")
-            if self.base_url
-            else self.stac_api + suffix
-        )
+        if self.base_url:
+            url = self.base_url.with_suffix(f"/{suffix}")
+        elif self.stac_api is not None:
+            url = self.stac_api + suffix
+        else:
+            raise ValueError(
+                "STAC_API environment variable is not set and base_url is not available"
+            )
         params = {"limit": 10}
 
         while True:

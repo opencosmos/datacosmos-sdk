@@ -45,11 +45,14 @@ class ItemClient:
             Item: The fetched STAC item.
         """
         suffix = f"collections/{collection_id}/items/{item_id}"
-        url = (
-            self.base_url.with_suffix(f"/{suffix}")
-            if self.base_url
-            else self.stac_api + suffix
-        )
+        if self.base_url:
+            url = self.base_url.with_suffix(f"/{suffix}")
+        elif self.stac_api is not None:
+            url = self.stac_api + suffix
+        else:
+            raise ValueError(
+                "STAC_API environment variable is not set and base_url is not available"
+            )
         response = self.client.get(url)
         check_api_response(response)
         return Item.from_dict(response.json())
@@ -66,11 +69,14 @@ class ItemClient:
             Item: Parsed STAC item.
         """
         suffix = "search"
-        url = (
-            self.base_url.with_suffix(f"/{suffix}")
-            if self.base_url
-            else self.stac_api + suffix
-        )
+        if self.base_url:
+            url = self.base_url.with_suffix(f"/{suffix}")
+        elif self.stac_api is not None:
+            url = self.stac_api + suffix
+        else:
+            raise ValueError(
+                "STAC_API environment variable is not set and base_url is not available"
+            )
         parameters_query = parameters.to_query()
         body = {"project": project_id, "limit": 50, "query": parameters_query}
         if parameters.collections is not None:
@@ -100,11 +106,14 @@ class ItemClient:
             raise ValueError("Cannot create item: no collection_id found on item")
 
         suffix = f"collections/{collection_id}/items"
-        url = (
-            self.base_url.with_suffix(f"/{suffix}")
-            if self.base_url
-            else self.stac_api + suffix
-        )
+        if self.base_url:
+            url = self.base_url.with_suffix(f"/{suffix}")
+        elif self.stac_api is not None:
+            url = self.stac_api + suffix
+        else:
+            raise ValueError(
+                "STAC_API environment variable is not set and base_url is not available"
+            )
         item_json: dict = item.to_dict()
         response = self.client.post(url, json=item_json)
         check_api_response(response)
@@ -132,11 +141,14 @@ class ItemClient:
             raise ValueError("Cannot create item: no collection_id found on item")
 
         suffix = f"collections/{collection_id}/items/{item.id}"
-        url = (
-            self.base_url.with_suffix(f"/{suffix}")
-            if self.base_url
-            else self.stac_api + suffix
-        )
+        if self.base_url:
+            url = self.base_url.with_suffix(f"/{suffix}")
+        elif self.stac_api is not None:
+            url = self.stac_api + suffix
+        else:
+            raise ValueError(
+                "STAC_API environment variable is not set and base_url is not available"
+            )
         item_json: dict = item.to_dict()
         response = self.client.put(url, json=item_json)
         check_api_response(response)
@@ -152,11 +164,14 @@ class ItemClient:
             update_data (ItemUpdate): The structured update payload.
         """
         suffix = f"collections/{collection_id}/items/{item_id}"
-        url = (
-            self.base_url.with_suffix(f"/{suffix}")
-            if self.base_url
-            else self.stac_api + suffix
-        )
+        if self.base_url:
+            url = self.base_url.with_suffix(f"/{suffix}")
+        elif self.stac_api is not None:
+            url = self.stac_api + suffix
+        else:
+            raise ValueError(
+                "STAC_API environment variable is not set and base_url is not available"
+            )
 
         update_payload = update_data.model_dump(by_alias=True, exclude_none=True)
 
@@ -183,12 +198,14 @@ class ItemClient:
             OCError: If the item is not found or deletion is forbidden.
         """
         suffix = f"collections/{collection_id}/items/{item_id}"
-
-        url = (
-            self.base_url.with_suffix(f"/{suffix}")
-            if self.base_url
-            else self.stac_api + suffix
-        )
+        if self.base_url:
+            url = self.base_url.with_suffix(f"/{suffix}")
+        elif self.stac_api is not None:
+            url = self.stac_api + suffix
+        else:
+            raise ValueError(
+                "STAC_API environment variable is not set and base_url is not available"
+            )
         response = self.client.delete(url)
         check_api_response(response)
 

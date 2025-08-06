@@ -63,11 +63,15 @@ class Uploader(StorageBase):
     ) -> None:
         """Uploads a single file to the specified destination path."""
         suffix = dst[1:]
-        url = (
-            self.base_url.with_suffix(f"/{suffix}")
-            if self.base_url
-            else self.datacosmos_file_storage + suffix
-        )
+        if self.base_url:
+            url = self.base_url.with_suffix(f"/{suffix}")
+        elif self.datacosmos_file_storage is not None:
+            url = self.datacosmos_file_storage + suffix
+        else:
+            raise ValueError(
+                "DATACOSMOS_FILE_STORAGE environment variable is not set and base_url is not available"
+            )
+
         mime = mime_type or self._guess_mime(src)
         headers = {"Content-Type": mime}
         with open(src, "rb") as f:
