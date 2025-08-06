@@ -26,7 +26,11 @@ class CollectionClient:
 
     def fetch_collection(self, collection_id: str) -> Collection:
         """Fetch details of an existing STAC collection."""
-        url = self.base_url.with_suffix(f"/collections/{collection_id}")
+        suffix = f"/collections/{collection_id}"
+        if isinstance(self.base_url, str):
+            url = self.base_url + suffix
+        else:
+            url = self.base_url.with_suffix(suffix)
         response = self.client.get(url)
         check_api_response(response)
         return Collection.from_dict(response.json())
@@ -59,8 +63,11 @@ class CollectionClient:
                 spatial=SpatialExtent(spatial_data),
                 temporal=TemporalExtent(parsed_temporal),
             )
-
-        url = self.base_url.with_suffix("/collections")
+        suffix = "/collections"
+        if isinstance(self.base_url, str):
+            url = self.base_url + suffix
+        else:
+            url = self.base_url.with_suffix(suffix)
         response = self.client.post(url, json=collection.to_dict())
         check_api_response(response)
 
@@ -68,7 +75,11 @@ class CollectionClient:
         self, collection_id: str, update_data: CollectionUpdate
     ) -> None:
         """Update an existing STAC collection."""
-        url = self.base_url.with_suffix(f"/collections/{collection_id}")
+        suffix = f"/collections/{collection_id}"
+        if isinstance(self.base_url, str):
+            url = self.base_url + suffix
+        else:
+            url = self.base_url.with_suffix(suffix)
         response = self.client.patch(
             url, json=update_data.model_dump(by_alias=True, exclude_none=True)
         )
@@ -76,13 +87,21 @@ class CollectionClient:
 
     def delete_collection(self, collection_id: str) -> None:
         """Delete a STAC collection by its ID."""
-        url = self.base_url.with_suffix(f"/collections/{collection_id}")
+        suffix = f"/collections/{collection_id}"
+        if isinstance(self.base_url, str):
+            url = self.base_url + suffix
+        else:
+            url = self.base_url.with_suffix(suffix)
         response = self.client.delete(url)
         check_api_response(response)
 
     def fetch_all_collections(self) -> Generator[Collection, None, None]:
         """Fetch all STAC collections with pagination support."""
-        url = self.base_url.with_suffix("/collections")
+        suffix = "/collections"
+        if isinstance(self.base_url, str):
+            url = self.base_url + suffix
+        else:
+            url = self.base_url.with_suffix(suffix)
         params = {"limit": 10}
 
         while True:
