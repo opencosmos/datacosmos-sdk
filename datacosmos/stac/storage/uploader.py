@@ -4,7 +4,6 @@ from pathlib import Path
 
 from pydantic import TypeAdapter
 
-from datacosmos.config.models.url import URL
 from datacosmos.datacosmos_client import DatacosmosClient
 from datacosmos.stac.item.item_client import ItemClient
 from datacosmos.stac.item.models.asset import Asset
@@ -63,11 +62,7 @@ class Uploader(StorageBase):
         self, src: str, dst: str, mime_type: str | None = None
     ) -> None:
         """Uploads a single file to the specified destination path."""
-        suffix = dst
-        if isinstance(self.base_url, str):
-            url = self.base_url + suffix
-        else:
-            url = self.base_url.with_suffix(suffix)
+        url = self.base_url.with_suffix(dst)
         mime = mime_type or self._guess_mime(src)
         headers = {"Content-Type": mime}
         with open(src, "rb") as f:
@@ -96,11 +91,7 @@ class Uploader(StorageBase):
 
     def _update_asset_href(self, asset: Asset) -> None:
         try:
-            url = (
-                self.client.config.datacosmos_public_cloud_storage.as_domain_url()
-                if isinstance(self.client.config.datacosmos_public_cloud_storage, URL)
-                else self.client.config.datacosmos_public_cloud_storage
-            )
+            url = self.client.config.datacosmos_public_cloud_storage.as_domain_url()
             new_href = url.with_base(asset.href)  # type: ignore
             asset.href = str(new_href)
         except ValueError:

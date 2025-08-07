@@ -7,7 +7,6 @@ from typing import Generator, Optional
 
 from pystac import Item
 
-from datacosmos.config.models.url import URL
 from datacosmos.datacosmos_client import DatacosmosClient
 from datacosmos.exceptions.datacosmos_exception import DatacosmosException
 from datacosmos.stac.item.models.catalog_search_parameters import (
@@ -28,11 +27,7 @@ class ItemClient:
             client (DatacosmosClient): The authenticated Datacosmos client instance.
         """
         self.client = client
-        self.base_url = (
-            client.config.stac.as_domain_url()
-            if isinstance(client.config.stac, URL)
-            else client.config.stac
-        )
+        self.base_url = client.config.stac.as_domain_url()
 
     def fetch_item(self, item_id: str, collection_id: str) -> Item:
         """Fetch a single STAC item by ID.
@@ -44,11 +39,7 @@ class ItemClient:
         Returns:
             Item: The fetched STAC item.
         """
-        suffix = f"/collections/{collection_id}/items/{item_id}"
-        if isinstance(self.base_url, str):
-            url = self.base_url + suffix
-        else:
-            url = self.base_url.with_suffix(suffix)
+        url = self.base_url.with_suffix(f"/collections/{collection_id}/items/{item_id}")
         response = self.client.get(url)
         check_api_response(response)
         return Item.from_dict(response.json())
@@ -64,11 +55,7 @@ class ItemClient:
         Yields:
             Item: Parsed STAC item.
         """
-        suffix = "/search"
-        if isinstance(self.base_url, str):
-            url = self.base_url + suffix
-        else:
-            url = self.base_url.with_suffix(suffix)
+        url = self.base_url.with_suffix("/search")
         parameters_query = parameters.to_query()
         body = {"project": project_id, "limit": 50, "query": parameters_query}
         if parameters.collections is not None:
@@ -97,11 +84,7 @@ class ItemClient:
         if not collection_id:
             raise ValueError("Cannot create item: no collection_id found on item")
 
-        suffix = f"/collections/{collection_id}/items"
-        if isinstance(self.base_url, str):
-            url = self.base_url + suffix
-        else:
-            url = self.base_url.with_suffix(suffix)
+        url = self.base_url.with_suffix(f"/collections/{collection_id}/items")
         item_json: dict = item.to_dict()
         response = self.client.post(url, json=item_json)
         check_api_response(response)
@@ -128,11 +111,7 @@ class ItemClient:
         if not collection_id:
             raise ValueError("Cannot create item: no collection_id found on item")
 
-        suffix = f"/collections/{collection_id}/items/{item.id}"
-        if isinstance(self.base_url, str):
-            url = self.base_url + suffix
-        else:
-            url = self.base_url.with_suffix(suffix)
+        url = self.base_url.with_suffix(f"/collections/{collection_id}/items/{item.id}")
         item_json: dict = item.to_dict()
         response = self.client.put(url, json=item_json)
         check_api_response(response)
@@ -147,11 +126,7 @@ class ItemClient:
             collection_id (str): The ID of the collection containing the item.
             update_data (ItemUpdate): The structured update payload.
         """
-        suffix = f"/collections/{collection_id}/items/{item_id}"
-        if isinstance(self.base_url, str):
-            url = self.base_url + suffix
-        else:
-            url = self.base_url.with_suffix(suffix)
+        url = self.base_url.with_suffix(f"/collections/{collection_id}/items/{item_id}")
 
         update_payload = update_data.model_dump(by_alias=True, exclude_none=True)
 
@@ -177,11 +152,7 @@ class ItemClient:
         Raises:
             OCError: If the item is not found or deletion is forbidden.
         """
-        suffix = f"/collections/{collection_id}/items/{item_id}"
-        if isinstance(self.base_url, str):
-            url = self.base_url + suffix
-        else:
-            url = self.base_url.with_suffix(suffix)
+        url = self.base_url.with_suffix(f"/collections/{collection_id}/items/{item_id}")
         response = self.client.delete(url)
         check_api_response(response)
 

@@ -5,7 +5,6 @@ from typing import Generator, Optional
 from pystac import Collection, Extent, SpatialExtent, TemporalExtent
 from pystac.utils import str_to_datetime
 
-from datacosmos.config.models.url import URL
 from datacosmos.datacosmos_client import DatacosmosClient
 from datacosmos.exceptions.datacosmos_exception import DatacosmosException
 from datacosmos.stac.collection.models.collection_update import CollectionUpdate
@@ -18,19 +17,11 @@ class CollectionClient:
     def __init__(self, client: DatacosmosClient):
         """Initialize the CollectionClient with a DatacosmosClient."""
         self.client = client
-        self.base_url = (
-            client.config.stac.as_domain_url()
-            if isinstance(client.config.stac, URL)
-            else client.config.stac
-        )
+        self.base_url = client.config.stac.as_domain_url()
 
     def fetch_collection(self, collection_id: str) -> Collection:
         """Fetch details of an existing STAC collection."""
-        suffix = f"/collections/{collection_id}"
-        if isinstance(self.base_url, str):
-            url = self.base_url + suffix
-        else:
-            url = self.base_url.with_suffix(suffix)
+        url = self.base_url.with_suffix(f"/collections/{collection_id}")
         response = self.client.get(url)
         check_api_response(response)
         return Collection.from_dict(response.json())
@@ -63,11 +54,7 @@ class CollectionClient:
                 spatial=SpatialExtent(spatial_data),
                 temporal=TemporalExtent(parsed_temporal),
             )
-        suffix = "/collections"
-        if isinstance(self.base_url, str):
-            url = self.base_url + suffix
-        else:
-            url = self.base_url.with_suffix(suffix)
+        url = self.base_url.with_suffix("/collections")
         response = self.client.post(url, json=collection.to_dict())
         check_api_response(response)
 
@@ -75,11 +62,7 @@ class CollectionClient:
         self, collection_id: str, update_data: CollectionUpdate
     ) -> None:
         """Update an existing STAC collection."""
-        suffix = f"/collections/{collection_id}"
-        if isinstance(self.base_url, str):
-            url = self.base_url + suffix
-        else:
-            url = self.base_url.with_suffix(suffix)
+        url = self.base_url.with_suffix(f"/collections/{collection_id}")
         response = self.client.patch(
             url, json=update_data.model_dump(by_alias=True, exclude_none=True)
         )
@@ -87,21 +70,13 @@ class CollectionClient:
 
     def delete_collection(self, collection_id: str) -> None:
         """Delete a STAC collection by its ID."""
-        suffix = f"/collections/{collection_id}"
-        if isinstance(self.base_url, str):
-            url = self.base_url + suffix
-        else:
-            url = self.base_url.with_suffix(suffix)
+        url = self.base_url.with_suffix(f"/collections/{collection_id}")
         response = self.client.delete(url)
         check_api_response(response)
 
     def fetch_all_collections(self) -> Generator[Collection, None, None]:
         """Fetch all STAC collections with pagination support."""
-        suffix = "/collections"
-        if isinstance(self.base_url, str):
-            url = self.base_url + suffix
-        else:
-            url = self.base_url.with_suffix(suffix)
+        url = self.base_url.with_suffix("/collections")
         params = {"limit": 10}
 
         while True:

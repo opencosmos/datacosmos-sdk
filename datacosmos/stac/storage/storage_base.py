@@ -3,7 +3,6 @@
 import mimetypes
 from concurrent.futures import ThreadPoolExecutor, wait
 
-from datacosmos.config.models.url import URL
 from datacosmos.datacosmos_client import DatacosmosClient
 
 
@@ -13,11 +12,7 @@ class StorageBase:
     def __init__(self, client: DatacosmosClient):
         """Base class providing common storage helpers (threading, MIME guess, futures)."""
         self.client = client
-        self.base_url = (
-            client.config.datacosmos_cloud_storage.as_domain_url()
-            if isinstance(client.config.datacosmos_cloud_storage, URL)
-            else client.config.datacosmos_cloud_storage
-        )
+        self.base_url = client.config.datacosmos_cloud_storage.as_domain_url()
 
     def _guess_mime(self, src: str) -> str:
         mime, _ = mimetypes.guess_type(src)
