@@ -54,6 +54,7 @@ class CollectionClient:
                 spatial=SpatialExtent(spatial_data),
                 temporal=TemporalExtent(parsed_temporal),
             )
+
         url = self.base_url.with_suffix("/collections")
         response = self.client.post(url, json=collection.to_dict())
         check_api_response(response)
