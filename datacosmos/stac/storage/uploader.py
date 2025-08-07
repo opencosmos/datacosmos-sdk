@@ -27,6 +27,7 @@ class Uploader(StorageBase):
         included_assets: list[str] | bool = True,
         max_workers: int = 4,
         time_out: float = 60 * 60 * 1,
+        mission: str = "",
     ) -> DatacosmosItem:
         """Upload a STAC item and its assets to Datacosmos."""
         if not assets_path and not isinstance(item, str):
@@ -50,7 +51,7 @@ class Uploader(StorageBase):
             else []
         )
 
-        jobs = [(item, asset_key, assets_path) for asset_key in upload_assets]
+        jobs = [(item, asset_key, assets_path, mission) for asset_key in upload_assets]
 
         self._run_in_threads(self._upload_asset, jobs, max_workers, time_out)
 
@@ -76,10 +77,10 @@ class Uploader(StorageBase):
         return TypeAdapter(DatacosmosItem).validate_json(data)
 
     def _upload_asset(
-        self, item: DatacosmosItem, asset_key: str, assets_path: str
+        self, item: DatacosmosItem, asset_key: str, assets_path: str, mission: str
     ) -> None:
         asset = item.assets[asset_key]
-        upload_path = UploadPath.from_item_path(item, "", Path(asset.href).name)
+        upload_path = UploadPath.from_item_path(item, mission, Path(asset.href).name)
         local_src = Path(assets_path) / asset.href
         if local_src.exists():
             src = str(local_src)
@@ -87,6 +88,7 @@ class Uploader(StorageBase):
         else:
             src = str(Path(assets_path) / Path(asset.href).name)
         self._update_asset_href(asset)
+        print(f"UPLOAD PATH: {upload_path}")
         self.upload_from_file(src, str(upload_path), mime_type=asset.type)
 
     def _update_asset_href(self, asset: Asset) -> None:

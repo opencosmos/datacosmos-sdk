@@ -19,7 +19,9 @@ def test_storage_client_upload_item(monkeypatch):
     monkeypatch.setattr(storage_client_module, "Uploader", DummyUploader)
     storage = StorageClient(dummy_client)
 
-    result = storage.upload_item("item", assets_path="path", max_workers=2)
+    result = storage.upload_item(
+        "item", assets_path="path", max_workers=2, mission="platero"
+    )
 
     assert result == "uploaded"
     # Check that uploader.upload_item was called with correct args
@@ -30,4 +32,5 @@ def test_storage_client_upload_item(monkeypatch):
         "included_assets": True,
         "max_workers": 2,
         "time_out": 3600,
+        "mission": "platero",
     }

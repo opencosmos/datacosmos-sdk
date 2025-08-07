@@ -20,6 +20,7 @@ class StorageClient:
         included_assets: list[str] | bool = True,
         max_workers: int = 4,
         time_out: float = 60 * 60 * 1,
+        mission: str = "",
     ) -> DatacosmosItem:
         """Proxy to Uploader.upload_item, without needing to pass client each call."""
         return self.uploader.upload_item(
@@ -28,4 +29,5 @@ class StorageClient:
             included_assets=included_assets,
             max_workers=max_workers,
             time_out=time_out,
+            mission=mission,
         )
