@@ -88,7 +88,6 @@ class Uploader(StorageBase):
         else:
             src = str(Path(assets_path) / Path(asset.href).name)
         self._update_asset_href(asset)
-        print(f"UPLOAD PATH: {upload_path}")
         self.upload_from_file(src, str(upload_path), mime_type=asset.type)
 
     def _update_asset_href(self, asset: Asset) -> None:
