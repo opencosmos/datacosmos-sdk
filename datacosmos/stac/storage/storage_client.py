@@ -8,10 +8,10 @@ from datacosmos.stac.storage.uploader import Uploader
 class StorageClient:
     """Generic StorageClient for all storage operations (upload, download, etc.)."""
 
-    def __init__(self, client: DatacosmosClient):
+    def __init__(self, client: DatacosmosClient, project_id: str):
         """Generic StorageClient for all storage operations (upload, download, etc.)."""
         self.client = client
-        self.uploader = Uploader(client)
+        self.uploader = Uploader(client, project_id)
 
     def upload_item(
         self,

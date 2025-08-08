@@ -8,6 +8,8 @@ from datacosmos.stac.item.models.asset import Asset
 from datacosmos.stac.item.models.datacosmos_item import DatacosmosItem
 from datacosmos.stac.storage.uploader import Uploader
 
+PROJECT_ID = "proj123"
+
 
 class FakeClient:
     def __init__(self):
@@ -38,17 +40,20 @@ def patch_item_client(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def patch_upload_path(monkeypatch):
+    def _dummy_from_item_path(cls, item, project_id, asset_name):  # new sig
+        return f"project/{project_id}/{item.id}/{asset_name}"
+
     monkeypatch.setattr(
         uploader_module.UploadPath,
         "from_item_path",
-        classmethod(lambda cls, item, mission_name, filename: filename),
+        classmethod(_dummy_from_item_path),
     )
 
 
 @pytest.fixture
 def uploader():
     client = FakeClient()
-    return Uploader(client)
+    return Uploader(client, project_id=PROJECT_ID)  # ← supply project_id
 
 
 @pytest.fixture
@@ -90,7 +95,5 @@ def test_upload_item(uploader, simple_item, patch_item_client):
         item, assets_path=assets_path, max_workers=2, time_out=30
     )
 
-    # Verify that upload_from_file was called once for our one asset
     assert uploader.upload_from_file.call_count == 1
-    # Confirm that add_item was called on the item client and returned item
     assert patch_item_client.added is result
