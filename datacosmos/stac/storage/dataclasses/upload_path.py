@@ -36,4 +36,7 @@ class UploadPath:
             raise ValueError(f"Invalid path: {path}")
 
         project_id, item_id, *rest = parts[1:]
-        return cls(project_id=project_id, item_id=item_id, asset_name="/".join(rest))
+        asset_name = "/".join(rest)
+        if not asset_name:
+            raise ValueError(f"Asset name is missing in path: {path}")
+        return cls(project_id=project_id, item_id=item_id, asset_name=asset_name)
