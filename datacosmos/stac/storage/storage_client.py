@@ -16,6 +16,7 @@ class StorageClient:
     def upload_item(
         self,
         item: DatacosmosItem,
+        project_id: str,
         assets_path: str | None = None,
         included_assets: list[str] | bool = True,
         max_workers: int = 4,
@@ -24,6 +25,7 @@ class StorageClient:
         """Proxy to Uploader.upload_item, without needing to pass client each call."""
         return self.uploader.upload_item(
             item=item,
+            project_id=project_id,
             assets_path=assets_path,
             included_assets=included_assets,
             max_workers=max_workers,

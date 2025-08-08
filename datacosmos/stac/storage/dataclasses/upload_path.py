@@ -1,63 +1,42 @@
-"""Dataclass for retrieving the upload path of a file."""
+"""Dataclass for generating the upload key of an asset."""
 
 from dataclasses import dataclass
-from datetime import datetime
 from pathlib import Path
 
-import structlog
-
-from datacosmos.stac.enums.processing_level import ProcessingLevel
 from datacosmos.stac.item.models.datacosmos_item import DatacosmosItem
-
-logger = structlog.get_logger()
 
 
 @dataclass
 class UploadPath:
-    """Dataclass for retrieving the upload path of a file."""
+    """Storage key in the form: project/<project-id>/<item-id>/<asset-name>."""
 
-    mission: str
-    level: ProcessingLevel
-    day: int
-    month: int
-    year: int
-    id: str
-    path: str
+    project_id: str
+    item_id: str
+    asset_name: str
 
-    def __str__(self):
-        """Return a human-readable string representation of the Path."""
-        path = f"full/{self.mission.lower()}/{self.level.value.lower()}/{self.year:02}/{self.month:02}/{self.day:02}/{self.id}/{self.path}"
-        return path.removesuffix("/")
+    def __str__(self) -> str:
+        """Path in the form: project/<project-id>/<item-id>/<asset-name>."""
+        return f"project/{self.project_id}/{self.item_id}/{self.asset_name}".rstrip("/")
 
     @classmethod
     def from_item_path(
-        cls, item: DatacosmosItem, mission: str, item_path: str
-    ) -> "Path":
-        """Create a Path instance from a DatacosmosItem and a path."""
-        dt = datetime.strptime(item.properties["datetime"], "%Y-%m-%dT%H:%M:%SZ")
-        path = UploadPath(
-            mission=mission,
-            level=ProcessingLevel(item.properties["processing:level"]),
-            day=dt.day,
-            month=dt.month,
-            year=dt.year,
-            id=item.id,
-            path=item_path,
-        )
-        return cls(**path.__dict__)
+        cls,
+        item: DatacosmosItem,
+        project_id: str,
+        asset_name: str,
+    ) -> "UploadPath":
+        """Create an UploadPath for the given item/asset."""
+        return cls(project_id=project_id, item_id=item.id, asset_name=asset_name)
 
     @classmethod
-    def from_path(cls, path: str) -> "Path":
-        """Create a Path instance from a string path."""
-        parts = path.split("/")
-        if len(parts) < 7:
-            raise ValueError(f"Invalid path {path}")
-        return cls(
-            mission=parts[0],
-            level=ProcessingLevel(parts[1]),
-            day=int(parts[4]),
-            month=int(parts[3]),
-            year=int(parts[2]),
-            id=parts[5],
-            path="/".join(parts[6:]),
-        )
+    def from_path(cls, path: str) -> "UploadPath":
+        """Reverse-parse a storage key back into its components."""
+        parts = Path(path).parts
+        if len(parts) < 4 or parts[0] != "project":
+            raise ValueError(f"Invalid path: {path}")
+
+        project_id, item_id, *rest = parts[1:]
+        asset_name = "/".join(rest)
+        if not asset_name:
+            raise ValueError(f"Asset name is missing in path: {path}")
+        return cls(project_id=project_id, item_id=item_id, asset_name=asset_name)
