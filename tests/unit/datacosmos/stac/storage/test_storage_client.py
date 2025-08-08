@@ -7,9 +7,8 @@ PROJECT_ID = "proj123"
 
 
 class DummyUploader:
-    def __init__(self, client, project_id: str):
+    def __init__(self, client):
         self.client = client
-        self.project_id = project_id
         self.upload_called_with = None
 
     def upload_item(self, *args, **kwargs):
@@ -22,16 +21,16 @@ def test_storage_client_upload_item(monkeypatch):
 
     monkeypatch.setattr(storage_client_module, "Uploader", DummyUploader)
 
-    storage = StorageClient(dummy_client, project_id=PROJECT_ID)
+    storage = StorageClient(dummy_client)
 
-    result = storage.upload_item("item", assets_path="path", max_workers=2)
+    result = storage.upload_item("item", PROJECT_ID, assets_path="path", max_workers=2)
 
     assert result == "uploaded"
-    assert storage.uploader.project_id == PROJECT_ID
 
     args, kwargs = storage.uploader.upload_called_with
     assert kwargs == {
         "item": "item",
+        "project_id": PROJECT_ID,
         "assets_path": "path",
         "included_assets": True,
         "max_workers": 2,

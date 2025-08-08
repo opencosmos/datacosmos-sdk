@@ -53,7 +53,7 @@ def patch_upload_path(monkeypatch):
 @pytest.fixture
 def uploader():
     client = FakeClient()
-    return Uploader(client, project_id=PROJECT_ID)  # ← supply project_id
+    return Uploader(client)
 
 
 @pytest.fixture
@@ -92,7 +92,7 @@ def test_upload_item(uploader, simple_item, patch_item_client):
     uploader._update_asset_href = Mock()
 
     result = uploader.upload_item(
-        item, assets_path=assets_path, max_workers=2, time_out=30
+        item, PROJECT_ID, assets_path=assets_path, max_workers=2, time_out=30
     )
 
     assert uploader.upload_from_file.call_count == 1

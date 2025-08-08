@@ -9,8 +9,8 @@ from datacosmos.stac.storage.storage_client import StorageClient
 class STACClient(ItemClient, CollectionClient, StorageClient):
     """Unified interface for STAC API, combining Item & Collection operations."""
 
-    def __init__(self, client: DatacosmosClient, project_id: str | None = None):
+    def __init__(self, client: DatacosmosClient):
         """Initialize the STACClient with a DatacosmosClient."""
         ItemClient.__init__(self, client)
         CollectionClient.__init__(self, client)
-        StorageClient.__init__(self, client, project_id)
+        StorageClient.__init__(self, client)

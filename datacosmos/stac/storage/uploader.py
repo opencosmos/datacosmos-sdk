@@ -15,20 +15,19 @@ from datacosmos.stac.storage.storage_base import StorageBase
 class Uploader(StorageBase):
     """Upload a STAC item and its assets to Datacosmos storage, then register the item in the STAC API."""
 
-    def __init__(self, client: DatacosmosClient, project_id: str):
+    def __init__(self, client: DatacosmosClient):
         """Initialize the uploader.
 
         Args:
             client (DatacosmosClient): Pre-configured DatacosmosClient.
-            project_id (str): UUID of the destination project. Used to build the storage key 'project/<project_id>/<item_id>/<asset_name>'.
         """
         super().__init__(client)
         self.item_client = ItemClient(client)
-        self.project_id = project_id
 
     def upload_item(
         self,
         item: DatacosmosItem | str,
+        project_id: str,
         assets_path: str | None = None,
         included_assets: list[str] | bool = True,
         max_workers: int = 4,
@@ -65,7 +64,9 @@ class Uploader(StorageBase):
             else []
         )
 
-        jobs = [(item, asset_key, assets_path) for asset_key in upload_assets]
+        jobs = [
+            (item, asset_key, assets_path, project_id) for asset_key in upload_assets
+        ]
         self._run_in_threads(self._upload_asset, jobs, max_workers, time_out)
 
         self.item_client.add_item(item)
@@ -90,7 +91,7 @@ class Uploader(StorageBase):
         return TypeAdapter(DatacosmosItem).validate_json(data)
 
     def _upload_asset(
-        self, item: DatacosmosItem, asset_key: str, assets_path: str
+        self, item: DatacosmosItem, asset_key: str, assets_path: str, project_id: str
     ) -> None:
         """Upload a single asset file and update its href inside the item object.
 
@@ -101,7 +102,7 @@ class Uploader(StorageBase):
         # Build storage key: project/<project_id>/<item_id>/<asset_name>
         upload_path = UploadPath.from_item_path(
             item,
-            self.project_id,
+            project_id,
             Path(asset.href).name,
         )
 

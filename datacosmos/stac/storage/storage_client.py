@@ -8,14 +8,15 @@ from datacosmos.stac.storage.uploader import Uploader
 class StorageClient:
     """Generic StorageClient for all storage operations (upload, download, etc.)."""
 
-    def __init__(self, client: DatacosmosClient, project_id: str):
+    def __init__(self, client: DatacosmosClient):
         """Generic StorageClient for all storage operations (upload, download, etc.)."""
         self.client = client
-        self.uploader = Uploader(client, project_id)
+        self.uploader = Uploader(client)
 
     def upload_item(
         self,
         item: DatacosmosItem,
+        project_id: str,
         assets_path: str | None = None,
         included_assets: list[str] | bool = True,
         max_workers: int = 4,
@@ -24,6 +25,7 @@ class StorageClient:
         """Proxy to Uploader.upload_item, without needing to pass client each call."""
         return self.uploader.upload_item(
             item=item,
+            project_id=project_id,
             assets_path=assets_path,
             included_assets=included_assets,
             max_workers=max_workers,
