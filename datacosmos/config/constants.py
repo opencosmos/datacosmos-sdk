@@ -1,3 +1,5 @@
+"""Config constants."""
+
 # ---- Authentication defaults ----
 DEFAULT_AUTH_TYPE = "m2m"
 
@@ -13,8 +15,12 @@ DEFAULT_LOCAL_SCOPES = "openid profile email offline_access"
 DEFAULT_LOCAL_CACHE_FILE = "~/.datacosmos/token_cache.json"
 
 # ---- Service URLs ----
-DEFAULT_STAC = dict(protocol="https", host="app.open-cosmos.com", port=443, path="/api/data/v0/stac")
-DEFAULT_STORAGE = dict(protocol="https", host="app.open-cosmos.com", port=443, path="/api/data/v0/storage")
+DEFAULT_STAC = dict(
+    protocol="https", host="app.open-cosmos.com", port=443, path="/api/data/v0/stac"
+)
+DEFAULT_STORAGE = dict(
+    protocol="https", host="app.open-cosmos.com", port=443, path="/api/data/v0/storage"
+)
 
 # ---- Config file path ----
 DEFAULT_CONFIG_YAML = "config/config.yaml"

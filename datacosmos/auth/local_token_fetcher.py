@@ -1,3 +1,5 @@
+"""Opens a browser for the user to log in (Authorization Code), caches token to a file, and refreshes when expired."""
+
 from __future__ import annotations
 
 import http.server
@@ -17,10 +19,8 @@ from datacosmos.auth.token import Token
 
 @dataclass
 class LocalTokenFetcher:
-    """
-    Opens a browser for the user to log in (Authorization Code),
-    caches token to a file, and refreshes when expired.
-    """
+    """Opens a browser for the user to log in (Authorization Code), caches token to a file, and refreshes when expired."""
+
     client_id: str
     authorization_endpoint: str
     token_endpoint: str
@@ -30,6 +30,7 @@ class LocalTokenFetcher:
     token_file: Path
 
     def get_token(self) -> Token:
+        """Get token."""
         tok = self.__load()
         if tok and not tok.is_expired():
             return tok
@@ -64,7 +65,6 @@ class LocalTokenFetcher:
             expires_at=float(data["expires_at"]),
         )
 
-
     def __exchange_code(self, code: str) -> Token:
         data = {
             "grant_type": "authorization_code",
@@ -95,7 +95,6 @@ class LocalTokenFetcher:
             refresh_token=token.refresh_token,  # some IdPs omit it on refresh
             expires_at=time.time() + float(data.get("expires_in", 3600)),
         )
-
 
     def __interactive_login(self) -> Token:
         params = {
@@ -130,7 +129,9 @@ class LocalTokenFetcher:
             def log_message(self, *_args, **_kwargs) -> None:  # silence
                 return
 
-        with socketserver.TCPServer(("localhost", int(self.redirect_port)), Handler) as httpd:
+        with socketserver.TCPServer(
+            ("localhost", int(self.redirect_port)), Handler
+        ) as httpd:
             httpd.timeout = 300  # 5 minutes
             httpd.handle_request()
 
@@ -142,4 +143,3 @@ class LocalTokenFetcher:
         token = self.__exchange_code(Handler.code)
         self.__save(token)
         return token
-

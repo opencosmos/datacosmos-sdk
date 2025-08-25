@@ -1,8 +1,8 @@
 """Client to interact with the Datacosmos API with authentication and request handling."""
 
 from datetime import datetime, timedelta, timezone
-from typing import Any, Optional
 from pathlib import Path
+from typing import Any, Optional
 
 import requests
 from oauthlib.oauth2 import BackendApplicationClient
@@ -37,7 +37,9 @@ class DatacosmosClient:
             try:
                 self.config = Config.model_validate(config)
             except Exception as e:
-                raise DatacosmosException("Invalid config provided to DatacosmosClient") from e
+                raise DatacosmosException(
+                    "Invalid config provided to DatacosmosClient"
+                ) from e
 
         self._owns_session = False
         self.token: Optional[str] = None
@@ -56,11 +58,15 @@ class DatacosmosClient:
                     )
                 token_data = {"access_token": auth_header.split(" ", 1)[1]}
             else:
-                raise DatacosmosException(f"Unsupported session type: {type(http_session)}")
+                raise DatacosmosException(
+                    f"Unsupported session type: {type(http_session)}"
+                )
 
             self.token = token_data.get("access_token")
             if not self.token:
-                raise DatacosmosException("Failed to extract access token from injected session")
+                raise DatacosmosException(
+                    "Failed to extract access token from injected session"
+                )
 
             expires_at = token_data.get("expires_at")
             expires_in = token_data.get("expires_in")
@@ -70,7 +76,9 @@ class DatacosmosClient:
                 self.token_expiry = expires_at
             elif expires_in is not None:
                 try:
-                    self.token_expiry = datetime.now(timezone.utc) + timedelta(seconds=int(expires_in))
+                    self.token_expiry = datetime.now(timezone.utc) + timedelta(
+                        seconds=int(expires_in)
+                    )
                 except (TypeError, ValueError):
                     self.token_expiry = None
 
@@ -160,7 +168,6 @@ class DatacosmosClient:
 
         self._local_token_fetcher = fetcher
         return http_client
-
 
     def request(
         self, method: str, url: str, *args: Any, **kwargs: Any

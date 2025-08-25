@@ -4,9 +4,9 @@ Used when running scripts in the cluster that require automated authentication
 without user interaction.
 """
 
-from typing import Literal
+from typing import Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class M2MAuthenticationConfig(BaseModel):
@@ -16,12 +16,8 @@ class M2MAuthenticationConfig(BaseModel):
     with client credentials.
     """
 
-    DEFAULT_TYPE: Literal["m2m"] = "m2m"
-    DEFAULT_TOKEN_URL: str = "https://login.open-cosmos.com/oauth/token"
-    DEFAULT_AUDIENCE: str = "https://beeapp.open-cosmos.com"
-
-    type: Literal["m2m"] = Field(default=DEFAULT_TYPE)
-    client_id: str
-    token_url: str = Field(default=DEFAULT_TOKEN_URL)
-    audience: str = Field(default=DEFAULT_AUDIENCE)
-    client_secret: str
+    type: Literal["m2m"] = "m2m"
+    client_id: Optional[str] = None
+    client_secret: Optional[str] = None
+    token_url: Optional[str] = None
+    audience: Optional[str] = None

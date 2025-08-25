@@ -1,15 +1,14 @@
 import os
-from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
 
 from datacosmos.config.config import Config
-from datacosmos.config.models.m2m_authentication_config import M2MAuthenticationConfig
-from datacosmos.config.models.url import URL
 from datacosmos.config.models.local_user_account_authentication_config import (
     LocalUserAccountAuthenticationConfig,
 )
+from datacosmos.config.models.m2m_authentication_config import M2MAuthenticationConfig
+from datacosmos.config.models.url import URL
 
 
 class TestConfig:
@@ -70,9 +69,9 @@ class TestConfig:
 
     def test_env_m2m(self, monkeypatch, tmp_path):
         monkeypatch.setattr(
-        "datacosmos.config.config.DEFAULT_CONFIG_YAML",
-        str(tmp_path / "does_not_exist.yaml"),
-        raising=True,
+            "datacosmos.config.config.DEFAULT_CONFIG_YAML",
+            str(tmp_path / "does_not_exist.yaml"),
+            raising=True,
         )
 
         monkeypatch.setenv("AUTHENTICATION__TYPE", "m2m")
@@ -90,17 +89,25 @@ class TestConfig:
 
         cfg = Config()
 
-        from datacosmos.config.models.m2m_authentication_config import M2MAuthenticationConfig
+        from datacosmos.config.models.m2m_authentication_config import (
+            M2MAuthenticationConfig,
+        )
+
         assert isinstance(cfg.authentication, M2MAuthenticationConfig)
         assert cfg.authentication.client_id == "env-client"
         assert cfg.authentication.client_secret == "env-secret"
         assert cfg.authentication.token_url == "https://env.token.url"
         assert cfg.authentication.audience == "https://env.audience"
         assert (cfg.stac.protocol, cfg.stac.host, cfg.stac.port, cfg.stac.path) == (
-            "http", "env-stac-host", 8080, "/env/stac"
+            "http",
+            "env-stac-host",
+            8080,
+            "/env/stac",
         )
 
-    def test_invalid_authentication_raises_validation_error(self, monkeypatch, tmp_path):
+    def test_invalid_authentication_raises_validation_error(
+        self, monkeypatch, tmp_path
+    ):
         monkeypatch.setattr(
             "datacosmos.config.config.DEFAULT_CONFIG_YAML",
             str(tmp_path / "does_not_exist.yaml"),
@@ -116,7 +123,9 @@ class TestConfig:
 
     def test_auth_defaults_applied_when_only_required_m2m(self):
         # Provide just the required m2m creds; the rest should be defaulted
-        cfg = Config(authentication={"type": "m2m", "client_id": "id", "client_secret": "secret"})
+        cfg = Config(
+            authentication={"type": "m2m", "client_id": "id", "client_secret": "secret"}
+        )
 
         assert isinstance(cfg.authentication, M2MAuthenticationConfig)
         assert cfg.authentication.type == "m2m"

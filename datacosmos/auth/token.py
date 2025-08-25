@@ -1,3 +1,5 @@
+"""Authentication Token class."""
+
 from __future__ import annotations
 
 import time
@@ -7,12 +9,15 @@ from typing import Optional
 
 @dataclass
 class Token:
+    """Authentication token class."""
+
     access_token: str
     refresh_token: Optional[str]
     expires_at: float  # epoch seconds
 
     @classmethod
     def from_json_response(cls, data: dict) -> "Token":
+        """Convert dict into Token dataclass."""
         # Some IdPs return expires_in, others return expires_at
         exp = float(
             data.get("expires_at")
@@ -25,4 +30,5 @@ class Token:
         )
 
     def is_expired(self, skew_seconds: int = 30) -> bool:
+        """Check if token is expired."""
         return (self.expires_at - time.time()) <= skew_seconds

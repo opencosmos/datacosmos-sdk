@@ -4,7 +4,7 @@ When this is chosen, the user will be prompted to log in using their OPS credent
 This will be used for running scripts locally.
 """
 
-from typing import Literal
+from typing import Literal, Optional
 
 from pydantic import BaseModel
 
@@ -16,11 +16,11 @@ class LocalUserAccountAuthenticationConfig(BaseModel):
     This will be used for running scripts locally.
     """
 
-    type: Literal["local"]
-    client_id: str
-    authorization_endpoint: str
-    token_endpoint: str
-    redirect_port: int
-    scopes: str
-    audience: str
-    cache_file: str
+    type: Literal["local"] = "local"
+    client_id: Optional[str] = None
+    authorization_endpoint: Optional[str] = None
+    token_endpoint: Optional[str] = None
+    redirect_port: Optional[int] = None
+    scopes: Optional[str] = None
+    audience: Optional[str] = None
+    cache_file: Optional[str] = None

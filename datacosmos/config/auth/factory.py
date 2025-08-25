@@ -1,25 +1,30 @@
-from typing import Union, Optional, cast
+"""Config authentication factory."""
+
+from typing import Optional, Union, cast
 
 from datacosmos.config.constants import (
-    DEFAULT_AUTH_TYPE,
-    DEFAULT_AUTH_TOKEN_URL,
     DEFAULT_AUTH_AUDIENCE,
+    DEFAULT_AUTH_TOKEN_URL,
+    DEFAULT_AUTH_TYPE,
     DEFAULT_LOCAL_AUTHORIZATION_ENDPOINT,
-    DEFAULT_LOCAL_TOKEN_ENDPOINT,
+    DEFAULT_LOCAL_CACHE_FILE,
     DEFAULT_LOCAL_REDIRECT_PORT,
     DEFAULT_LOCAL_SCOPES,
-    DEFAULT_LOCAL_CACHE_FILE,
+    DEFAULT_LOCAL_TOKEN_ENDPOINT,
 )
-from datacosmos.config.models.m2m_authentication_config import M2MAuthenticationConfig
 from datacosmos.config.models.local_user_account_authentication_config import (
     LocalUserAccountAuthenticationConfig,
 )
+from datacosmos.config.models.m2m_authentication_config import M2MAuthenticationConfig
 
 AuthModel = Union[M2MAuthenticationConfig, LocalUserAccountAuthenticationConfig]
 
+
 def parse_auth_config(raw: dict | AuthModel | None) -> Optional[AuthModel]:
     """Turn a raw dict (e.g., from YAML) into a concrete auth model."""
-    if raw is None or isinstance(raw, (M2MAuthenticationConfig, LocalUserAccountAuthenticationConfig)):
+    if raw is None or isinstance(
+        raw, (M2MAuthenticationConfig, LocalUserAccountAuthenticationConfig)
+    ):
         return cast(Optional[AuthModel], raw)
 
     auth_type = (raw.get("type") or DEFAULT_AUTH_TYPE).lower()
@@ -28,7 +33,9 @@ def parse_auth_config(raw: dict | AuthModel | None) -> Optional[AuthModel]:
         return LocalUserAccountAuthenticationConfig(
             type="local",
             client_id=raw.get("client_id"),
-            authorization_endpoint=raw.get("authorization_endpoint", DEFAULT_LOCAL_AUTHORIZATION_ENDPOINT),
+            authorization_endpoint=raw.get(
+                "authorization_endpoint", DEFAULT_LOCAL_AUTHORIZATION_ENDPOINT
+            ),
             token_endpoint=raw.get("token_endpoint", DEFAULT_LOCAL_TOKEN_ENDPOINT),
             redirect_port=raw.get("redirect_port", DEFAULT_LOCAL_REDIRECT_PORT),
             scopes=raw.get("scopes", DEFAULT_LOCAL_SCOPES),
@@ -44,6 +51,7 @@ def parse_auth_config(raw: dict | AuthModel | None) -> Optional[AuthModel]:
         client_id=raw.get("client_id"),
         client_secret=raw.get("client_secret"),
     )
+
 
 def apply_auth_defaults(auth: AuthModel | None) -> AuthModel:
     """Fill in any missing defaults by type."""
@@ -65,8 +73,8 @@ def apply_auth_defaults(auth: AuthModel | None) -> AuthModel:
                 type="m2m",
                 token_url=DEFAULT_AUTH_TOKEN_URL,
                 audience=DEFAULT_AUTH_AUDIENCE,
-                client_id=None,        # type: ignore[arg-type]
-                client_secret=None,    # type: ignore[arg-type]
+                client_id=None,  # type: ignore[arg-type]
+                client_secret=None,  # type: ignore[arg-type]
             )
 
     if isinstance(auth, M2MAuthenticationConfig):
@@ -77,7 +85,9 @@ def apply_auth_defaults(auth: AuthModel | None) -> AuthModel:
 
     # Local
     auth.type = auth.type or "local"
-    auth.authorization_endpoint = auth.authorization_endpoint or DEFAULT_LOCAL_AUTHORIZATION_ENDPOINT
+    auth.authorization_endpoint = (
+        auth.authorization_endpoint or DEFAULT_LOCAL_AUTHORIZATION_ENDPOINT
+    )
     auth.token_endpoint = auth.token_endpoint or DEFAULT_LOCAL_TOKEN_ENDPOINT
     try:
         auth.redirect_port = int(auth.redirect_port)  # ensure int
@@ -88,21 +98,25 @@ def apply_auth_defaults(auth: AuthModel | None) -> AuthModel:
     auth.cache_file = auth.cache_file or DEFAULT_LOCAL_CACHE_FILE
     return auth
 
+
 def check_required_auth_fields(auth: AuthModel) -> None:
     """Enforce required fields per auth type."""
     if isinstance(auth, M2MAuthenticationConfig):
         missing = [f for f in ("client_id", "client_secret") if not getattr(auth, f)]
         if missing:
-            raise ValueError(f"Missing required authentication fields for m2m: {', '.join(missing)}")
+            raise ValueError(
+                f"Missing required authentication fields for m2m: {', '.join(missing)}"
+            )
         return
 
     # local
     if not auth.client_id:
         raise ValueError("Missing required authentication field for local: client_id")
 
+
 def normalize_authentication(raw: dict | AuthModel | None) -> AuthModel:
-    """
-    End-to-end auth normalization:
+    """End-to-end auth normalization.
+
     1) parse -> 2) defaults -> 3) required-fields check
     """
     model = parse_auth_config(raw)

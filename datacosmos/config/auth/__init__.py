@@ -1,0 +1,1 @@
+"""Configuration authentication related things."""
