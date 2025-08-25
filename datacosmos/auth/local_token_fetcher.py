@@ -105,10 +105,11 @@ class LocalTokenFetcher:
             "scope": self.scopes,
         }
         url = f"{self.authorization_endpoint}?{urllib.parse.urlencode(params)}"
-        try:
+
+        from contextlib import suppress
+
+        with suppress(Exception):
             webbrowser.open(url, new=1, autoraise=True)
-        except Exception:
-            pass  # user can copy-paste URL if needed
 
         class Handler(http.server.BaseHTTPRequestHandler):
             code: Optional[str] = None
@@ -126,7 +127,7 @@ class LocalTokenFetcher:
                     self.end_headers()
                     self.wfile.write(b"No authorization code found.")
 
-            def log_message(self, *_args, **_kwargs) -> None:  # silence
+            def log_message(self, *_args, **_kwargs) -> None:
                 return
 
         with socketserver.TCPServer(

@@ -24,68 +24,92 @@ class DatacosmosClient:
         """Initialize the DatacosmosClient.
 
         Args:
-            config (Optional[Config]): Configuration object (only needed when SDK creates its own session).
-            http_session (Optional[requests.Session]): Pre-authenticated session.
+            config: SDK configuration (if omitted, Config() loads YAML + env).
+            http_session: Pre-authenticated session (OAuth2Session or requests.Session
+                          with 'Authorization: Bearer ...').
         """
-        if config is None:
-            self.config = Config()
-        elif isinstance(config, Config):
-            self.config = config
-        elif isinstance(config, dict):
-            self.config = Config(**config)
-        else:
-            try:
-                self.config = Config.model_validate(config)
-            except Exception as e:
-                raise DatacosmosException(
-                    "Invalid config provided to DatacosmosClient"
-                ) from e
-
-        self._owns_session = False
+        self.config = self._coerce_config(config)
         self.token: Optional[str] = None
         self.token_expiry: Optional[datetime] = None
 
         if http_session is not None:
-            self._http_client = http_session
-
-            if isinstance(http_session, OAuth2Session):
-                token_data = getattr(http_session, "token", None) or {}
-            elif isinstance(http_session, requests.Session):
-                auth_header = http_session.headers.get("Authorization", "")
-                if not auth_header.startswith("Bearer "):
-                    raise DatacosmosException(
-                        "Injected requests.Session must include a 'Bearer' token in its headers"
-                    )
-                token_data = {"access_token": auth_header.split(" ", 1)[1]}
-            else:
-                raise DatacosmosException(
-                    f"Unsupported session type: {type(http_session)}"
-                )
-
-            self.token = token_data.get("access_token")
-            if not self.token:
-                raise DatacosmosException(
-                    "Failed to extract access token from injected session"
-                )
-
-            expires_at = token_data.get("expires_at")
-            expires_in = token_data.get("expires_in")
-            if isinstance(expires_at, (int, float)):
-                self.token_expiry = datetime.fromtimestamp(expires_at, tz=timezone.utc)
-            elif isinstance(expires_at, datetime):
-                self.token_expiry = expires_at
-            elif expires_in is not None:
-                try:
-                    self.token_expiry = datetime.now(timezone.utc) + timedelta(
-                        seconds=int(expires_in)
-                    )
-                except (TypeError, ValueError):
-                    self.token_expiry = None
-
+            self._init_with_injected_session(http_session)
             return
 
         self._owns_session = True
         self._http_client = self._authenticate_and_initialize_client()
+
+    # --------------------------- init helpers ---------------------------
+
+    def _coerce_config(self, cfg: Optional[Config | Any]) -> Config:
+        """Normalize various config inputs into a Config instance."""
+        if cfg is None:
+            return Config()
+        if isinstance(cfg, Config):
+            return cfg
+        if isinstance(cfg, dict):
+            return Config(**cfg)
+        try:
+            return Config.model_validate(cfg)  # pydantic v2
+        except Exception as e:
+            raise DatacosmosException(
+                "Invalid config provided to DatacosmosClient"
+            ) from e
+
+    def _init_with_injected_session(
+        self, http_session: requests.Session | OAuth2Session
+    ) -> None:
+        """Adopt a caller-provided session and extract token/expiry."""
+        self._http_client = http_session
+        self._owns_session = False
+
+        token_data = self._extract_token_data(http_session)
+        self.token = token_data.get("access_token")
+        if not self.token:
+            raise DatacosmosException(
+                "Failed to extract access token from injected session"
+            )
+
+        self.token_expiry = self._compute_expiry(
+            token_data.get("expires_at"),
+            token_data.get("expires_in"),
+        )
+
+    def _extract_token_data(
+        self, http_session: requests.Session | OAuth2Session
+    ) -> dict:
+        """Return {'access_token', 'expires_at'?, 'expires_in'?} from the session."""
+        if isinstance(http_session, OAuth2Session):
+            return getattr(http_session, "token", {}) or {}
+
+        if isinstance(http_session, requests.Session):
+            auth_header = http_session.headers.get("Authorization", "")
+            if not auth_header.startswith("Bearer "):
+                raise DatacosmosException(
+                    "Injected requests.Session must include a 'Bearer' token in its headers"
+                )
+            return {"access_token": auth_header.split(" ", 1)[1]}
+
+        raise DatacosmosException(f"Unsupported session type: {type(http_session)}")
+
+    def _compute_expiry(
+        self,
+        expires_at: Optional[datetime | int | float],
+        expires_in: Optional[int | float],
+    ) -> Optional[datetime]:
+        """Normalize expiry inputs to an absolute UTC datetime (or None)."""
+        if isinstance(expires_at, datetime):
+            return expires_at
+        if isinstance(expires_at, (int, float)):
+            return datetime.fromtimestamp(expires_at, tz=timezone.utc)
+        if expires_in is not None:
+            try:
+                return datetime.now(timezone.utc) + timedelta(seconds=int(expires_in))
+            except (TypeError, ValueError):
+                return None
+        return None
+
+    # --------------------------- auth/session ---------------------------
 
     def _authenticate_and_initialize_client(self) -> requests.Session:
         """Authenticate and initialize the HTTP client with a valid token."""
@@ -102,8 +126,14 @@ class DatacosmosClient:
 
     def _refresh_token_if_needed(self):
         """Refresh the token if it has expired (only if SDK created it)."""
-        if self._owns_session and (
-            not self.token or self.token_expiry <= datetime.now(timezone.utc)
+        if not getattr(self, "_owns_session", False):
+            return
+        now = datetime.now(timezone.utc)
+        # Treat missing token or missing expiry as 'needs refresh'
+        if (
+            (not self.token)
+            or (self.token_expiry is None)
+            or (self.token_expiry <= now)
         ):
             self._http_client = self._authenticate_and_initialize_client()
 
@@ -166,8 +196,11 @@ class DatacosmosClient:
         http_client = requests.Session()
         http_client.headers.update({"Authorization": f"Bearer {self.token}"})
 
+        # keep for potential reuse in refresh path (optional)
         self._local_token_fetcher = fetcher
         return http_client
+
+    # --------------------------- request API ---------------------------
 
     def request(
         self, method: str, url: str, *args: Any, **kwargs: Any
