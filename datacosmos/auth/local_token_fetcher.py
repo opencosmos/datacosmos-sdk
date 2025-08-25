@@ -36,7 +36,7 @@ class LocalTokenFetcher:
         if tok and tok.is_expired():
             refreshed = self.__refresh(tok)
             if refreshed:
-                self._save(refreshed)
+                self.__save(refreshed)
                 return refreshed
         # No token or failed refresh -> interactive login
         return self.__interactive_login()
