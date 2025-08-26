@@ -40,10 +40,17 @@ class TestLocalTokenFetcher:
 
     def test_get_token_refreshes_expired_token_and_saves(self, tmp_path, monkeypatch):
         cache = tmp_path / "token.json"
+
+        # freeze time for deterministic expiry checks
+        fixed_now = 1_700_000_000.0
+        monkeypatch.setattr(
+            "datacosmos.auth.local_token_fetcher.time.time", lambda: fixed_now
+        )
+
         expired = {
             "access_token": "old-access",
             "refresh_token": "r1",
-            "expires_at": time.time() - 100,  # expired
+            "expires_at": fixed_now - 100,  # expired
         }
         cache.write_text(json.dumps(expired))
 
@@ -60,6 +67,9 @@ class TestLocalTokenFetcher:
         class DummyResp:
             status_code = 200
 
+            def raise_for_status(self):  # <-- needed by __refresh
+                return None
+
             def json(self):
                 return {"access_token": "new-access", "expires_in": 1800}
 
@@ -75,12 +85,12 @@ class TestLocalTokenFetcher:
 
         t = fetcher.get_token()
         assert t.access_token == "new-access"
-        assert t.expires_at >= time.time() + 1500  # ~ now + 1800
+        assert t.expires_at == pytest.approx(fixed_now + 1800, rel=0, abs=1e-9)
 
         saved = self._read_cache(cache)
         assert saved["access_token"] == "new-access"
         assert saved["refresh_token"] == "r1"
-        assert saved["expires_at"] >= time.time() + 1500
+        assert saved["expires_at"] == pytest.approx(fixed_now + 1800, rel=0, abs=1e-9)
 
     def test_get_token_interactive_when_no_token(self, tmp_path, monkeypatch):
         cache = tmp_path / "token.json"
@@ -120,10 +130,17 @@ class TestLocalTokenFetcher:
 
     def test_get_token_interactive_when_refresh_fails(self, tmp_path, monkeypatch):
         cache = tmp_path / "token.json"
+
+        # freeze time so expiry math is deterministic
+        fixed_now = 1_700_000_000.0
+        monkeypatch.setattr(
+            "datacosmos.auth.local_token_fetcher.time.time", lambda: fixed_now
+        )
+
         expired = {
             "access_token": "old-access",
             "refresh_token": "r1",
-            "expires_at": time.time() - 100,
+            "expires_at": fixed_now - 100,
         }
         cache.write_text(json.dumps(expired))
 
@@ -140,6 +157,11 @@ class TestLocalTokenFetcher:
         class FailResp:
             status_code = 400
 
+            def raise_for_status(self):
+                import requests
+
+                raise requests.HTTPError("400 Bad Request")
+
             def json(self):  # pragma: no cover
                 return {"error": "bad_refresh"}
 
@@ -151,7 +173,7 @@ class TestLocalTokenFetcher:
             "datacosmos.auth.local_token_fetcher.requests.post", fake_post
         )
 
-        fake_token = Token("interactive-after-fail", "r2", time.time() + 500)
+        fake_token = Token("interactive-after-fail", "r2", fixed_now + 500)
 
         # preserve side-effect: save the token like the real method would
         def fake_interactive_login():

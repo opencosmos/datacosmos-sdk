@@ -6,7 +6,7 @@ This module normalizes the `authentication` config into a concrete model:
 - `check_required_auth_fields` enforces the minimum required inputs.
 - `normalize_authentication` runs the whole pipeline.
 
-Design notes (Option 1):
+Design notes:
 - Auth models accept partial data (fields are Optional with None defaults).
 - We DO NOT pass `None` explicitly when constructing models here.
 - Required-ness is enforced centrally by `check_required_auth_fields`, not by model init.
@@ -36,20 +36,19 @@ def parse_auth_config(raw: dict | AuthModel | None) -> Optional[AuthModel]:
     """Turn a raw dict (e.g., from YAML) into a concrete auth model.
 
     - If `raw` is already an auth model (M2M or local), return it unchanged.
-    - If `raw` is a dict, choose the type using `raw['type']` (or DEFAULT_AUTH_TYPE),
-      then construct the corresponding model. For missing fields we *may* apply
-      some non-secret defaults here (e.g., endpoints), but credentials remain as provided.
+    - If `raw` is a dict, choose/validate the type using `raw['type']`
+      (or DEFAULT_AUTH_TYPE), then construct the corresponding model.
+      For missing fields we *may* apply non-secret defaults (endpoints, etc.).
     """
     if raw is None or isinstance(
         raw, (M2MAuthenticationConfig, LocalUserAccountAuthenticationConfig)
     ):
         return cast(Optional[AuthModel], raw)
 
-    auth_type = (raw.get("type") or DEFAULT_AUTH_TYPE).lower()
+    auth_type = _normalize_auth_type(raw.get("type") or DEFAULT_AUTH_TYPE)
 
     if auth_type == "local":
         return LocalUserAccountAuthenticationConfig(
-            # type defaults to "local" in the model; we set it for clarity
             type="local",
             client_id=raw.get("client_id"),
             authorization_endpoint=raw.get(
@@ -62,9 +61,7 @@ def parse_auth_config(raw: dict | AuthModel | None) -> Optional[AuthModel]:
             cache_file=raw.get("cache_file", DEFAULT_LOCAL_CACHE_FILE),
         )
 
-    # Default (or explicit) m2m
     return M2MAuthenticationConfig(
-        # model defaults type to "m2m"; set explicitly for clarity
         type="m2m",
         token_url=raw.get("token_url", DEFAULT_AUTH_TOKEN_URL),
         audience=raw.get("audience", DEFAULT_AUTH_AUDIENCE),
@@ -80,7 +77,8 @@ def apply_auth_defaults(auth: AuthModel | None) -> AuthModel:
     without passing None for unknown credentials.
     """
     if auth is None:
-        if DEFAULT_AUTH_TYPE.lower() == "local":
+        default_type = _normalize_auth_type(DEFAULT_AUTH_TYPE)
+        if default_type == "local":
             auth = LocalUserAccountAuthenticationConfig(
                 type="local",
                 authorization_endpoint=DEFAULT_LOCAL_AUTHORIZATION_ENDPOINT,
@@ -90,7 +88,7 @@ def apply_auth_defaults(auth: AuthModel | None) -> AuthModel:
                 audience=DEFAULT_AUTH_AUDIENCE,
                 cache_file=DEFAULT_LOCAL_CACHE_FILE,
             )
-        else:
+        else:  # "m2m"
             auth = M2MAuthenticationConfig(
                 type="m2m",
                 token_url=DEFAULT_AUTH_TOKEN_URL,
@@ -103,19 +101,13 @@ def apply_auth_defaults(auth: AuthModel | None) -> AuthModel:
         auth.audience = auth.audience or DEFAULT_AUTH_AUDIENCE
         return auth
 
-    # local
+    # Local defaults (Pydantic already coerces types; only set when missing)
     auth.type = auth.type or "local"
     auth.authorization_endpoint = (
         auth.authorization_endpoint or DEFAULT_LOCAL_AUTHORIZATION_ENDPOINT
     )
     auth.token_endpoint = auth.token_endpoint or DEFAULT_LOCAL_TOKEN_ENDPOINT
-    try:
-        auth.redirect_port = (
-            int(auth.redirect_port)
-            if auth.redirect_port is not None
-            else DEFAULT_LOCAL_REDIRECT_PORT
-        )
-    except (TypeError, ValueError):
+    if auth.redirect_port is None:
         auth.redirect_port = DEFAULT_LOCAL_REDIRECT_PORT
     auth.scopes = auth.scopes or DEFAULT_LOCAL_SCOPES
     auth.audience = auth.audience or DEFAULT_AUTH_AUDIENCE
@@ -137,9 +129,14 @@ def check_required_auth_fields(auth: AuthModel) -> None:
             )
         return
 
-    # local
-    if not auth.client_id:
-        raise ValueError("Missing required authentication field for local: client_id")
+    if isinstance(auth, LocalUserAccountAuthenticationConfig):
+        if not auth.client_id:
+            raise ValueError(
+                "Missing required authentication field for local: client_id"
+            )
+        return
+
+    raise ValueError(f"Unsupported authentication model: {type(auth).__name__}")
 
 
 def normalize_authentication(raw: dict | AuthModel | None) -> AuthModel:
@@ -148,3 +145,13 @@ def normalize_authentication(raw: dict | AuthModel | None) -> AuthModel:
     model = apply_auth_defaults(model)
     check_required_auth_fields(model)
     return model
+
+
+def _normalize_auth_type(value: str) -> str:
+    """Return a normalized auth type or raise for unsupported values."""
+    v = (value or "").strip().lower()
+    if v in {"m2m", "local"}:
+        return v
+    raise ValueError(
+        f"Unsupported authentication type: {value!r}. Expected 'm2m' or 'local'."
+    )

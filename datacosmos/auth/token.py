@@ -16,7 +16,7 @@ class Token:
     expires_at: float  # epoch seconds
 
     @classmethod
-    def from_json_response(cls, data: dict) -> "Token":
+    def from_json_response(cls, data: dict) -> Token:
         """Convert dict into Token dataclass."""
         # Some IdPs return expires_in, others return expires_at
         exp = float(

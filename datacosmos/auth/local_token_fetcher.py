@@ -8,6 +8,7 @@ import socketserver
 import time
 import urllib.parse
 import webbrowser
+from contextlib import suppress
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
@@ -30,17 +31,19 @@ class LocalTokenFetcher:
     token_file: Path
 
     def get_token(self) -> Token:
-        """Get token."""
+        """Return a valid token from cache, or refresh / interact as needed."""
         tok = self.__load()
-        if tok and not tok.is_expired():
-            return tok
-        if tok and tok.is_expired():
-            refreshed = self.__refresh(tok)
-            if refreshed:
-                self.__save(refreshed)
-                return refreshed
-        # No token or failed refresh -> interactive login
-        return self.__interactive_login()
+        if not tok:
+            return self.__interactive_login()
+
+        if tok.is_expired():
+            # Try to refresh; if that fails for any reason, fall back to interactive login.
+            try:
+                return self.__refresh(tok)
+            except (requests.HTTPError, RuntimeError):
+                return self.__interactive_login()
+
+        return tok
 
     def __save(self, token: Token) -> None:
         self.token_file.parent.mkdir(parents=True, exist_ok=True)
@@ -77,9 +80,16 @@ class LocalTokenFetcher:
         resp.raise_for_status()
         return Token.from_json_response(resp.json())
 
-    def __refresh(self, token: Token) -> Optional[Token]:
+    def __refresh(self, token: Token) -> Token:
+        """Refresh the token, persist it on success, and return it.
+
+        Raises:
+            RuntimeError: if no refresh_token is available.
+            requests.HTTPError: if the token endpoint returns an error.
+        """
         if not token.refresh_token:
-            return None
+            raise RuntimeError("No refresh_token available for local auth refresh")
+
         data = {
             "grant_type": "refresh_token",
             "refresh_token": token.refresh_token,
@@ -87,14 +97,16 @@ class LocalTokenFetcher:
             "audience": self.audience,
         }
         resp = requests.post(self.token_endpoint, data=data, timeout=30)
-        if resp.status_code != 200:
-            return None
-        data = resp.json()
-        return Token(
-            access_token=data["access_token"],
-            refresh_token=token.refresh_token,  # some IdPs omit it on refresh
-            expires_at=time.time() + float(data.get("expires_in", 3600)),
+        resp.raise_for_status()  # will raise requests.HTTPError on non-2xx
+
+        payload = resp.json()
+        refreshed = Token(
+            access_token=payload["access_token"],
+            refresh_token=token.refresh_token,
+            expires_at=time.time() + float(payload.get("expires_in", 3600)),
         )
+        self.__save(refreshed)
+        return refreshed
 
     def __interactive_login(self) -> Token:
         params = {
@@ -105,8 +117,6 @@ class LocalTokenFetcher:
             "scope": self.scopes,
         }
         url = f"{self.authorization_endpoint}?{urllib.parse.urlencode(params)}"
-
-        from contextlib import suppress
 
         with suppress(Exception):
             webbrowser.open(url, new=1, autoraise=True)
