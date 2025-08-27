@@ -10,6 +10,7 @@ from datacosmos.datacosmos_client import DatacosmosClient
     "datacosmos.datacosmos_client.DatacosmosClient._authenticate_and_initialize_client"
 )
 def test_delete_request(mock_auth_client):
+    """Test that the client performs a DELETE request correctly."""
     mock_http_client = MagicMock()
     mock_resp = MagicMock(status_code=204)
     mock_http_client.request.return_value = mock_resp

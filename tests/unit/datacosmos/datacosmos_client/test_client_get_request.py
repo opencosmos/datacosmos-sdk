@@ -11,7 +11,6 @@ from datacosmos.datacosmos_client import DatacosmosClient
 )
 def test_client_get_request(mock_auth_client):
     """Test that the client performs a GET request correctly."""
-    # Mock the HTTP client returned by _authenticate_and_initialize_client
     mock_http_client = MagicMock()
     mock_response = MagicMock()
     mock_response.status_code = 200
