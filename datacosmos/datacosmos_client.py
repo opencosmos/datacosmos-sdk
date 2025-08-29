@@ -219,9 +219,9 @@ class DatacosmosClient:
         """Send an HTTP request using the authenticated session (with auto-refresh)."""
         self._refresh_token_if_needed()
         try:
-            resp = self._http_client.request(method, url, *args, **kwargs)
-            resp.raise_for_status()
-            return resp
+            response = self._http_client.request(method, url, *args, **kwargs)
+            response.raise_for_status()
+            return response
         except HTTPError as e:
             status = getattr(e.response, "status_code", None)
             if status in (401, 403) and getattr(self, "_owns_session", False):
