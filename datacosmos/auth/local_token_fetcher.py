@@ -65,7 +65,7 @@ class LocalTokenFetcher:
         return Token(
             access_token=data["access_token"],
             refresh_token=data.get("refresh_token"),
-            expires_at=float(data["expires_at"]),
+            expires_at=int(data["expires_at"]),
         )
 
     def __exchange_code(self, code: str) -> Token:
@@ -103,7 +103,7 @@ class LocalTokenFetcher:
         refreshed = Token(
             access_token=payload["access_token"],
             refresh_token=token.refresh_token,
-            expires_at=time.time() + float(payload.get("expires_in", 3600)),
+            expires_at=time.time() + int(payload.get("expires_in", 3600)),
         )
         self.__save(refreshed)
         return refreshed

@@ -18,7 +18,7 @@ class TestLocalTokenFetcher:
         tok = {
             "access_token": "cached-access",
             "refresh_token": "cached-refresh",
-            "expires_at": time.time() + 3600,
+            "expires_at": int(time.time()) + 3600,
         }
         cache.write_text(json.dumps(tok))
 
@@ -36,7 +36,7 @@ class TestLocalTokenFetcher:
         assert isinstance(t, Token)
         assert t.access_token == "cached-access"
         assert t.refresh_token == "cached-refresh"
-        assert t.expires_at == pytest.approx(tok["expires_at"], rel=0, abs=1e-6)
+        assert t.expires_at == tok["expires_at"]
 
     def test_get_token_refreshes_expired_token_and_saves(self, tmp_path, monkeypatch):
         cache = tmp_path / "token.json"
