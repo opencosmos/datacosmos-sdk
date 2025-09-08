@@ -117,6 +117,7 @@ class DatacosmosClient:
         raise DatacosmosException(f"Unsupported authentication type: {auth_type}")
 
     def __build_m2m_session(self) -> requests.Session:
+        """Client Credentials (M2M) flow using requests-oauthlib."""
         auth = self.config.authentication
         try:
             client = BackendApplicationClient(client_id=auth.client_id)
@@ -146,6 +147,7 @@ class DatacosmosClient:
             ) from e
 
     def __build_local_session(self) -> requests.Session:
+        """Interactive local login via LocalTokenFetcher (cached + refresh)."""
         auth = self.config.authentication
         try:
             from datacosmos.auth.local_token_fetcher import LocalTokenFetcher
@@ -185,8 +187,8 @@ class DatacosmosClient:
     def _refresh_now(self) -> None:
         """Force refresh.
 
-        - local: use LocalTokenFetcher (non-interactive refresh/cached token)
-        - m2m: re-run client-credentials flow
+        In case of local auth it uses LocalTokenFetcher (non-interactive refresh/cached token).
+        In case of m2m auth it re-runs client-credentials flow.
         """
         with self._refresh_lock:
             if not self._needs_refresh():
@@ -227,15 +229,15 @@ class DatacosmosClient:
             if status in (401, 403) and getattr(self, "_owns_session", False):
                 # token likely expired/invalid — refresh once and retry
                 self._refresh_now()
-                resp2 = self._http_client.request(method, url, *args, **kwargs)
+                retry_response = self._http_client.request(method, url, *args, **kwargs)
                 try:
-                    resp2.raise_for_status()
-                    return resp2
-                except HTTPError as e2:
+                    retry_response.raise_for_status()
+                    return retry_response
+                except HTTPError as e:
                     raise DatacosmosException(
                         f"HTTP error during {method.upper()} request to {url} after refresh",
-                        response=e2.response,
-                    ) from e2
+                        response=e.response,
+                    ) from e
             raise DatacosmosException(
                 f"HTTP error during {method.upper()} request to {url}",
                 response=getattr(e, "response", None),
