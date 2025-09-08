@@ -1,18 +1,23 @@
+from datacosmos.config.auth.factory import apply_auth_defaults
+from datacosmos.config.constants import DEFAULT_AUTH_AUDIENCE, DEFAULT_AUTH_TOKEN_URL
 from datacosmos.config.models.m2m_authentication_config import M2MAuthenticationConfig
 
 
 class TestM2MAuthenticationConfig:
     def test_with_minimal_input(self):
-        """Test default values are set when only client_id and client_secret are provided."""
-        config = M2MAuthenticationConfig(
-            client_id="test-client-id", client_secret="test-client-secret"
+        """Defaults are filled by the factory when only client_id/secret are provided."""
+        partial = M2MAuthenticationConfig(
+            client_id="test-client-id",
+            client_secret="test-client-secret",
         )
+
+        config = apply_auth_defaults(partial)  # <-- fills token_url & audience
 
         assert config.client_id == "test-client-id"
         assert config.client_secret == "test-client-secret"
         assert config.type == "m2m"
-        assert config.token_url == "https://login.open-cosmos.com/oauth/token"
-        assert config.audience == "https://beeapp.open-cosmos.com"
+        assert config.token_url == DEFAULT_AUTH_TOKEN_URL
+        assert config.audience == DEFAULT_AUTH_AUDIENCE
 
     def test_with_full_input(self):
         """Test full config input overrides defaults correctly."""

@@ -5,15 +5,19 @@ It loads default values, allows overrides via YAML configuration files,
 and supports environment variable-based overrides.
 """
 
-import os
-from typing import ClassVar, Optional
+from typing import Optional
 
-import yaml
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from datacosmos.config.auth.factory import normalize_authentication, parse_auth_config
+from datacosmos.config.constants import (
+    DEFAULT_CONFIG_YAML,
+    DEFAULT_STAC,
+    DEFAULT_STORAGE,
+)
+from datacosmos.config.loaders.yaml_source import yaml_settings_source
 from datacosmos.config.models.authentication_config import AuthenticationConfig
-from datacosmos.config.models.m2m_authentication_config import M2MAuthenticationConfig
 from datacosmos.config.models.url import URL
 
 
@@ -27,196 +31,71 @@ class Config(BaseSettings):
     )
 
     authentication: Optional[AuthenticationConfig] = None
-    stac: Optional[URL] = None
-    datacosmos_cloud_storage: Optional[URL] = None
-    datacosmos_public_cloud_storage: Optional[URL] = None
-
-    DEFAULT_AUTH_TYPE: ClassVar[str] = "m2m"
-    DEFAULT_AUTH_TOKEN_URL: ClassVar[str] = "https://login.open-cosmos.com/oauth/token"
-    DEFAULT_AUTH_AUDIENCE: ClassVar[str] = "https://beeapp.open-cosmos.com"
+    stac: URL | None = None
+    datacosmos_cloud_storage: URL | None = None
+    datacosmos_public_cloud_storage: URL | None = None
 
     @classmethod
-    def from_yaml(cls, file_path: str = "config/config.yaml") -> "Config":
-        """Load configuration from a YAML file and override defaults.
+    def settings_customise_sources(cls, *args, **kwargs):
+        """Sets customised sources."""
+        init_settings = kwargs.get("init_settings") or (
+            args[1] if len(args) > 1 else None
+        )
+        env_settings = kwargs.get("env_settings") or (
+            args[2] if len(args) > 2 else None
+        )
+        dotenv_settings = kwargs.get("dotenv_settings") or (
+            args[3] if len(args) > 3 else None
+        )
+        file_secret_settings = kwargs.get("file_secret_settings") or (
+            args[4] if len(args) > 4 else None
+        )
 
-        Args:
-            file_path (str): The path to the YAML configuration file.
+        sources = [
+            init_settings,
+            yaml_settings_source(DEFAULT_CONFIG_YAML),
+            env_settings,
+            dotenv_settings,
+            file_secret_settings,
+        ]
+        return tuple(s for s in sources if s is not None)
 
-        Returns:
-            Config: An instance of the Config class with loaded settings.
-        """
-        config_data: dict = {}
-        if os.path.exists(file_path):
-            with open(file_path, "r") as f:
-                yaml_data = yaml.safe_load(f) or {}
-                # Remove empty values from YAML to avoid overwriting with `None`
-                config_data = {
-                    key: value
-                    for key, value in yaml_data.items()
-                    if value not in [None, ""]
-                }
-
-        return cls(**config_data)
-
+    @field_validator("authentication", mode="before")
     @classmethod
-    def from_env(cls) -> "Config":
-        """Load configuration from environment variables.
-
-        Returns:
-            Config: An instance of the Config class with settings loaded from environment variables.
-        """
-        authentication_config = M2MAuthenticationConfig(
-            type=os.getenv("OC_AUTH_TYPE", cls.DEFAULT_AUTH_TYPE),
-            client_id=os.getenv("OC_AUTH_CLIENT_ID"),
-            client_secret=os.getenv("OC_AUTH_CLIENT_SECRET"),
-            token_url=os.getenv("OC_AUTH_TOKEN_URL", cls.DEFAULT_AUTH_TOKEN_URL),
-            audience=os.getenv("OC_AUTH_AUDIENCE", cls.DEFAULT_AUTH_AUDIENCE),
+    def _parse_authentication(cls, raw):
+        if raw is None:
+            return None
+        from datacosmos.config.models.local_user_account_authentication_config import (
+            LocalUserAccountAuthenticationConfig,
+        )
+        from datacosmos.config.models.m2m_authentication_config import (
+            M2MAuthenticationConfig,
         )
 
-        stac_config = URL(
-            protocol=os.getenv("OC_STAC_PROTOCOL", "https"),
-            host=os.getenv("OC_STAC_HOST", "app.open-cosmos.com"),
-            port=int(os.getenv("OC_STAC_PORT", "443")),
-            path=os.getenv("OC_STAC_PATH", "/api/data/v0/stac"),
-        )
-
-        datacosmos_cloud_storage_config = URL(
-            protocol=os.getenv("DC_CLOUD_STORAGE_PROTOCOL", "https"),
-            host=os.getenv("DC_CLOUD_STORAGE_HOST", "app.open-cosmos.com"),
-            port=int(os.getenv("DC_CLOUD_STORAGE_PORT", "443")),
-            path=os.getenv("DC_CLOUD_STORAGE_PATH", "/api/data/v0/storage"),
-        )
-
-        datacosmos_public_cloud_storage_config = URL(
-            protocol=os.getenv("DC_PUBLIC_CLOUD_STORAGE_PROTOCOL", "https"),
-            host=os.getenv("DC_PUBLIC_CLOUD_STORAGE_HOST", "app.open-cosmos.com"),
-            port=int(os.getenv("DC_PUBLIC_CLOUD_STORAGE_PORT", "443")),
-            path=os.getenv("DC_PUBLIC_CLOUD_STORAGE_PATH", "/api/data/v0/storage"),
-        )
-
-        return cls(
-            authentication=authentication_config,
-            stac=stac_config,
-            datacosmos_cloud_storage=datacosmos_cloud_storage_config,
-            datacosmos_public_cloud_storage=datacosmos_public_cloud_storage_config,
-        )
+        if isinstance(
+            raw, (M2MAuthenticationConfig, LocalUserAccountAuthenticationConfig)
+        ):
+            return raw
+        if isinstance(raw, dict):
+            return parse_auth_config(raw)
+        return raw
 
     @field_validator("authentication", mode="after")
     @classmethod
-    def validate_authentication(
-        cls, auth: Optional[M2MAuthenticationConfig]
-    ) -> M2MAuthenticationConfig:
-        """Ensure authentication is provided and apply defaults.
-
-        Args:
-            auth (Optional[M2MAuthenticationConfig]): The authentication config.
-
-        Returns:
-            M2MAuthenticationConfig: The validated authentication configuration.
-
-        Raises:
-            ValueError: If authentication is missing or required fields are not set.
-        """
-        if auth is None:
-            auth = cls.apply_auth_defaults(M2MAuthenticationConfig())
-        else:
-            auth = cls.apply_auth_defaults(auth)
-
-        cls.check_required_auth_fields(auth)
-        return auth
-
-    @staticmethod
-    def apply_auth_defaults(auth: M2MAuthenticationConfig) -> M2MAuthenticationConfig:
-        """Apply default authentication values if they are missing."""
-        auth.type = auth.type or Config.DEFAULT_AUTH_TYPE
-        auth.token_url = auth.token_url or Config.DEFAULT_AUTH_TOKEN_URL
-        auth.audience = auth.audience or Config.DEFAULT_AUTH_AUDIENCE
-        return auth
-
-    @classmethod
-    def parse_auth_config(cls, auth_data: dict) -> M2MAuthenticationConfig:
-        """Parse authentication config from a dictionary."""
-        return M2MAuthenticationConfig(
-            type=auth_data.get("type", cls.DEFAULT_AUTH_TYPE),
-            token_url=auth_data.get("token_url", cls.DEFAULT_AUTH_TOKEN_URL),
-            audience=auth_data.get("audience", cls.DEFAULT_AUTH_AUDIENCE),
-            client_id=auth_data.get("client_id"),
-            client_secret=auth_data.get("client_secret"),
-        )
-
-    @staticmethod
-    def check_required_auth_fields(auth: M2MAuthenticationConfig):
-        """Ensure required fields (client_id, client_secret) are provided."""
-        missing_fields = [
-            field
-            for field in ("client_id", "client_secret")
-            if not getattr(auth, field)
-        ]
-        if missing_fields:
-            raise ValueError(
-                f"Missing required authentication fields: {', '.join(missing_fields)}"
-            )
+    def _validate_authentication(cls, auth: Optional[AuthenticationConfig]):
+        return normalize_authentication(auth)
 
     @field_validator("stac", mode="before")
     @classmethod
-    def validate_stac(cls, stac_config: Optional[URL]) -> URL:
-        """Ensure STAC configuration has a default if not explicitly set.
-
-        Args:
-            stac_config (Optional[URL]): The STAC config to validate.
-
-        Returns:
-            URL: The validated STAC configuration.
-        """
-        if stac_config is None:
-            return URL(
-                protocol="https",
-                host="app.open-cosmos.com",
-                port=443,
-                path="/api/data/v0/stac",
-            )
-        return stac_config
+    def _default_stac(cls, value: URL | None) -> URL:
+        return value or URL(**DEFAULT_STAC)
 
     @field_validator("datacosmos_cloud_storage", mode="before")
     @classmethod
-    def validate_datacosmos_cloud_storage(
-        cls, datacosmos_cloud_storage_config: Optional[URL]
-    ) -> URL:
-        """Ensure datacosmos cloud storage configuration has a default if not explicitly set.
-
-        Args:
-            datacosmos_cloud_storage_config (Optional[URL]): The datacosmos cloud storage config to validate.
-
-        Returns:
-            URL: The validated datacosmos cloud storage configuration.
-        """
-        if datacosmos_cloud_storage_config is None:
-            return URL(
-                protocol="https",
-                host="app.open-cosmos.com",
-                port=443,
-                path="/api/data/v0/storage",
-            )
-        return datacosmos_cloud_storage_config
+    def _default_cloud_storage(cls, value: URL | None) -> URL:
+        return value or URL(**DEFAULT_STORAGE)
 
     @field_validator("datacosmos_public_cloud_storage", mode="before")
     @classmethod
-    def validate_datacosmos_public_cloud_storage(
-        cls, datacosmos_public_cloud_storage_config: Optional[URL]
-    ) -> URL:
-        """Ensure datacosmos cloud storage configuration has a default if not explicitly set.
-
-        Args:
-            datacosmos_public_cloud_storage_config (Optional[URL]): The datacosmos public cloud storage config to validate.
-
-        Returns:
-            URL: The validated datacosmos public cloud storage configuration.
-        """
-        if datacosmos_public_cloud_storage_config is None:
-            return URL(
-                protocol="https",
-                host="app.open-cosmos.com",
-                port=443,
-                path="/api/data/v0/storage",
-            )
-        return datacosmos_public_cloud_storage_config
+    def _default_public_cloud_storage(cls, value: URL | None) -> URL:
+        return value or URL(**DEFAULT_STORAGE)

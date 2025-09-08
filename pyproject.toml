@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "datacosmos"
-version = "0.0.12"
+version = "0.0.13"
 authors = [
     { name="Open Cosmos", email="support@open-cosmos.com" },
 ]
@@ -31,6 +31,7 @@ dev = [
     "ruff==0.9.5",
     "pytest==7.2.0",
     "bandit[toml]==1.7.4",
+    "pbr>=6.0.0",
     "isort==5.11.4",
     "pydocstyle==6.1.1"
 ]
