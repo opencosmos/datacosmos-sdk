@@ -238,6 +238,7 @@ class DatacosmosClient:
         except HTTPError as e:
             status = getattr(e.response, "status_code", None)
             if status in (401, 403) and getattr(self, "_owns_session", False):
+                # token likely expired/invalid — refresh once and retry
                 self._refresh_now()
                 retry_response = self._http_client.request(method, url, *args, **kwargs)
                 try:
