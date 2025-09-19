@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "datacosmos"
-version = "0.0.14"
+version = "0.0.15"
 authors = [
     { name="Open Cosmos", email="support@open-cosmos.com" },
 ]
@@ -22,7 +22,8 @@ dependencies = [
     "pydantic>=2",
     "pystac==1.12.1",
     "pyyaml==6.0.2",
-    "structlog==24.4.0"
+    "structlog==24.4.0",
+    "tenacity>=8.2.3"
 ]
 
 [project.optional-dependencies]

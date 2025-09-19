@@ -9,6 +9,12 @@ import requests
 from oauthlib.oauth2 import BackendApplicationClient
 from requests.exceptions import ConnectionError, HTTPError, RequestException, Timeout
 from requests_oauthlib import OAuth2Session
+from tenacity import (
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 from datacosmos.config.config import Config
 from datacosmos.exceptions.datacosmos_exception import DatacosmosException
@@ -215,10 +221,15 @@ class DatacosmosClient:
 
     # --------------------------- request API ---------------------------
 
+    @retry(
+        stop=stop_after_attempt(5),
+        wait=wait_exponential(multiplier=1, min=2, max=20),
+        retry=retry_if_exception_type((ConnectionError, Timeout)),
+    )
     def request(
         self, method: str, url: str, *args: Any, **kwargs: Any
     ) -> requests.Response:
-        """Send an HTTP request using the authenticated session (with auto-refresh)."""
+        """Send an HTTP request using the authenticated session (with auto-refresh and retries)."""
         self._refresh_token_if_needed()
         try:
             response = self._http_client.request(method, url, *args, **kwargs)
@@ -241,14 +252,6 @@ class DatacosmosClient:
             raise DatacosmosException(
                 f"HTTP error during {method.upper()} request to {url}",
                 response=getattr(e, "response", None),
-            ) from e
-        except ConnectionError as e:
-            raise DatacosmosException(
-                f"Connection error during {method.upper()} request to {url}: {e}"
-            ) from e
-        except Timeout as e:
-            raise DatacosmosException(
-                f"Request timeout during {method.upper()} request to {url}: {e}"
             ) from e
         except RequestException as e:
             raise DatacosmosException(
