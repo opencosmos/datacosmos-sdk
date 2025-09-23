@@ -20,7 +20,13 @@ class AuthResult:
         token: Optional[str] = None,
         token_expiry: Optional[datetime] = None,
     ):
-        """Authentication result object."""
+        """Initializes an AuthResult object.
+
+        Args:
+            http_client (requests.Session): The HTTP client/session to use for requests.
+            token (Optional[str], optional): The authentication token, if available.
+            token_expiry (Optional[datetime], optional): The expiry time of the token, if available.
+        """
         self.http_client = http_client
         self.token = token
         self.token_expiry = token_expiry
@@ -30,7 +36,11 @@ class BaseAuthenticator(ABC):
     """Abstract base class for all authenticators."""
 
     def __init__(self, config: Config):
-        """Abstract base class for all authenticators."""
+        """Initializes the BaseAuthenticator with the given configuration.
+
+        Args:
+            config (Config): The configuration object containing authentication settings.
+        """
         self.config = config
 
     @abstractmethod

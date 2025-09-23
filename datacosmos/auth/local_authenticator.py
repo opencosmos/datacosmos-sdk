@@ -14,7 +14,11 @@ class LocalAuthenticator(BaseAuthenticator):
     """Handles authentication via the interactive local login flow."""
 
     def __init__(self, config: Any):
-        """Handles authentication via the interactive local login flow."""
+        """Initializes a LocalAuthenticator instance.
+
+        Args:
+            config (Any): Configuration object containing authentication settings.
+        """
         super().__init__(config)
         self._local_token_fetcher = self._init_fetcher()
 
@@ -56,8 +60,13 @@ class LocalAuthenticator(BaseAuthenticator):
             tok = self._local_token_fetcher.get_token()
             token = tok.access_token
             token_expiry = datetime.fromtimestamp(tok.expires_at, tz=timezone.utc)
+
+            # Create a new session with the new token
+            http_client = requests.Session()
+            http_client.headers.update({"Authorization": f"Bearer {token}"})
+
             return AuthResult(
-                http_client=self.http_client, token=token, token_expiry=token_expiry
+                http_client=http_client, token=token, token_expiry=token_expiry
             )
         except Exception as e:
             raise DatacosmosException(f"Local token refresh failed: {e}") from e
