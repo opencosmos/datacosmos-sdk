@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import threading
 from datetime import datetime, timedelta, timezone
-from typing import Any, Optional
+from typing import Any, Callable, List, Optional
 
 import requests
 from requests.exceptions import ConnectionError, HTTPError, RequestException, Timeout
@@ -21,6 +21,9 @@ from datacosmos.auth.m2m_authenticator import M2MAuthenticator
 from datacosmos.config.config import Config
 from datacosmos.exceptions.datacosmos_exception import DatacosmosException
 
+RequestHook = Callable[[str, str, Any, Any], None]
+ResponseHook = Callable[[requests.Response], None]
+
 
 class DatacosmosClient:
     """Client to interact with the Datacosmos API with authentication and request handling."""
@@ -31,18 +34,24 @@ class DatacosmosClient:
         self,
         config: Optional[Config | Any] = None,
         http_session: Optional[requests.Session | OAuth2Session] = None,
+        request_hooks: Optional[List[RequestHook]] = None,
+        response_hooks: Optional[List[ResponseHook]] = None,
     ):
         """Initialize the DatacosmosClient.
 
         Args:
             config (Optional[Config]): Configuration object (only needed when SDK creates its own session).
             http_session (Optional[requests.Session]): Pre-authenticated session.
+            request_hooks (Optional[List[Callable]]): A list of functions to be called before each request.
+            response_hooks (Optional[List[Callable]]): A list of functions to be called after each successful response.
         """
         self.config = self._coerce_config(config)
         self.token: Optional[str] = None
         self.token_expiry: Optional[datetime] = None
         self._refresh_lock = threading.Lock()
         self._authenticator: Optional[BaseAuthenticator] = None
+        self._request_hooks = request_hooks or []
+        self._response_hooks = response_hooks or []
 
         if http_session is not None:
             self._init_with_injected_session(http_session)
@@ -172,11 +181,34 @@ class DatacosmosClient:
     def request(
         self, method: str, url: str, *args: Any, **kwargs: Any
     ) -> requests.Response:
-        """Send an HTTP request using the authenticated session (with auto-refresh and retries)."""
+        """Send an HTTP request using the authenticated session (with auto-refresh and retries).
+
+        Args:
+            method (str): The HTTP method (e.g., "GET", "POST").
+            url (str): The URL for the request.
+            *args: Positional arguments for requests.request().
+            **kwargs: Keyword arguments for requests.request().
+
+        Returns:
+            requests.Response: The HTTP response.
+
+        Raises:
+            DatacosmosException: For any HTTP or request-related errors.
+        """
         self._refresh_token_if_needed()
+
+        # Call pre-request hooks
+        for hook in self._request_hooks:
+            hook(method, url, *args, **kwargs)
+
         try:
             response = self._http_client.request(method, url, *args, **kwargs)
             response.raise_for_status()
+
+            # Call post-response hooks on success
+            for hook in self._response_hooks:
+                hook(response)
+
             return response
         except HTTPError as e:
             status = getattr(e.response, "status_code", None)
