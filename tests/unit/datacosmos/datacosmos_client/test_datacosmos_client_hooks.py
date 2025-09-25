@@ -12,7 +12,6 @@ class TestDatacosmosClientHooks(unittest.TestCase):
 
     def setUp(self):
         """Set up a mock config for the client."""
-        # Provide a minimal valid Config object
         self.mock_config = Config(
             authentication={
                 "type": "m2m",
