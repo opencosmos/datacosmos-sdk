@@ -87,7 +87,7 @@ class DatacosmosItem(BaseModel):
     @property
     def polygon(
         self,
-    ) -> Any:  # Assuming Polygon is a separate class from a library like shapely
+    ) -> Polygon:
         """Returns the polygon of the item."""
         coordinates = self.geometry["coordinates"][0]
         return Polygon(coordinates)

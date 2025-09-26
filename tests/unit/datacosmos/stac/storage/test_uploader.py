@@ -1,4 +1,3 @@
-from datetime import datetime
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -90,7 +89,7 @@ def simple_item(tmp_path):
             ],
         },
         properties={
-            "datetime": datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "datetime": "2023-01-01T12:00:00Z",
             "processing:level": "level1a",
             "sat:platform_international_designator": "sat123",
         },
