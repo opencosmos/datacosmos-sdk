@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -76,12 +77,27 @@ def simple_item(tmp_path):
         type="Feature",
         stac_version="1.0.0",
         stac_extensions=[],
-        geometry={},
-        properties={},
+        geometry={
+            "type": "Polygon",
+            "coordinates": [
+                [
+                    [0.0, 0.0],
+                    [1.0, 0.0],
+                    [1.0, 1.0],
+                    [0.0, 1.0],
+                    [0.0, 0.0],
+                ]
+            ],
+        },
+        properties={
+            "datetime": datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "processing:level": "level1a",
+            "sat:platform_international_designator": "sat123",
+        },
         links=[],
         assets={"file": asset},
         collection="collection1",
-        bbox=(0.0, 0.0, 0.0, 0.0),
+        bbox=[0.0, 0.0, 1.0, 1.0],
     )
     return item, str(tmp_path)
 
