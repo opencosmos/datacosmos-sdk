@@ -1,14 +1,22 @@
 """Model representing a datacosmos item."""
 
+import math
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, ConfigDict, field_validator
-from shapely.geometry import Polygon
+from pydantic import BaseModel, ConfigDict, field_validator, model_validator
+from shapely.errors import ShapelyError
+from shapely.geometry import Polygon, shape
 
 from datacosmos.exceptions.datacosmos_exception import DatacosmosException
 from datacosmos.stac.enums.processing_level import ProcessingLevel
 from datacosmos.stac.item.models.asset import Asset
+
+_REQUIRED_DATACOSMOS_PROPERTIES = [
+    "datetime",
+    "processing:level",
+    "sat:platform_international_designator",
+]
 
 
 class DatacosmosItem(BaseModel):
@@ -35,13 +43,9 @@ class DatacosmosItem(BaseModel):
         cls, properties_data: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Validates that Datacosmos-specific properties exist."""
-        required_keys = [
-            "datetime",
-            "processing:level",
-            "sat:platform_international_designator",
+        missing_keys = [
+            key for key in _REQUIRED_DATACOSMOS_PROPERTIES if key not in properties_data
         ]
-
-        missing_keys = [key for key in required_keys if key not in properties_data]
 
         if missing_keys:
             raise DatacosmosException(
@@ -59,7 +63,38 @@ class DatacosmosItem(BaseModel):
             "coordinates"
         ):
             raise DatacosmosException("Geometry must be a Polygon with coordinates.")
+
+        try:
+            # Use shape() for robust GeoJSON parsing and validation
+            polygon = shape(geometry_data)
+            if not polygon.is_valid:
+                raise ValueError("Polygon geometry is invalid.")
+
+        except (KeyError, ShapelyError, ValueError) as e:
+            raise DatacosmosException(f"Invalid geometry data: {e}") from e
+
         return geometry_data
+
+    @model_validator(mode="after")
+    def validate_bbox_vs_geometry(self) -> "DatacosmosItem":
+        """Validates that the bbox tightly encloses the geometry."""
+        if self.geometry and self.bbox:
+            try:
+                geom_shape = shape(self.geometry)
+                true_bbox = list(geom_shape.bounds)
+
+                # Check for floating point equality within a tolerance
+                if not all(
+                    math.isclose(a, b, rel_tol=1e-9)
+                    for a, b in zip(self.bbox, true_bbox)
+                ):
+                    raise DatacosmosException(
+                        "Provided bbox does not match geometry bounds."
+                    )
+            except Exception as e:
+                # Catch any errors from Shapely or the comparison
+                raise DatacosmosException(f"Invalid bbox or geometry: {e}") from e
+        return self
 
     def get_property(self, key: str) -> Optional[Any]:
         """Get a property value from the Datacosmos item."""
@@ -70,7 +105,7 @@ class DatacosmosItem(BaseModel):
         return self.assets.get(key)
 
     @property
-    def datacosmos_datetime(self) -> datetime:
+    def datetime(self) -> datetime:
         """Get the datetime of the Datacosmos item."""
         return datetime.strptime(self.properties["datetime"], "%Y-%m-%dT%H:%M:%SZ")
 
@@ -85,10 +120,9 @@ class DatacosmosItem(BaseModel):
         return self.properties["sat:platform_international_designator"]
 
     @property
-    def polygon(
-        self,
-    ) -> Polygon:
+    def polygon(self) -> Polygon:
         """Returns the polygon of the item."""
+        # The geometry has already been validated to be a polygon with coordinates
         coordinates = self.geometry["coordinates"][0]
         return Polygon(coordinates)
 
