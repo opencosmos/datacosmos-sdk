@@ -1,32 +1,106 @@
 """Model representing a datacosmos item."""
 
+import math
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, field_validator, model_validator
+from shapely.errors import ShapelyError
+from shapely.geometry import Polygon, shape
 
+from datacosmos.exceptions.datacosmos_exception import DatacosmosException
 from datacosmos.stac.enums.processing_level import ProcessingLevel
 from datacosmos.stac.item.models.asset import Asset
 
+_REQUIRED_DATACOSMOS_PROPERTIES = [
+    "datetime",
+    "processing:level",
+    "sat:platform_international_designator",
+]
+
 
 class DatacosmosItem(BaseModel):
-    """Model representing a datacosmos item."""
+    """Model representing a flexible Datacosmos STAC item with mandatory business fields."""
+
+    model_config = ConfigDict(extra="allow")
 
     id: str
     type: str
-    stac_version: str
-    stac_extensions: list | None
-    geometry: dict
-    properties: dict
-    links: list
-    assets: dict[str, Asset]
-    collection: str
-    bbox: tuple[float, float, float, float]
+    geometry: Dict[str, Any]
+    bbox: List[float]
+    properties: Dict[str, Any]
 
-    def get_property(self, key: str) -> str | None:
+    links: List[Dict[str, Any]]
+    assets: Dict[str, Asset]
+
+    stac_version: Optional[str] = None
+    stac_extensions: Optional[List[str]] = None
+    collection: Optional[str] = None
+
+    @field_validator("properties", mode="before")
+    @classmethod
+    def validate_datacosmos_properties(
+        cls, properties_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Validates that Datacosmos-specific properties exist."""
+        missing_keys = [
+            key for key in _REQUIRED_DATACOSMOS_PROPERTIES if key not in properties_data
+        ]
+
+        if missing_keys:
+            raise DatacosmosException(
+                f"Datacosmos-specific properties are missing: {', '.join(missing_keys)}."
+            )
+        return properties_data
+
+    @field_validator("geometry", mode="before")
+    @classmethod
+    def validate_geometry_is_polygon(
+        cls, geometry_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Validates that the geometry is a Polygon with coordinates."""
+        if geometry_data.get("type") != "Polygon" or not geometry_data.get(
+            "coordinates"
+        ):
+            raise DatacosmosException("Geometry must be a Polygon with coordinates.")
+
+        try:
+            # Use shape() for robust GeoJSON parsing and validation
+            polygon = shape(geometry_data)
+            if not polygon.is_valid:
+                raise ValueError("Polygon geometry is invalid.")
+
+        except (KeyError, ShapelyError, ValueError) as e:
+            raise DatacosmosException(f"Invalid geometry data: {e}") from e
+
+        return geometry_data
+
+    @model_validator(mode="after")
+    def validate_bbox_vs_geometry(self) -> "DatacosmosItem":
+        """Validates that the bbox tightly encloses the geometry."""
+        if self.geometry and self.bbox:
+            try:
+                geom_shape = shape(self.geometry)
+                true_bbox = list(geom_shape.bounds)
+
+                # Check for floating point equality within a tolerance
+                if not all(
+                    math.isclose(a, b, rel_tol=1e-9)
+                    for a, b in zip(self.bbox, true_bbox)
+                ):
+                    raise DatacosmosException(
+                        "Provided bbox does not match geometry bounds."
+                    )
+            except Exception as e:
+                # Catch any errors from Shapely or the comparison
+                raise DatacosmosException(f"Invalid bbox or geometry: {e}") from e
+        return self
+
+    def get_property(self, key: str) -> Optional[Any]:
         """Get a property value from the Datacosmos item."""
         return self.properties.get(key)
 
-    def get_asset(self, key: str) -> Asset | None:
+    def get_asset(self, key: str) -> Optional[Asset]:
         """Get an asset from the Datacosmos item."""
         return self.assets.get(key)
 
@@ -43,12 +117,14 @@ class DatacosmosItem(BaseModel):
     @property
     def sat_int_designator(self) -> str:
         """Get the satellite international designator of the Datacosmos item."""
-        property = self.get_property("sat:platform_international_designator")
-        if property is None:
-            raise ValueError(
-                "sat:platform_international_designator is missing in STAC item"
-            )
-        return property
+        return self.properties["sat:platform_international_designator"]
+
+    @property
+    def polygon(self) -> Polygon:
+        """Returns the polygon of the item."""
+        # The geometry has already been validated to be a polygon with coordinates
+        coordinates = self.geometry["coordinates"][0]
+        return Polygon(coordinates)
 
     def to_dict(self) -> dict:
         """Converts the DatacosmosItem instance to a dictionary."""
