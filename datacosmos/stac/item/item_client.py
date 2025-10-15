@@ -9,6 +9,7 @@ from pystac import Item
 
 from datacosmos.datacosmos_client import DatacosmosClient
 from datacosmos.exceptions.datacosmos_exception import DatacosmosException
+from datacosmos.exceptions.stac_validation_exception import StacValidationException
 from datacosmos.stac.item.models.catalog_search_parameters import (
     CatalogSearchParameters,
 )
@@ -72,14 +73,27 @@ class ItemClient:
 
         Raises:
             ValueError: If the item has no collection set.
+            StacValidationException: If the collection ID in the links doesn't match the item's collection field.
             RequestError: If the API returns an error response.
         """
         if isinstance(item, Item):
             collection_id = item.collection_id or (
                 item.get_collection().id if item.get_collection() else None
             )
+            if collection_id and not self._is_collection_link_consistent_pystac(
+                item, collection_id
+            ):
+                raise StacValidationException(
+                    "Parent link in pystac.Item does not match its collection_id."
+                )
         else:
             collection_id = item.collection
+            if collection_id and not self._is_collection_link_consistent_datacosmos(
+                item
+            ):
+                raise StacValidationException(
+                    "Parent link in DatacosmosItem does not match its collection."
+                )
 
         if not collection_id:
             raise ValueError("Cannot create item: no collection_id found on item")
@@ -99,14 +113,27 @@ class ItemClient:
 
         Raises:
             ValueError: If the item has no collection set.
+            StacValidationException: If the collection ID in the links doesn't match the item's collection field.
             RequestError: If the API returns an error response.
         """
         if isinstance(item, Item):
             collection_id = item.collection_id or (
                 item.get_collection().id if item.get_collection() else None
             )
+            if collection_id and not self._is_collection_link_consistent_pystac(
+                item, collection_id
+            ):
+                raise StacValidationException(
+                    "Parent link in pystac.Item does not match its collection_id."
+                )
         else:
             collection_id = item.collection
+            if collection_id and not self._is_collection_link_consistent_datacosmos(
+                item
+            ):
+                raise StacValidationException(
+                    "Parent link in DatacosmosItem does not match its collection."
+                )
 
         if not collection_id:
             raise ValueError("Cannot create item: no collection_id found on item")
@@ -212,3 +239,27 @@ class ItemClient:
                 f"Failed to parse pagination token from {next_href}",
                 response=e.response,
             ) from e
+
+    def _is_collection_link_consistent_pystac(
+        self, item: Item, collection_id: str
+    ) -> bool:
+        """Helper to check if the parent link matches the pystac item's collection_id."""
+        parent_link = next(
+            (link for link in item.get_links("parent") if link.rel == "parent"), None
+        )
+        if not parent_link:
+            return True
+
+        link_collection_id = parent_link.get_href().rstrip("/").split("/")[-1]
+        return link_collection_id == collection_id
+
+    def _is_collection_link_consistent_datacosmos(self, item: DatacosmosItem) -> bool:
+        """Helper to check if the parent link matches the datacosmos item's collection field."""
+        if not item.collection:
+            return True
+
+        for link in item.links:
+            if link.get("rel") == "parent":
+                link_collection_id = link.get("href", "").rstrip("/").split("/")[-1]
+                return link_collection_id == item.collection
+        return True
