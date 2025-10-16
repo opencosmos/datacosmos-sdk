@@ -8,6 +8,7 @@ from datacosmos.config.models.m2m_authentication_config import M2MAuthentication
 from datacosmos.datacosmos_client import DatacosmosClient
 from datacosmos.exceptions.stac_validation_exception import StacValidationException
 from datacosmos.stac.item.item_client import ItemClient
+from datacosmos.stac.item.models.datacosmos_item import DatacosmosItem
 
 
 class TestItemClient(unittest.TestCase):
@@ -40,6 +41,14 @@ class TestItemClient(unittest.TestCase):
         self.client = DatacosmosClient(config=self.config)
         self.stac_client = ItemClient(self.client)
 
+        self.valid_asset_data = {
+            "href": "http://example.com/thumb.jpg",
+            "title": "Thumbnail Image",
+            "description": "A preview thumbnail.",
+            "type": "image/jpeg",
+            "roles": ["role"],
+        }
+
     def tearDown(self):
         """Clean up patches after each test."""
         patch.stopall()
@@ -61,7 +70,6 @@ class TestItemClient(unittest.TestCase):
         mock_response.json.return_value = item_dict
         self.mock_post.return_value = mock_response
 
-        # Create a pystac.Item with a consistent parent link
         item = Item.from_dict(item_dict)
         item.add_link(Link.parent(f"https://some.url/collections/{item.collection_id}"))
 
@@ -74,8 +82,8 @@ class TestItemClient(unittest.TestCase):
             json=item.to_dict(),
         )
 
-    def test_create_item_mismatched_collection_raises_error(self):
-        """Test that creating a STAC item with a mismatched parent link raises StacValidationException."""
+    def test_create_pystac_item_mismatched_collection_raises_error(self):
+        """Test that creating a pystac.Item with a mismatched parent link raises StacValidationException."""
         item_dict = {
             "id": "item-1",
             "collection": "test-collection",
@@ -87,13 +95,52 @@ class TestItemClient(unittest.TestCase):
             "links": [],
         }
 
-        # Create a pystac.Item with an inconsistent parent link
         item = Item.from_dict(item_dict)
         item.add_link(Link.parent("https://some.url/collections/wrong-collection"))
 
         with self.assertRaisesRegex(
             StacValidationException,
             "Parent link in pystac.Item does not match its collection_id.",
+        ):
+            self.stac_client.create_item(item)
+
+        self.mock_post.assert_not_called()
+        self.mock_check_api_response.assert_not_called()
+
+    def test_create_datacosmos_item_mismatched_collection_raises_error(self):
+        """Test that creating a DatacosmosItem with a mismatched parent link raises StacValidationException."""
+        item_dict = {
+            "id": "item-1",
+            "type": "Feature",
+            "stac_version": "1.0.0",
+            "stac_extensions": [],
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0], [0.0, 0.0]]
+                ],
+            },
+            "properties": {
+                "datetime": "2023-12-01T12:00:00Z",
+                "processing:level": "l1a",
+                "sat:platform_international_designator": "TEST-SAT-1",
+            },
+            "bbox": [0.0, 0.0, 1.0, 1.0],
+            "links": [
+                {
+                    "href": "https://some.url/collections/wrong-collection",
+                    "rel": "parent",
+                }
+            ],
+            "assets": {"thumbnail": self.valid_asset_data},
+            "collection": "test-collection",
+        }
+
+        item = DatacosmosItem(**item_dict)
+
+        with self.assertRaisesRegex(
+            StacValidationException,
+            "Parent link in DatacosmosItem does not match its collection.",
         ):
             self.stac_client.create_item(item)
 
