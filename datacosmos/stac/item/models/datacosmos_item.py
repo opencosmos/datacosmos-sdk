@@ -2,7 +2,7 @@
 
 import math
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 from shapely.errors import ShapelyError
@@ -26,22 +26,22 @@ class DatacosmosItem(BaseModel):
 
     id: str
     type: str
-    geometry: Dict[str, Any]
-    bbox: List[float]
-    properties: Dict[str, Any]
+    geometry: dict[str, Any]
+    bbox: list[float]
+    properties: dict[str, Any]
 
-    links: List[Dict[str, Any]]
-    assets: Dict[str, Asset]
+    links: list[dict[str, Any]]
+    assets: dict[str, Asset]
 
-    stac_version: Optional[str] = None
-    stac_extensions: Optional[List[str]] = None
-    collection: Optional[str] = None
+    stac_version: str | None = None
+    stac_extensions: list[str] | None = None
+    collection: str | None = None
 
     @field_validator("properties", mode="before")
     @classmethod
     def validate_datacosmos_properties(
-        cls, properties_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        cls, properties_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Validates that Datacosmos-specific properties exist."""
         missing_keys = [
             key for key in _REQUIRED_DATACOSMOS_PROPERTIES if key not in properties_data
@@ -56,9 +56,9 @@ class DatacosmosItem(BaseModel):
     @field_validator("geometry", mode="before")
     @classmethod
     def validate_geometry_is_polygon(
-        cls, geometry_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """Validates that the geometry is a Polygon with coordinates."""
+        cls, geometry_data: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Validates that the geometry is a Polygon with coordinates and correct winding order."""
         if geometry_data.get("type") != "Polygon" or not geometry_data.get(
             "coordinates"
         ):
@@ -67,8 +67,17 @@ class DatacosmosItem(BaseModel):
         try:
             # Use shape() for robust GeoJSON parsing and validation
             polygon = shape(geometry_data)
+
             if not polygon.is_valid:
-                raise ValueError("Polygon geometry is invalid.")
+                raise ValueError(f"Polygon geometry is invalid: {polygon.geom_type}")
+
+            # right-hand rule validation:
+            # The right-hand rule means exterior ring must be counter-clockwise (CCW).
+            # Shapely's Polygon stores the exterior as CCW if the input is valid.
+            if not polygon.exterior.is_ccw:
+                raise ValueError(
+                    "Polygon winding order violates GeoJSON Right-Hand Rule (Exterior ring is clockwise)."
+                )
 
         except (KeyError, ShapelyError, ValueError) as e:
             raise DatacosmosException(f"Invalid geometry data: {e}") from e
@@ -96,11 +105,11 @@ class DatacosmosItem(BaseModel):
                 raise DatacosmosException(f"Invalid bbox or geometry: {e}") from e
         return self
 
-    def get_property(self, key: str) -> Optional[Any]:
+    def get_property(self, key: str) -> Any | None:
         """Get a property value from the Datacosmos item."""
         return self.properties.get(key)
 
-    def get_asset(self, key: str) -> Optional[Asset]:
+    def get_asset(self, key: str) -> Asset | None:
         """Get an asset from the Datacosmos item."""
         return self.assets.get(key)
 
@@ -122,7 +131,6 @@ class DatacosmosItem(BaseModel):
     @property
     def polygon(self) -> Polygon:
         """Returns the polygon of the item."""
-        # The geometry has already been validated to be a polygon with coordinates
         coordinates = self.geometry["coordinates"][0]
         return Polygon(coordinates)
 
