@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
 from datacosmos.auth.local_authenticator import LocalAuthenticator
-from datacosmos.exceptions.datacosmos_exception import DatacosmosException
+from datacosmos.exceptions.datacosmos_error import DatacosmosError
 
 
 class TestLocalAuthenticator(unittest.TestCase):
@@ -54,7 +54,7 @@ class TestLocalAuthenticator(unittest.TestCase):
         )
 
         authenticator = LocalAuthenticator(self.mock_config)
-        with self.assertRaises(DatacosmosException) as cm:
+        with self.assertRaises(DatacosmosError) as cm:
             authenticator.authenticate_and_build_session()
 
         self.assertIn("Local authentication failed", str(cm.exception))
@@ -86,7 +86,7 @@ class TestLocalAuthenticator(unittest.TestCase):
         mock_fetcher_instance = mock_fetcher_class.return_value
         mock_fetcher_instance.get_token.side_effect = Exception("Mocked refresh error")
 
-        with self.assertRaises(DatacosmosException) as cm:
+        with self.assertRaises(DatacosmosError) as cm:
             authenticator.refresh_token()
 
         self.assertIn("Local token refresh failed", str(cm.exception))

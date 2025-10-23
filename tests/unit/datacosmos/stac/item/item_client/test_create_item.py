@@ -6,7 +6,7 @@ from pystac import Item, Link
 from datacosmos.config.config import Config
 from datacosmos.config.models.m2m_authentication_config import M2MAuthenticationConfig
 from datacosmos.datacosmos_client import DatacosmosClient
-from datacosmos.exceptions.stac_validation_exception import StacValidationException
+from datacosmos.exceptions.stac_validation_error import StacValidationError
 from datacosmos.stac.item.item_client import ItemClient
 from datacosmos.stac.item.models.datacosmos_item import DatacosmosItem
 
@@ -83,7 +83,7 @@ class TestItemClient(unittest.TestCase):
         )
 
     def test_create_pystac_item_mismatched_collection_raises_error(self):
-        """Test that creating a pystac.Item with a mismatched parent link raises StacValidationException."""
+        """Test that creating a pystac.Item with a mismatched parent link raises StacValidationError."""
         item_dict = {
             "id": "item-1",
             "collection": "test-collection",
@@ -99,7 +99,7 @@ class TestItemClient(unittest.TestCase):
         item.add_link(Link.parent("https://some.url/collections/wrong-collection"))
 
         with self.assertRaisesRegex(
-            StacValidationException,
+            StacValidationError,
             "Parent link in pystac.Item does not match its collection_id.",
         ):
             self.stac_client.create_item(item)
@@ -108,7 +108,7 @@ class TestItemClient(unittest.TestCase):
         self.mock_check_api_response.assert_not_called()
 
     def test_create_datacosmos_item_mismatched_collection_raises_error(self):
-        """Test that creating a DatacosmosItem with a mismatched parent link raises StacValidationException."""
+        """Test that creating a DatacosmosItem with a mismatched parent link raises StacValidationError."""
         item_dict = {
             "id": "item-1",
             "type": "Feature",
@@ -139,7 +139,7 @@ class TestItemClient(unittest.TestCase):
         item = DatacosmosItem(**item_dict)
 
         with self.assertRaisesRegex(
-            StacValidationException,
+            StacValidationError,
             "Parent link in DatacosmosItem does not match its collection.",
         ):
             self.stac_client.create_item(item)

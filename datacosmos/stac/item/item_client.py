@@ -8,8 +8,7 @@ from typing import Generator, Optional
 from pystac import Item
 
 from datacosmos.datacosmos_client import DatacosmosClient
-from datacosmos.exceptions.datacosmos_exception import DatacosmosException
-from datacosmos.exceptions.stac_validation_exception import StacValidationException
+from datacosmos.exceptions import DatacosmosError, StacValidationError
 from datacosmos.stac.item.models.catalog_search_parameters import (
     CatalogSearchParameters,
 )
@@ -73,7 +72,7 @@ class ItemClient:
 
         Raises:
             ValueError: If the item has no collection set.
-            StacValidationException: If the collection ID in the links doesn't match the item's collection field.
+            StacValidationError: If the collection ID in the links doesn't match the item's collection field.
             RequestError: If the API returns an error response.
         """
         collection_id = self._get_validated_collection_id(item, method="create")
@@ -93,7 +92,7 @@ class ItemClient:
 
         Raises:
             ValueError: If the item has no collection set.
-            StacValidationException: If the collection ID in the links doesn't match the item's collection field.
+            StacValidationError: If the collection ID in the links doesn't match the item's collection field.
             RequestError: If the API returns an error response.
         """
         collection_id = self._get_validated_collection_id(item, method="add")
@@ -193,12 +192,12 @@ class ItemClient:
             Optional[str]: The extracted token, or None if parsing fails.
 
         Raises:
-            DatacosmosException: If pagination token extraction fails.
+            DatacosmosError: If pagination token extraction fails.
         """
         try:
             return next_href.split("?")[1].split("=")[-1]
         except (IndexError, AttributeError) as e:
-            raise DatacosmosException(
+            raise DatacosmosError(
                 f"Failed to parse pagination token from {next_href}",
                 response=e.response,
             ) from e
@@ -217,7 +216,7 @@ class ItemClient:
 
         Raises:
             ValueError: If collection ID cannot be resolved.
-            StacValidationException: If the collection ID and parent link are inconsistent.
+            StacValidationError: If the collection ID and parent link are inconsistent.
         """
         if isinstance(item, Item):
             collection_id = item.collection_id or (
@@ -226,7 +225,7 @@ class ItemClient:
             if collection_id and not self._is_collection_link_consistent_pystac(
                 item, collection_id
             ):
-                raise StacValidationException(
+                raise StacValidationError(
                     "Parent link in pystac.Item does not match its collection_id."
                 )
         else:
@@ -234,7 +233,7 @@ class ItemClient:
             if collection_id and not self._is_collection_link_consistent_datacosmos(
                 item
             ):
-                raise StacValidationException(
+                raise StacValidationError(
                     "Parent link in DatacosmosItem does not match its collection."
                 )
 

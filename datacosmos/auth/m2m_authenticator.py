@@ -13,7 +13,7 @@ from tenacity import (
 )
 
 from datacosmos.auth.base_authenticator import AuthResult, BaseAuthenticator
-from datacosmos.exceptions.datacosmos_exception import DatacosmosException
+from datacosmos.exceptions.datacosmos_error import DatacosmosError
 
 
 class M2MAuthenticator(BaseAuthenticator):
@@ -52,9 +52,9 @@ class M2MAuthenticator(BaseAuthenticator):
                 http_client=http_client, token=token, token_expiry=token_expiry
             )
         except (HTTPError, ConnectionError, Timeout) as e:
-            raise DatacosmosException(f"M2M authentication failed: {e}") from e
+            raise DatacosmosError(f"M2M authentication failed: {e}") from e
         except RequestException as e:
-            raise DatacosmosException(
+            raise DatacosmosError(
                 f"Unexpected request failure during M2M authentication: {e}"
             ) from e
 

@@ -7,7 +7,7 @@ import requests
 
 from datacosmos.auth.base_authenticator import AuthResult, BaseAuthenticator
 from datacosmos.auth.local_token_fetcher import LocalTokenFetcher
-from datacosmos.exceptions.datacosmos_exception import DatacosmosException
+from datacosmos.exceptions.datacosmos_error import DatacosmosError
 
 
 class LocalAuthenticator(BaseAuthenticator):
@@ -36,9 +36,7 @@ class LocalAuthenticator(BaseAuthenticator):
                 token_file=Path(auth.cache_file).expanduser(),
             )
         except Exception as e:
-            raise DatacosmosException(
-                f"Failed to initialize LocalTokenFetcher: {e}"
-            ) from e
+            raise DatacosmosError(f"Failed to initialize LocalTokenFetcher: {e}") from e
 
     def authenticate_and_build_session(self) -> AuthResult:
         """Builds an authenticated session using the local token fetcher."""
@@ -52,7 +50,7 @@ class LocalAuthenticator(BaseAuthenticator):
                 http_client=http_client, token=token, token_expiry=token_expiry
             )
         except Exception as e:
-            raise DatacosmosException(f"Local authentication failed: {e}") from e
+            raise DatacosmosError(f"Local authentication failed: {e}") from e
 
     def refresh_token(self) -> AuthResult:
         """Refreshes the local token non-interactively."""
@@ -69,4 +67,4 @@ class LocalAuthenticator(BaseAuthenticator):
                 http_client=http_client, token=token, token_expiry=token_expiry
             )
         except Exception as e:
-            raise DatacosmosException(f"Local token refresh failed: {e}") from e
+            raise DatacosmosError(f"Local token refresh failed: {e}") from e

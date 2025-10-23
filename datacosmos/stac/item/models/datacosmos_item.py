@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 from shapely.errors import ShapelyError
 from shapely.geometry import Polygon, shape
 
-from datacosmos.exceptions.stac_validation_exception import StacValidationException
+from datacosmos.exceptions.stac_validation_error import StacValidationError
 from datacosmos.stac.enums.processing_level import ProcessingLevel
 from datacosmos.stac.item.models.asset import Asset
 
@@ -48,7 +48,7 @@ class DatacosmosItem(BaseModel):
         ]
 
         if missing_keys:
-            raise StacValidationException(
+            raise StacValidationError(
                 f"Datacosmos-specific properties are missing: {', '.join(missing_keys)}."
             )
         return properties_data
@@ -62,9 +62,7 @@ class DatacosmosItem(BaseModel):
         if geometry_data.get("type") != "Polygon" or not geometry_data.get(
             "coordinates"
         ):
-            raise StacValidationException(
-                "Geometry must be a Polygon with coordinates."
-            )
+            raise StacValidationError("Geometry must be a Polygon with coordinates.")
 
         try:
             # Use shape() for robust GeoJSON parsing and validation
@@ -82,7 +80,7 @@ class DatacosmosItem(BaseModel):
                 )
 
         except (KeyError, ShapelyError, ValueError) as e:
-            raise StacValidationException(f"Invalid geometry data: {e}") from e
+            raise StacValidationError(f"Invalid geometry data: {e}") from e
 
         return geometry_data
 
@@ -99,12 +97,12 @@ class DatacosmosItem(BaseModel):
                     math.isclose(a, b, rel_tol=1e-9)
                     for a, b in zip(self.bbox, true_bbox)
                 ):
-                    raise StacValidationException(
+                    raise StacValidationError(
                         "Provided bbox does not match geometry bounds."
                     )
             except Exception as e:
                 # Catch any errors from Shapely or the comparison
-                raise StacValidationException(f"Invalid bbox or geometry: {e}") from e
+                raise StacValidationError(f"Invalid bbox or geometry: {e}") from e
         return self
 
     def get_property(self, key: str) -> Any | None:
