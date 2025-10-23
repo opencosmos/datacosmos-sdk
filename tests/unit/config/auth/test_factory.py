@@ -1,8 +1,7 @@
-# tests/unit/config/test_auth_factory.py
-
 import pytest
 
 from datacosmos.config.auth.factory import (
+    ENV_MAPPING,
     apply_auth_defaults,
     check_required_auth_fields,
     normalize_authentication,
@@ -24,9 +23,14 @@ from datacosmos.config.models.local_user_account_authentication_config import (
 from datacosmos.config.models.m2m_authentication_config import M2MAuthenticationConfig
 
 
-class TestFactory:
-    # ---------------- parse_auth_config ----------------
+@pytest.fixture(autouse=True)
+def clean_auth_environment(monkeypatch):
+    """Fixture to ensure the environment is clean of DATACOSMOS auth variables."""
+    for env_var in ENV_MAPPING.values():
+        monkeypatch.delenv(env_var, raising=False)
 
+
+class TestFactory:
     def test_parse_auth_config_none(self):
         assert parse_auth_config(None) is None
 
@@ -43,6 +47,31 @@ class TestFactory:
         assert auth.type == DEFAULT_AUTH_TYPE  # "m2m"
         assert auth.token_url == DEFAULT_AUTH_TOKEN_URL
         assert auth.audience == DEFAULT_AUTH_AUDIENCE
+
+    def test_parse_auth_config_m2m_with_env_fallback(self, monkeypatch):
+        """Test that parse_auth_config picks up variables from os.environ as a valid config source."""
+        monkeypatch.setenv("DATACOSMOS_CLIENT_ID", "env_cid")
+        monkeypatch.setenv("DATACOSMOS_CLIENT_SECRET", "env_sec")
+        monkeypatch.setenv("DATACOSMOS_TOKEN_URL", "https://env.token")
+
+        auth_none = parse_auth_config(None)
+
+        assert isinstance(auth_none, M2MAuthenticationConfig)
+        assert auth_none.client_id == "env_cid"
+        assert auth_none.client_secret == "env_sec"
+        assert auth_none.token_url == "https://env.token"
+        assert auth_none.audience == DEFAULT_AUTH_AUDIENCE
+
+        # Test when raw input is an empty dict
+        auth_empty_dict = parse_auth_config({})
+        assert isinstance(auth_empty_dict, M2MAuthenticationConfig)
+        assert auth_empty_dict.client_id == "env_cid"
+        assert auth_empty_dict.client_secret == "env_sec"
+
+        # Test when input dictionary overrides one ENV variable
+        auth_override = parse_auth_config({"client_id": "manual_cid"})
+        assert auth_override.client_id == "manual_cid"
+        assert auth_override.client_secret == "env_sec"
 
     def test_parse_auth_config_local_dict(self):
         raw = {
@@ -82,10 +111,7 @@ class TestFactory:
         assert parse_auth_config(m2m) is m2m
         assert parse_auth_config(local) is local
 
-    # ---------------- apply_auth_defaults ----------------
-
     def test_apply_auth_defaults_when_none_uses_default_type(self):
-        # DEFAULT_AUTH_TYPE is "m2m" in your constants, so we expect an M2M shell
         auth = apply_auth_defaults(None)
         assert isinstance(auth, M2MAuthenticationConfig)
         assert auth.type == "m2m"
@@ -118,8 +144,6 @@ class TestFactory:
         assert filled.scopes == DEFAULT_LOCAL_SCOPES
         assert filled.audience == DEFAULT_AUTH_AUDIENCE
         assert filled.cache_file == DEFAULT_LOCAL_CACHE_FILE
-
-    # ---------------- check_required_auth_fields ----------------
 
     def test_check_required_auth_fields_m2m_missing_raises(self):
         with pytest.raises(
@@ -168,14 +192,25 @@ class TestFactory:
             )
         )
 
-    # ---------------- normalize_authentication (end-to-end) ----------------
-
     def test_normalize_authentication_m2m_minimal_dict(self):
         raw = {"client_id": "cid", "client_secret": "sec"}
         auth = normalize_authentication(raw)
         assert isinstance(auth, M2MAuthenticationConfig)
         assert auth.client_id == "cid"
         assert auth.client_secret == "sec"
+        assert auth.token_url == DEFAULT_AUTH_TOKEN_URL
+        assert auth.audience == DEFAULT_AUTH_AUDIENCE
+
+    def test_normalize_authentication_m2m_with_env_fallback(self, monkeypatch):
+        """Test end-to-end normalization works when credentials come only from ENVs."""
+        monkeypatch.setenv("DATACOSMOS_CLIENT_ID", "env_final_cid")
+        monkeypatch.setenv("DATACOSMOS_CLIENT_SECRET", "env_final_sec")
+
+        auth = normalize_authentication(None)
+
+        assert isinstance(auth, M2MAuthenticationConfig)
+        assert auth.client_id == "env_final_cid"
+        assert auth.client_secret == "env_final_sec"
         assert auth.token_url == DEFAULT_AUTH_TOKEN_URL
         assert auth.audience == DEFAULT_AUTH_AUDIENCE
 
@@ -195,11 +230,11 @@ class TestFactory:
         with pytest.raises(
             ValueError, match="Missing required authentication fields for m2m"
         ):
-            normalize_authentication({"client_id": "cid"})  # no client_secret
+            normalize_authentication({"client_id": "cid"})
 
     def test_normalize_authentication_local_missing_client_id_raises(self):
         with pytest.raises(
             ValueError,
             match="Missing required authentication field for local: client_id",
         ):
-            normalize_authentication({"type": "local"})  # no client_id
+            normalize_authentication({"type": "local"})

@@ -7,7 +7,7 @@ and supports environment variable-based overrides.
 
 from typing import Optional
 
-from pydantic import field_validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from datacosmos.config.auth.factory import normalize_authentication, parse_auth_config
@@ -18,6 +18,10 @@ from datacosmos.config.constants import (
 )
 from datacosmos.config.loaders.yaml_source import yaml_settings_source
 from datacosmos.config.models.authentication_config import AuthenticationConfig
+from datacosmos.config.models.local_user_account_authentication_config import (
+    LocalUserAccountAuthenticationConfig,
+)
+from datacosmos.config.models.m2m_authentication_config import M2MAuthenticationConfig
 from datacosmos.config.models.url import URL
 
 
@@ -25,15 +29,21 @@ class Config(BaseSettings):
     """Centralized configuration for the Datacosmos SDK."""
 
     model_config = SettingsConfigDict(
+        env_prefix="DATACOSMOS_",
         env_nested_delimiter="__",
         nested_model_default_partial_update=True,
         extra="allow",
     )
 
     authentication: Optional[AuthenticationConfig] = None
-    stac: URL | None = None
-    datacosmos_cloud_storage: URL | None = None
-    datacosmos_public_cloud_storage: URL | None = None
+
+    stac: URL = Field(default_factory=lambda: URL(**DEFAULT_STAC))
+    datacosmos_cloud_storage: URL = Field(
+        default_factory=lambda: URL(**DEFAULT_STORAGE)
+    )
+    datacosmos_public_cloud_storage: URL = Field(
+        default_factory=lambda: URL(**DEFAULT_STORAGE)
+    )
 
     @classmethod
     def settings_customise_sources(cls, *args, **kwargs):
@@ -65,13 +75,6 @@ class Config(BaseSettings):
     def _parse_authentication(cls, raw):
         if raw is None:
             return None
-        from datacosmos.config.models.local_user_account_authentication_config import (
-            LocalUserAccountAuthenticationConfig,
-        )
-        from datacosmos.config.models.m2m_authentication_config import (
-            M2MAuthenticationConfig,
-        )
-
         if isinstance(
             raw, (M2MAuthenticationConfig, LocalUserAccountAuthenticationConfig)
         ):
@@ -84,18 +87,3 @@ class Config(BaseSettings):
     @classmethod
     def _validate_authentication(cls, auth: Optional[AuthenticationConfig]):
         return normalize_authentication(auth)
-
-    @field_validator("stac", mode="before")
-    @classmethod
-    def _default_stac(cls, value: URL | None) -> URL:
-        return value or URL(**DEFAULT_STAC)
-
-    @field_validator("datacosmos_cloud_storage", mode="before")
-    @classmethod
-    def _default_cloud_storage(cls, value: URL | None) -> URL:
-        return value or URL(**DEFAULT_STORAGE)
-
-    @field_validator("datacosmos_public_cloud_storage", mode="before")
-    @classmethod
-    def _default_public_cloud_storage(cls, value: URL | None) -> URL:
-        return value or URL(**DEFAULT_STORAGE)
