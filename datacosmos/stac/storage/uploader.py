@@ -1,6 +1,7 @@
 """Handles uploading files to Datacosmos storage and registering STAC items."""
 
 from pathlib import Path
+from typing import Any
 
 from pydantic import TypeAdapter
 
@@ -13,7 +14,7 @@ from datacosmos.stac.storage.storage_base import StorageBase
 
 
 class Uploader(StorageBase):
-    """Upload a STAC item and its assets to Datacosmos storage, then register the item in the STAC API."""
+    """Upload a STAC item and its assets to Datacosmos storage and register the item in the STAC API."""
 
     def __init__(self, client: DatacosmosClient):
         """Initialize the uploader.
@@ -32,17 +33,25 @@ class Uploader(StorageBase):
         included_assets: list[str] | bool = True,
         max_workers: int = 4,
         time_out: float = 60 * 60 * 1,
-    ) -> DatacosmosItem:
-        """Upload a STAC item (and optionally its assets) to Datacosmos.
+    ) -> tuple[DatacosmosItem, list[str], list[dict[str, Any]]]:
+        """Upload a STAC item (and optionally its assets) to Datacosmos in parallel threads.
 
-        `item` can be either:
-          • a DatacosmosItem instance, or
-          • the path to an item JSON file on disk.
+        Args:
+            item (DatacosmosItem | str):
+                - a DatacosmosItem instance, or
+                - the path to an item JSON file on disk.
+            project_id (str): The project ID to upload assets to.
+            assets_path (str | None): Base directory where local asset files are located.
+            included_assets (list[str] | bool):
+                - True → upload every asset in the item.
+                - list[str] → upload only the asset keys in that list.
+                - False → skip asset upload; just register the item.
+            max_workers (int): Maximum number of parallel threads for asset upload.
+            time_out (float): Timeout in seconds for the entire asset batch upload.
 
-        If `included_assets` is:
-          • True  → upload every asset in the item
-          • list  → upload only the asset keys in that list
-          • False → upload nothing; just register the item
+        Returns:
+            tuple[DatacosmosItem, list[str], list[dict[str, Any]]]:
+            The updated DatacosmosItem, a list of asset keys that were uploaded successfully, and a list of upload failures.
         """
         if not assets_path and not isinstance(item, str):
             raise ValueError(
@@ -54,23 +63,45 @@ class Uploader(StorageBase):
             item = self._load_item(item_filename)
             assets_path = assets_path or str(Path(item_filename).parent)
 
+        if not isinstance(item, DatacosmosItem):
+            raise TypeError(f"item must be a DatacosmosItem, got {type(item).__name__}")
+
         assets_path = assets_path or str(Path.cwd())
 
-        upload_assets = (
-            included_assets
-            if isinstance(included_assets, list)
-            else item.assets.keys()
-            if included_assets is True
-            else []
-        )
+        if included_assets is False:
+            upload_assets: list[str] = []
+        elif included_assets is True:
+            upload_assets = list(item.assets.keys())
+        elif isinstance(included_assets, list):
+            upload_assets = included_assets
+        else:
+            upload_assets = []
 
         jobs = [
             (item, asset_key, assets_path, project_id) for asset_key in upload_assets
         ]
-        self._run_in_threads(self._upload_asset, jobs, max_workers, time_out)
 
-        self.item_client.add_item(item)
-        return item
+        if not jobs:
+            self.item_client.add_item(item)
+            return item, [], []
+
+        successes, failures = self.run_in_threads(
+            self._upload_asset, jobs, max_workers, time_out
+        )
+
+        # Register the item if the overall process didn't time out
+        # and there was at least one successful upload.
+        if successes:
+            self.item_client.add_item(item)
+
+        return item, successes, failures
+
+    @staticmethod
+    def _load_item(item_json_file_path: str) -> DatacosmosItem:
+        """Load a DatacosmosItem from a JSON file on disk."""
+        with open(item_json_file_path, "rb") as file:
+            data = file.read().decode("utf-8")
+        return TypeAdapter(DatacosmosItem).validate_json(data)
 
     def upload_from_file(
         self, src: str, dst: str, mime_type: str | None = None
@@ -83,19 +114,13 @@ class Uploader(StorageBase):
             response = self.client.put(url, data=f, headers=headers)
         response.raise_for_status()
 
-    @staticmethod
-    def _load_item(item_json_file_path: str) -> DatacosmosItem:
-        """Load a DatacosmosItem from a JSON file on disk."""
-        with open(item_json_file_path, "rb") as file:
-            data = file.read().decode("utf-8")
-        return TypeAdapter(DatacosmosItem).validate_json(data)
-
     def _upload_asset(
         self, item: DatacosmosItem, asset_key: str, assets_path: str, project_id: str
-    ) -> None:
+    ) -> str:
         """Upload a single asset file and update its href inside the item object.
 
-        Runs in parallel via _run_in_threads().
+        Returns:
+            str: The asset_key upon successful upload.
         """
         asset = item.assets[asset_key]
 
@@ -116,6 +141,8 @@ class Uploader(StorageBase):
 
         self._update_asset_href(asset)  # turn href into public URL
         self.upload_from_file(src, str(upload_path), mime_type=asset.type)
+
+        return asset_key
 
     def _update_asset_href(self, asset: Asset) -> None:
         """Convert the storage key to a public HTTPS URL."""

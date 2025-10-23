@@ -1,9 +1,10 @@
 from pathlib import Path
-from unittest.mock import Mock
+from unittest.mock import MagicMock, Mock
 
 import pytest
 
 import datacosmos.stac.storage.uploader as uploader_module
+from datacosmos.exceptions.datacosmos_error import DatacosmosError
 from datacosmos.stac.item.models.asset import Asset
 from datacosmos.stac.item.models.datacosmos_item import DatacosmosItem
 from datacosmos.stac.storage.uploader import Uploader
@@ -40,7 +41,7 @@ def patch_item_client(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def patch_upload_path(monkeypatch):
-    def _dummy_from_item_path(cls, item, project_id, asset_name):  # new sig
+    def _dummy_from_item_path(cls, item, project_id, asset_name):
         return f"project/{project_id}/{item.id}/{asset_name}"
 
     monkeypatch.setattr(
@@ -58,17 +59,24 @@ def uploader():
 
 @pytest.fixture
 def simple_item(tmp_path):
-    file_path = tmp_path / "data.txt"
-    file_path.write_text("content")
+    file_path_1 = tmp_path / "data1.tif"
+    file_path_1.write_text("content1")
+    file_path_2 = tmp_path / "data2.tif"
+    file_path_2.write_text("content2")
 
-    asset = Asset(
-        href=file_path.name,
-        title="dummy",
-        description="dummy",
-        type="text/plain",
+    asset_1 = Asset(
+        href=file_path_1.name,
+        title="asset1",
+        description="desc1",
+        type="image/tiff",
         roles=None,
-        eo_bands=None,
-        raster_bands=None,
+    )
+    asset_2 = Asset(
+        href=file_path_2.name,
+        title="asset2",
+        description="desc2",
+        type="image/tiff",
+        roles=None,
     )
 
     item = DatacosmosItem(
@@ -79,36 +87,95 @@ def simple_item(tmp_path):
         geometry={
             "type": "Polygon",
             "coordinates": [
-                [
-                    [0.0, 0.0],
-                    [1.0, 0.0],
-                    [1.0, 1.0],
-                    [0.0, 1.0],
-                    [0.0, 0.0],
-                ]
+                [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0], [0.0, 0.0]],
             ],
         },
         properties={
             "datetime": "2023-01-01T12:00:00Z",
-            "processing:level": "level1a",
+            "processing:level": "l1a",
             "sat:platform_international_designator": "sat123",
         },
         links=[],
-        assets={"file": asset},
+        assets={"file1": asset_1, "file2": asset_2},
         collection="collection1",
         bbox=[0.0, 0.0, 1.0, 1.0],
     )
     return item, str(tmp_path)
 
 
-def test_upload_item(uploader, simple_item, patch_item_client):
-    item, assets_path = simple_item
-    uploader.upload_from_file = Mock()
-    uploader._update_asset_href = Mock()
+class TestUploader:
+    """Tests for the multithreaded batch functionality of the Uploader."""
 
-    result = uploader.upload_item(
-        item, PROJECT_ID, assets_path=assets_path, max_workers=2, time_out=30
-    )
+    def test_upload_item_success(
+        self, uploader, simple_item, patch_item_client, monkeypatch
+    ):
+        """Test successful parallel upload and item registration."""
+        item, assets_path = simple_item
 
-    assert uploader.upload_from_file.call_count == 1
-    assert patch_item_client.added is result
+        # Mock the parallel runner to simulate success
+        mock_run_in_threads = MagicMock(return_value=([True, True], []))
+        monkeypatch.setattr(
+            uploader_module.Uploader, "run_in_threads", mock_run_in_threads
+        )
+
+        uploader.upload_from_file = Mock()
+        uploader._update_asset_href = Mock()
+
+        # The method now returns a tuple of (item, successes, failures)
+        result_item, successes, failures = uploader.upload_item(
+            item, PROJECT_ID, assets_path=assets_path, max_workers=2, time_out=30
+        )
+
+        assert mock_run_in_threads.call_count == 1
+        assert result_item is item
+        assert len(successes) == 2
+        assert len(failures) == 0
+
+        assert patch_item_client.added is item
+
+    def test_upload_item_partial_failure(
+        self, uploader, simple_item, patch_item_client, monkeypatch
+    ):
+        """Test parallel upload where some assets fail, and only successful ones are handled."""
+        item, assets_path = simple_item
+
+        # Mock the parallel runner to simulate partial success/failure
+        mock_failure = {
+            "error": "Upload failed",
+            "exception": Exception("Upload failed"),
+        }
+        mock_run_in_threads = MagicMock(return_value=([True], [mock_failure]))
+        monkeypatch.setattr(
+            uploader_module.Uploader, "run_in_threads", mock_run_in_threads
+        )
+
+        uploader.upload_from_file = Mock()
+        uploader._update_asset_href = Mock()
+
+        result_item, successes, failures = uploader.upload_item(
+            item, PROJECT_ID, assets_path=assets_path, max_workers=2, time_out=30
+        )
+
+        assert mock_run_in_threads.call_count == 1
+        assert result_item is item
+        assert len(successes) == 1
+        assert len(failures) == 1
+
+        assert patch_item_client.added is item
+
+    def test_upload_item_timeout_raises_error(self, uploader, simple_item, patch_item_client, monkeypatch):
+        """Test that a timeout error still aborts the process immediately (handled in run_in_threads)."""
+        item, assets_path = simple_item
+
+        # Mock the parallel runner to raise the DatacosmosError (simulating timeout)
+        mock_run_in_threads = MagicMock(
+            side_effect=DatacosmosError("Batch processing failed: operation timed out.")
+        )
+        monkeypatch.setattr(
+            uploader_module.Uploader, "run_in_threads", mock_run_in_threads
+        )
+
+        with pytest.raises(DatacosmosError, match="operation timed out"):
+            uploader.upload_item(item, PROJECT_ID, assets_path=assets_path)
+
+        assert patch_item_client.added is None
