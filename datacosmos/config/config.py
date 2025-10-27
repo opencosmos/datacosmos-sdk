@@ -29,7 +29,6 @@ class Config(BaseSettings):
     """Centralized configuration for the Datacosmos SDK."""
 
     model_config = SettingsConfigDict(
-        env_prefix="DATACOSMOS_",
         env_nested_delimiter="__",
         nested_model_default_partial_update=True,
         extra="allow",

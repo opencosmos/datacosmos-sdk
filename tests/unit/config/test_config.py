@@ -10,14 +10,9 @@ from datacosmos.config.models.local_user_account_authentication_config import (
 from datacosmos.config.models.m2m_authentication_config import M2MAuthenticationConfig
 from datacosmos.config.models.url import URL
 
-# Define all possible environment variable prefixes that Pydantic Settings might read
-# This ensures a clean environment for each test by deleting any lingering config.
 ALL_CONFIG_ENV_PREFIXES = [
     "AUTHENTICATION__",
     "STAC__",
-    "DATACOSMOS_",
-    "OC_AUTH_",
-    "DATACOSMOS_STAC__",
     "DATACOSMOS_DATACOSMOS_CLOUD_STORAGE__",
     "DATACOSMOS_DATACOSMOS_PUBLIC_CLOUD_STORAGE__",
 ]
@@ -79,60 +74,42 @@ class TestConfig:
             raising=True,
         )
 
-        # With no YAML and no env, authentication validator should fail
+        # With no YAML and no supported ENV set, authentication validator should fail
         with pytest.raises(ValidationError):
             Config()
 
     def test_env_m2m(self, monkeypatch, tmp_path):
-        """Test reading nested Pydantic Settings ENVs and simple M2M fallback."""
+        """Test reading nested Pydantic Settings ENVs for both Authentication and STAC."""
         monkeypatch.setattr(
             "datacosmos.config.config.DEFAULT_CONFIG_YAML",
             str(tmp_path / "does_not_exist.yaml"),
             raising=True,
         )
 
-        monkeypatch.setenv("DATACOSMOS_CLIENT_ID", "env-client")
-        monkeypatch.setenv("DATACOSMOS_CLIENT_SECRET", "env-secret")
-        monkeypatch.setenv("DATACOSMOS_TOKEN_URL", "https://env.token.url")
-        monkeypatch.setenv("DATACOSMOS_AUDIENCE", "https://env.audience")
+        monkeypatch.setenv("AUTHENTICATION__CLIENT_ID", "nested-env-client")
+        monkeypatch.setenv("AUTHENTICATION__CLIENT_SECRET", "nested-env-secret")
+        monkeypatch.setenv("AUTHENTICATION__TOKEN_URL", "https://nested.token.url")
+        monkeypatch.setenv("AUTHENTICATION__AUDIENCE", "https://nested.audience")
 
-        monkeypatch.setenv("DATACOSMOS_STAC__PROTOCOL", "http")
-        monkeypatch.setenv("DATACOSMOS_STAC__HOST", "env-stac-host")
-        monkeypatch.setenv("DATACOSMOS_STAC__PORT", "8080")
-        monkeypatch.setenv("DATACOSMOS_STAC__PATH", "/env/stac")
+        monkeypatch.setenv("STAC__PROTOCOL", "http")
+        monkeypatch.setenv("STAC__HOST", "env-stac-host")
+        monkeypatch.setenv("STAC__PORT", "8080")
+        monkeypatch.setenv("STAC__PATH", "/env/stac")
 
         cfg = Config()
 
-        assert cfg.authentication.client_id == "env-client"
+        assert isinstance(cfg.authentication, M2MAuthenticationConfig)
+        assert cfg.authentication.client_id == "nested-env-client"
+        assert cfg.authentication.client_secret == "nested-env-secret"
+        assert cfg.authentication.token_url == "https://nested.token.url"
+        assert cfg.authentication.audience == "https://nested.audience"
+
         assert (cfg.stac.protocol, cfg.stac.host, cfg.stac.port, cfg.stac.path) == (
             "http",
             "env-stac-host",
             8080,
             "/env/stac",
         )
-
-    def test_simple_env_m2m_fallback(self, monkeypatch, tmp_path):
-        """Test reading simple, top-level ENV variables via the factory fallback."""
-        monkeypatch.setattr(
-            "datacosmos.config.config.DEFAULT_CONFIG_YAML",
-            str(tmp_path / "does_not_exist.yaml"),
-            raising=True,
-        )
-
-        monkeypatch.setenv("DATACOSMOS_CLIENT_ID", "simple-env-id")
-        monkeypatch.setenv("DATACOSMOS_CLIENT_SECRET", "simple-env-secret")
-
-        cfg = Config()
-
-        assert isinstance(cfg.authentication, M2MAuthenticationConfig)
-        assert cfg.authentication.client_id == "simple-env-id"
-        assert cfg.authentication.client_secret == "simple-env-secret"
-
-        assert cfg.authentication.token_url
-        assert cfg.authentication.audience
-
-        assert isinstance(cfg.stac, URL)
-        assert cfg.stac.host == "app.open-cosmos.com"
 
     def test_invalid_authentication_raises_validation_error(
         self, monkeypatch, tmp_path

@@ -62,7 +62,7 @@ class StorageBase:
                 try:
                     result = future.result()
                 except Exception as e:
-                    failures.append({'error': str(e), 'exception': e})
+                    failures.append({"error": str(e), "exception": e})
                 else:
                     successes.append(result)
 

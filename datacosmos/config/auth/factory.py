@@ -7,7 +7,6 @@ This module normalizes the `authentication` config into a concrete model:
 - `normalize_authentication` runs the whole pipeline.
 """
 
-import os
 from typing import Optional, Union, cast
 
 from datacosmos.config.constants import (
@@ -27,40 +26,18 @@ from datacosmos.config.models.m2m_authentication_config import M2MAuthentication
 
 AuthModel = Union[M2MAuthenticationConfig, LocalUserAccountAuthenticationConfig]
 
-ENV_MAPPING = {
-    "client_id": "DATACOSMOS_CLIENT_ID",
-    "client_secret": "DATACOSMOS_CLIENT_SECRET",
-    "token_url": "DATACOSMOS_TOKEN_URL",
-    "audience": "DATACOSMOS_AUDIENCE",
-}
-
 
 def parse_auth_config(raw: dict | AuthModel | None) -> Optional[AuthModel]:
-    """Turn a raw dict (e.g., from YAML) into a concrete auth model."""
+    """Turn a raw dict (e.g., from YAML/env) into a concrete auth model."""
     if isinstance(raw, (M2MAuthenticationConfig, LocalUserAccountAuthenticationConfig)):
         return cast(Optional[AuthModel], raw)
 
-    # Prepare raw_data. If raw is None, we start with an empty dict.
     if raw is None:
         raw_data = {}
     else:
         raw_data = raw.copy()
 
-    credentials_found = False
-
-    for field, env_var in ENV_MAPPING.items():
-        env_value = os.environ.get(env_var)
-
-        # Only inject the environment variable if the field is NOT explicitly set
-        # (value is None) AND the ENV var exists.
-        if raw_data.get(field) is None and env_value:
-            raw_data[field] = env_value
-            if field in ["client_id", "client_secret"]:
-                credentials_found = True
-
-    # If no config was provided (raw was None) and no credentials were found in the environment,
-    # we return None, preserving the original contract.
-    if raw is None and not credentials_found:
+    if raw is None and not raw_data:
         return None
 
     auth_type = _normalize_auth_type(raw_data.get("type") or DEFAULT_AUTH_TYPE)
