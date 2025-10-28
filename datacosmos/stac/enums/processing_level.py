@@ -3,7 +3,19 @@
 from enum import Enum
 
 
-class ProcessingLevel(Enum):
+class CaseInsensitiveEnum(Enum):
+    """An enum that can be initialized with case-insensitive strings."""
+
+    @classmethod
+    def _missing_(cls, value: object):
+        if isinstance(value, str):
+            for member in cls:
+                if member.value.lower() == value.lower():
+                    return member
+        return super()._missing_(value)
+
+
+class ProcessingLevel(CaseInsensitiveEnum):
     """Enum class for the processing levels of the data."""
 
     RAW = "RAW"
