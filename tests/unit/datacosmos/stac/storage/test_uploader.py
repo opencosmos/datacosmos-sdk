@@ -163,7 +163,9 @@ class TestUploader:
 
         assert patch_item_client.added is item
 
-    def test_upload_item_timeout_raises_error(self, uploader, simple_item, patch_item_client, monkeypatch):
+    def test_upload_item_timeout_raises_error(
+        self, uploader, simple_item, patch_item_client, monkeypatch
+    ):
         """Test that a timeout error still aborts the process immediately (handled in run_in_threads)."""
         item, assets_path = simple_item
 

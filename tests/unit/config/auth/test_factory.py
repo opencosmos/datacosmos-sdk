@@ -1,5 +1,8 @@
-# tests/unit/config/test_auth_factory.py
-
+"""
+Test module for the authentication factory functions.
+It validates that raw input (dict or model) is correctly parsed, defaulted, and validated.
+It no longer includes logic or tests for environment variable fallback.
+"""
 import pytest
 
 from datacosmos.config.auth.factory import (
@@ -25,30 +28,32 @@ from datacosmos.config.models.m2m_authentication_config import M2MAuthentication
 
 
 class TestFactory:
-    # ---------------- parse_auth_config ----------------
-
     def test_parse_auth_config_none(self):
+        """Test that None input returns None, allowing Pydantic to apply post-parsing defaults."""
         assert parse_auth_config(None) is None
 
     def test_parse_auth_config_m2m_dict(self):
+        """Test parsing a minimal dictionary into an M2M model."""
         raw = {
             "client_id": "cid",
             "client_secret": "secret",
-            # omit token_url / audience to ensure defaults are applied in parse
         }
         auth = parse_auth_config(raw)
         assert isinstance(auth, M2MAuthenticationConfig)
         assert auth.client_id == "cid"
         assert auth.client_secret == "secret"
-        assert auth.type == DEFAULT_AUTH_TYPE  # "m2m"
+        assert auth.type == DEFAULT_AUTH_TYPE
+
         assert auth.token_url == DEFAULT_AUTH_TOKEN_URL
         assert auth.audience == DEFAULT_AUTH_AUDIENCE
 
+    # Removed: The original test_parse_auth_config_m2m_with_env_fallback is REMOVED.
+
     def test_parse_auth_config_local_dict(self):
+        """Test parsing a minimal dictionary into a Local user model."""
         raw = {
             "type": "local",
             "client_id": "cid",
-            # omit everything else to ensure defaults are applied in parse
         }
         auth = parse_auth_config(raw)
         assert isinstance(auth, LocalUserAccountAuthenticationConfig)
@@ -62,6 +67,7 @@ class TestFactory:
         assert auth.cache_file == DEFAULT_LOCAL_CACHE_FILE
 
     def test_parse_auth_config_passthrough_instance(self):
+        """Test that already-parsed model instances are returned unchanged."""
         m2m = M2MAuthenticationConfig(
             type="m2m",
             client_id="x",
@@ -82,21 +88,18 @@ class TestFactory:
         assert parse_auth_config(m2m) is m2m
         assert parse_auth_config(local) is local
 
-    # ---------------- apply_auth_defaults ----------------
-
     def test_apply_auth_defaults_when_none_uses_default_type(self):
-        # DEFAULT_AUTH_TYPE is "m2m" in your constants, so we expect an M2M shell
+        """Test that applying defaults to None creates a default M2M model shell."""
         auth = apply_auth_defaults(None)
         assert isinstance(auth, M2MAuthenticationConfig)
         assert auth.type == "m2m"
         assert auth.token_url == DEFAULT_AUTH_TOKEN_URL
         assert auth.audience == DEFAULT_AUTH_AUDIENCE
-        # these are intentionally None (filled later by user/env)
         assert getattr(auth, "client_id") is None
         assert getattr(auth, "client_secret") is None
 
     def test_apply_auth_defaults_m2m_fills_missing_fields(self):
-        # missing token_url/audience should be defaulted
+        """Test that M2M non-secret fields are correctly defaulted."""
         partial = M2MAuthenticationConfig(
             type="m2m", client_id="cid", client_secret="sec"
         )
@@ -108,6 +111,7 @@ class TestFactory:
         assert filled.audience == DEFAULT_AUTH_AUDIENCE
 
     def test_apply_auth_defaults_local_fills_missing_fields(self):
+        """Test that Local non-secret fields are correctly defaulted."""
         partial = LocalUserAccountAuthenticationConfig(type="local", client_id="cid")
         filled = apply_auth_defaults(partial)
         assert filled.type == "local"
@@ -119,9 +123,8 @@ class TestFactory:
         assert filled.audience == DEFAULT_AUTH_AUDIENCE
         assert filled.cache_file == DEFAULT_LOCAL_CACHE_FILE
 
-    # ---------------- check_required_auth_fields ----------------
-
     def test_check_required_auth_fields_m2m_missing_raises(self):
+        """Test that required M2M fields cause a ValueError."""
         with pytest.raises(
             ValueError, match="Missing required authentication fields for m2m"
         ):
@@ -135,6 +138,7 @@ class TestFactory:
             )
 
     def test_check_required_auth_fields_local_missing_raises(self):
+        """Test that required Local fields cause a ValueError."""
         with pytest.raises(
             ValueError,
             match="Missing required authentication field for local: client_id",
@@ -144,6 +148,7 @@ class TestFactory:
             )
 
     def test_check_required_auth_fields_valid(self):
+        """Test that valid configs pass validation."""
         # m2m ok
         check_required_auth_fields(
             M2MAuthenticationConfig(
@@ -168,9 +173,8 @@ class TestFactory:
             )
         )
 
-    # ---------------- normalize_authentication (end-to-end) ----------------
-
     def test_normalize_authentication_m2m_minimal_dict(self):
+        """Test end-to-end normalization of a minimal M2M dict."""
         raw = {"client_id": "cid", "client_secret": "sec"}
         auth = normalize_authentication(raw)
         assert isinstance(auth, M2MAuthenticationConfig)
@@ -180,6 +184,7 @@ class TestFactory:
         assert auth.audience == DEFAULT_AUTH_AUDIENCE
 
     def test_normalize_authentication_local_minimal_dict(self):
+        """Test end-to-end normalization of a minimal Local dict."""
         raw = {"type": "local", "client_id": "cid"}
         auth = normalize_authentication(raw)
         assert isinstance(auth, LocalUserAccountAuthenticationConfig)
@@ -192,14 +197,16 @@ class TestFactory:
         assert auth.cache_file == DEFAULT_LOCAL_CACHE_FILE
 
     def test_normalize_authentication_m2m_missing_secret_raises(self):
+        """Test validation failure for incomplete M2M config."""
         with pytest.raises(
             ValueError, match="Missing required authentication fields for m2m"
         ):
-            normalize_authentication({"client_id": "cid"})  # no client_secret
+            normalize_authentication({"client_id": "cid"})
 
     def test_normalize_authentication_local_missing_client_id_raises(self):
+        """Test validation failure for incomplete Local config."""
         with pytest.raises(
             ValueError,
             match="Missing required authentication field for local: client_id",
         ):
-            normalize_authentication({"type": "local"})  # no client_id
+            normalize_authentication({"type": "local"})
