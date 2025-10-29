@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 from requests.exceptions import HTTPError
 
 from datacosmos.auth.m2m_authenticator import M2MAuthenticator
-from datacosmos.exceptions.datacosmos_exception import DatacosmosException
+from datacosmos.exceptions.datacosmos_error import DatacosmosError
 
 
 class TestM2MAuthenticator(unittest.TestCase):
@@ -49,14 +49,14 @@ class TestM2MAuthenticator(unittest.TestCase):
 
     @patch("datacosmos.auth.m2m_authenticator.OAuth2Session")
     def test_authenticate_and_build_session_failure(self, mock_oauth_session):
-        """Test that authentication raises DatacosmosException on HTTP error."""
+        """Test that authentication raises DatacosmosError on HTTP error."""
 
         mock_oauth_session.return_value.fetch_token.side_effect = HTTPError(
             "Mocked HTTP error"
         )
 
         authenticator = M2MAuthenticator(self.mock_config)
-        with self.assertRaises(DatacosmosException) as cm:
+        with self.assertRaises(DatacosmosError) as cm:
             authenticator.authenticate_and_build_session()
 
         self.assertIn("M2M authentication failed", str(cm.exception))

@@ -6,11 +6,11 @@ from requests import Response
 from requests.exceptions import RequestException
 
 
-class DatacosmosException(RequestException):
+class DatacosmosError(RequestException):
     """Base exception class for all Datacosmos SDK exceptions."""
 
     def __init__(self, message: str, response: Optional[Response] = None):
-        """Initialize DatacosmosException.
+        """Initialize DatacosmosError.
 
         Args:
             message (str): The error message.

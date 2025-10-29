@@ -3,7 +3,7 @@ from datetime import datetime
 
 from shapely.geometry import Polygon
 
-from datacosmos.exceptions.datacosmos_exception import DatacosmosException
+from datacosmos.exceptions.datacosmos_error import DatacosmosError
 from datacosmos.stac.enums.processing_level import ProcessingLevel
 from datacosmos.stac.item.models.datacosmos_item import DatacosmosItem
 
@@ -90,7 +90,7 @@ class TestDatacosmosItem(unittest.TestCase):
         invalid_data = self.valid_item_data.copy()
         del invalid_data["properties"]["datetime"]
 
-        with self.assertRaises(DatacosmosException) as cm:
+        with self.assertRaises(DatacosmosError) as cm:
             DatacosmosItem(**invalid_data)
         self.assertIn("datetime", str(cm.exception))
 
@@ -102,7 +102,7 @@ class TestDatacosmosItem(unittest.TestCase):
         del invalid_data["properties"]["datetime"]
         del invalid_data["properties"]["processing:level"]
 
-        with self.assertRaises(DatacosmosException) as cm:
+        with self.assertRaises(DatacosmosError) as cm:
             DatacosmosItem(**invalid_data)
         self.assertIn("datetime", str(cm.exception))
         self.assertIn("processing:level", str(cm.exception))
@@ -113,7 +113,7 @@ class TestDatacosmosItem(unittest.TestCase):
         invalid_data = self.valid_item_data.copy()
         invalid_data["geometry"] = {"type": "Point", "coordinates": [0.0, 0.0]}
 
-        with self.assertRaises(DatacosmosException) as cm:
+        with self.assertRaises(DatacosmosError) as cm:
             DatacosmosItem(**invalid_data)
         self.assertIn("Geometry must be a Polygon", str(cm.exception))
 
@@ -122,7 +122,7 @@ class TestDatacosmosItem(unittest.TestCase):
         invalid_data = self.valid_item_data.copy()
         invalid_data["geometry"] = {"type": "Polygon", "coordinates": None}
 
-        with self.assertRaises(DatacosmosException) as cm:
+        with self.assertRaises(DatacosmosError) as cm:
             DatacosmosItem(**invalid_data)
         self.assertIn("Geometry must be a Polygon with coordinates.", str(cm.exception))
 
@@ -135,7 +135,7 @@ class TestDatacosmosItem(unittest.TestCase):
         # Change bbox to a value that doesn't match the geometry
         invalid_data["bbox"] = [10.0, 10.0, 20.0, 20.0]
 
-        with self.assertRaises(DatacosmosException) as cm:
+        with self.assertRaises(DatacosmosError) as cm:
             DatacosmosItem(**invalid_data)
         self.assertIn(
             "Provided bbox does not match geometry bounds.", str(cm.exception)

@@ -1,20 +1,20 @@
-"""Validates an API response and raises a DatacosmosException if an error occurs."""
+"""Validates an API response and raises a DatacosmosError if an error occurs."""
 
 from pydantic import ValidationError
 from requests import Response
 
-from datacosmos.exceptions.datacosmos_exception import DatacosmosException
+from datacosmos.exceptions.datacosmos_error import DatacosmosError
 from datacosmos.utils.http_response.models.datacosmos_response import DatacosmosResponse
 
 
 def check_api_response(response: Response) -> None:
-    """Validates an API response and raises a DatacosmosException if an error occurs.
+    """Validates an API response and raises a DatacosmosError if an error occurs.
 
     Args:
         resp (requests.Response): The response object.
 
     Raises:
-        DatacosmosException: If the response status code indicates an error.
+        DatacosmosError: If the response status code indicates an error.
     """
     if 200 <= response.status_code < 400:
         return
@@ -26,9 +26,9 @@ def check_api_response(response: Response) -> None:
             msg = "\n  * " + "\n  * ".join(
                 error.human_readable() for error in response.errors
             )
-        raise DatacosmosException(msg, response=response)
+        raise DatacosmosError(msg, response=response)
 
     except ValidationError:
-        raise DatacosmosException(
+        raise DatacosmosError(
             f"HTTP {response.status_code}: {response.text}", response=response
         )

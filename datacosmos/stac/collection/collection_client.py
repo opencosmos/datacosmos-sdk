@@ -6,7 +6,7 @@ from pystac import Collection, Extent, SpatialExtent, TemporalExtent
 from pystac.utils import str_to_datetime
 
 from datacosmos.datacosmos_client import DatacosmosClient
-from datacosmos.exceptions.datacosmos_exception import DatacosmosException
+from datacosmos.exceptions.datacosmos_error import DatacosmosError
 from datacosmos.stac.collection.models.collection_update import CollectionUpdate
 from datacosmos.utils.http_response.check_api_response import check_api_response
 
@@ -147,7 +147,7 @@ class CollectionClient:
         try:
             return next_href.split("?")[1].split("=")[-1]
         except (IndexError, AttributeError) as e:
-            raise DatacosmosException(
+            raise DatacosmosError(
                 f"Failed to parse pagination token from {next_href}",
                 response=e.response,
             ) from e
