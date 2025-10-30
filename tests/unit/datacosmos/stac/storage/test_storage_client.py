@@ -38,7 +38,6 @@ class TestStorageClient:
         """Patches external dependencies for all tests in this class."""
         monkeypatch.setattr(storage_client_module, "Uploader", DummyUploader)
         monkeypatch.setattr(storage_client_module, "Downloader", DummyDownloader)
-
         monkeypatch.setattr(storage_client_module, "ItemClient", Mock)
 
     @pytest.fixture
@@ -66,12 +65,12 @@ class TestStorageClient:
             "time_out": 3600,
         }
 
-    def test_storage_client_download_assets(self, storage_client):
+    def test_storage_client_download_assets(self, storage_client, tmp_path):
         """Test the download_assets proxy method passes all args correctly."""
 
         TEST_ITEM = "test-item-1"
         TEST_COLLECTION = "test-coll-1"
-        TEST_PATH = "/tmp/downloads"
+        TEST_PATH = str(tmp_path / "downloads")
 
         result = storage_client.download_assets(
             TEST_ITEM,
