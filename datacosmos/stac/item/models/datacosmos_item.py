@@ -71,14 +71,6 @@ class DatacosmosItem(BaseModel):
             if not polygon.is_valid:
                 raise ValueError(f"Polygon geometry is invalid: {polygon.geom_type}")
 
-            # right-hand rule validation:
-            # The right-hand rule means exterior ring must be counter-clockwise (CCW).
-            # Shapely's Polygon stores the exterior as CCW if the input is valid.
-            if not polygon.exterior.is_ccw:
-                raise ValueError(
-                    "Polygon winding order violates GeoJSON Right-Hand Rule (Exterior ring is clockwise)."
-                )
-
         except (KeyError, ShapelyError, ValueError) as e:
             raise StacValidationError(f"Invalid geometry data: {e}") from e
 
@@ -104,6 +96,18 @@ class DatacosmosItem(BaseModel):
                 # Catch any errors from Shapely or the comparison
                 raise StacValidationError(f"Invalid bbox or geometry: {e}") from e
         return self
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "DatacosmosItem":
+        """Creates a DatacosmosItem instance from a dictionary using Pydantic's model_validate.
+
+        Args:
+            data (dict): The dictionary (JSON response) to validate and load.
+
+        Returns:
+            DatacosmosItem: A validated instance of the model.
+        """
+        return cls.model_validate(data)
 
     def get_property(self, key: str) -> Any | None:
         """Get a property value from the Datacosmos item."""
