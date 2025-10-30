@@ -9,8 +9,6 @@ PROJECT_ID = "proj123"
 
 
 class DummyUploader:
-    """Mock class to simulate Uploader and track arguments passed to upload_item."""
-
     def __init__(self, client):
         self.client = client
         self.upload_called_with = None
@@ -21,8 +19,6 @@ class DummyUploader:
 
 
 class DummyDownloader:
-    """Mock class to simulate Downloader and track arguments passed to download_assets."""
-
     def __init__(self, client):
         self.client = client
         self.download_called_with = None
@@ -35,14 +31,16 @@ class DummyDownloader:
 class TestStorageClient:
     @pytest.fixture(autouse=True)
     def setup_mocks(self, monkeypatch):
-        """Patches external dependencies for all tests in this class."""
+
+        mock_item_client_class = MagicMock(name="MockItemClientClass")
+
         monkeypatch.setattr(storage_client_module, "Uploader", DummyUploader)
         monkeypatch.setattr(storage_client_module, "Downloader", DummyDownloader)
-        monkeypatch.setattr(storage_client_module, "ItemClient", MagicMock)
+
+        monkeypatch.setattr(storage_client_module, "ItemClient", mock_item_client_class)
 
     @pytest.fixture
     def storage_client(self):
-        """Initializes StorageClient with a mock client."""
         dummy_client = MagicMock()
         return StorageClient(dummy_client)
 
