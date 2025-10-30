@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, Mock
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -29,7 +29,7 @@ class DummyDownloader:
 
     def download_assets(self, *args, **kwargs):
         self.download_called_with = (args, kwargs)
-        return MagicMock(), ["path1"], []
+        return MagicMock(name="ItemInstance"), ["path1"], []
 
 
 class TestStorageClient:
@@ -38,12 +38,12 @@ class TestStorageClient:
         """Patches external dependencies for all tests in this class."""
         monkeypatch.setattr(storage_client_module, "Uploader", DummyUploader)
         monkeypatch.setattr(storage_client_module, "Downloader", DummyDownloader)
-        monkeypatch.setattr(storage_client_module, "ItemClient", Mock)
+        monkeypatch.setattr(storage_client_module, "ItemClient", MagicMock)
 
     @pytest.fixture
     def storage_client(self):
         """Initializes StorageClient with a mock client."""
-        dummy_client = Mock()
+        dummy_client = MagicMock()
         return StorageClient(dummy_client)
 
     def test_storage_client_upload_item(self, storage_client):
