@@ -41,8 +41,8 @@ class Downloader(StorageBase):
             time_out (float): Timeout in seconds for the entire asset batch download.
 
         Returns:
-            tuple[Item | DatacosmosItem, list[dict[str, str]], list[dict[str, Any]]]:
-            The downloaded pystac.Item, a list of asset keys mapped to local paths (successes), and a list of failures.
+            tuple[DatacosmosItem, list[dict[str, str]], list[dict[str, Any]]]:
+            The downloaded DatacosmosItem, a list of asset keys mapped to local paths (successes), and a list of failures.
         """
         stac_item = self.item_client.fetch_item(
             item_id=item, collection_id=collection_id

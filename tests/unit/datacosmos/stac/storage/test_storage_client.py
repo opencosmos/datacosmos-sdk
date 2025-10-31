@@ -32,12 +32,8 @@ class TestStorageClient:
     @pytest.fixture(autouse=True)
     def setup_mocks(self, monkeypatch):
 
-        mock_item_client_class = MagicMock(name="MockItemClientClass")
-
         monkeypatch.setattr(storage_client_module, "Uploader", DummyUploader)
         monkeypatch.setattr(storage_client_module, "Downloader", DummyDownloader)
-
-        monkeypatch.setattr(storage_client_module, "ItemClient", mock_item_client_class)
 
     @pytest.fixture
     def storage_client(self):

@@ -3,7 +3,6 @@
 from typing import Any, Dict, List, Tuple
 
 from datacosmos.datacosmos_client import DatacosmosClient
-from datacosmos.stac.item.item_client import ItemClient
 from datacosmos.stac.item.models.datacosmos_item import DatacosmosItem
 from datacosmos.stac.storage.downloader import Downloader
 from datacosmos.stac.storage.uploader import Uploader
@@ -16,10 +15,7 @@ class StorageClient:
         """Generic StorageClient for all storage operations (upload, download, etc.)."""
         self.client = client
         self.uploader = Uploader(client)
-        self.downloader = Downloader(client)  # NEW: Instantiate Downloader
-        self.item_client = ItemClient(
-            client
-        )  # Initialize ItemClient for fetching metadata
+        self.downloader = Downloader(client)
 
     def upload_item(
         self,
