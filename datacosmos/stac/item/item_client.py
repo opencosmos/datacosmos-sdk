@@ -29,7 +29,7 @@ class ItemClient:
         self.client = client
         self.base_url = client.config.stac.as_domain_url()
 
-    def fetch_item(self, item_id: str, collection_id: str) -> Item:
+    def fetch_item(self, item_id: str, collection_id: str) -> DatacosmosItem:
         """Fetch a single STAC item by ID.
 
         Args:
@@ -37,12 +37,12 @@ class ItemClient:
             collection_id (str): The ID of the collection containing the item.
 
         Returns:
-            Item: The fetched STAC item.
+            DatacosmosItem: The fetched STAC item.
         """
         url = self.base_url.with_suffix(f"/collections/{collection_id}/items/{item_id}")
         response = self.client.get(url)
         check_api_response(response)
-        return Item.from_dict(response.json())
+        return DatacosmosItem.from_dict(response.json())
 
     def search_items(
         self, parameters: CatalogSearchParameters, project_id: str
