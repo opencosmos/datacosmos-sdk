@@ -1,5 +1,7 @@
 """Handles downloading STAC items and their assets from Datacosmos storage."""
 
+import json
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -9,6 +11,8 @@ from datacosmos.datacosmos_client import DatacosmosClient
 from datacosmos.stac.item.item_client import ItemClient
 from datacosmos.stac.item.models.datacosmos_item import DatacosmosItem
 from datacosmos.stac.storage.storage_base import StorageBase
+
+_log = logging.getLogger(__name__)
 
 
 class Downloader(StorageBase):
@@ -54,8 +58,6 @@ class Downloader(StorageBase):
 
         item_json_path = base_path / f"{item_id}.json"
         if overwrite or not item_json_path.exists():
-            import json
-
             with open(item_json_path, "w") as f:
                 json.dump(stac_item.to_dict(), f)
 
@@ -73,6 +75,10 @@ class Downloader(StorageBase):
         for asset_key in download_assets:
             if asset_key in stac_item.assets:
                 jobs.append((stac_item, asset_key, str(base_path), overwrite))
+            else:
+                _log.warning(
+                    f"Requested asset '{asset_key}' not found in STAC item '{item_id}'. Skipping download."
+                )
 
         if not jobs:
             return stac_item, [], []
@@ -81,7 +87,6 @@ class Downloader(StorageBase):
             self._download_asset_worker, jobs, max_workers, time_out
         )
 
-        # Successes list contains dictionaries of {'asset_key': 'local_path'}
         return stac_item, successes, failures
 
     def download_file(self, src: str, dst: str) -> None:
@@ -104,6 +109,9 @@ class Downloader(StorageBase):
 
         # Skip if file exists and overwrite is False
         if not overwrite and local_path.exists():
+            _log.info(
+                f"Asset file already exists at '{local_path}'. Skipping download because overwrite=False."
+            )
             return {asset_key: str(local_path)}
 
         self.download_file(src=asset_url, dst=str(local_path))
