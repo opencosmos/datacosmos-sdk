@@ -105,6 +105,18 @@ class DatacosmosItem(BaseModel):
                 raise StacValidationError(f"Invalid bbox or geometry: {e}") from e
         return self
 
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "DatacosmosItem":
+        """Creates a DatacosmosItem instance from a dictionary using Pydantic's model_validate.
+
+        Args:
+            data (dict): The dictionary (JSON response) to validate and load.
+
+        Returns:
+            DatacosmosItem: A validated instance of the model.
+        """
+        return cls.model_validate(data)
+
     def get_property(self, key: str) -> Any | None:
         """Get a property value from the Datacosmos item."""
         return self.properties.get(key)

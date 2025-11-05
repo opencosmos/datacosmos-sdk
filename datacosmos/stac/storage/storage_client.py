@@ -1,7 +1,10 @@
 """Generic StorageClient for all storage operations (upload, download, etc.)."""
 
+from typing import Any, Dict, List, Tuple
+
 from datacosmos.datacosmos_client import DatacosmosClient
 from datacosmos.stac.item.models.datacosmos_item import DatacosmosItem
+from datacosmos.stac.storage.downloader import Downloader
 from datacosmos.stac.storage.uploader import Uploader
 
 
@@ -12,6 +15,7 @@ class StorageClient:
         """Generic StorageClient for all storage operations (upload, download, etc.)."""
         self.client = client
         self.uploader = Uploader(client)
+        self.downloader = Downloader(client)
 
     def upload_item(
         self,
@@ -21,13 +25,34 @@ class StorageClient:
         included_assets: list[str] | bool = True,
         max_workers: int = 4,
         time_out: float = 60 * 60 * 1,
-    ) -> DatacosmosItem:
+    ) -> Tuple[DatacosmosItem, List[Any], List[Dict[str, Any]]]:
         """Proxy to Uploader.upload_item, without needing to pass client each call."""
         return self.uploader.upload_item(
             item=item,
             project_id=project_id,
             assets_path=assets_path,
             included_assets=included_assets,
+            max_workers=max_workers,
+            time_out=time_out,
+        )
+
+    def download_assets(
+        self,
+        item: str,
+        collection_id: str,
+        target_path: str | None = None,
+        included_assets: list[str] | bool = True,
+        overwrite: bool = True,
+        max_workers: int = 4,
+        time_out: float = 60 * 60 * 1,
+    ) -> Tuple[DatacosmosItem, List[Dict[str, str]], List[Dict[str, Any]]]:
+        """Proxy to Downloader.download_assets, without needing to pass client each call."""
+        return self.downloader.download_assets(
+            item=item,
+            collection_id=collection_id,
+            target_path=target_path,
+            included_assets=included_assets,
+            overwrite=overwrite,
             max_workers=max_workers,
             time_out=time_out,
         )
