@@ -27,10 +27,10 @@ def test_fetch_item(mock_get, mock_check_api_response, mock_fetch_token):
         "geometry": {
             "type": "Polygon",
             "coordinates": [
-                [[2.1, 42.0], [2.1, 42.5], [2.6, 42.5], [2.6, 42.0], [2.1, 42.0]]
+                [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0], [0.0, 0.0]]
             ],
         },
-        "bbox": [2.1, 42.0, 2.6, 42.5],
+        "bbox": [0.0, 0.0, 1.0, 1.0],
         "properties": {
             "datetime": "2023-01-01T10:30:09Z",
             "processing:level": "L1C",
