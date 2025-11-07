@@ -52,7 +52,9 @@ class Uploader(StorageBase):
                 - False → skip asset upload; just register the item.
             max_workers (int): Maximum number of parallel threads for asset upload.
             time_out (float): Timeout in seconds for the entire asset batch upload.
-            on_error: (Optional[Callable[[Asset, Exception], None]]): Failure hook
+            on_error: (Optional[Callable[[Asset, Exception], None]]): Optional callback function
+                      invoked for each failed asset upload, receiving the failed Asset object and
+                      the Exception that caused the failure.
 
         Returns:
             UploadResult: The final item, along with lists of successful and failed asset keys.
@@ -119,7 +121,7 @@ class Uploader(StorageBase):
         """Executes the on_error callback for each failed asset."""
         if on_error:
             for failure in raw_failures:
-                job_args = failure.get("job_args", ())
+                job_args = failure.get("job_args") or ()
                 asset_key_failed = job_args[1] if len(job_args) > 1 else None
                 exception = failure.get("exception")
 
