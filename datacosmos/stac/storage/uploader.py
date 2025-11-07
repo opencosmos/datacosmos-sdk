@@ -1,7 +1,7 @@
 """Handles uploading files to Datacosmos storage and registering STAC items."""
 
 from pathlib import Path
-from typing import Any
+from typing import Callable, Optional
 
 from pydantic import TypeAdapter
 
@@ -10,6 +10,7 @@ from datacosmos.stac.item.item_client import ItemClient
 from datacosmos.stac.item.models.asset import Asset
 from datacosmos.stac.item.models.datacosmos_item import DatacosmosItem
 from datacosmos.stac.storage.dataclasses.upload_path import UploadPath
+from datacosmos.stac.storage.dataclasses.upload_result import UploadResult
 from datacosmos.stac.storage.storage_base import StorageBase
 
 
@@ -33,7 +34,8 @@ class Uploader(StorageBase):
         included_assets: list[str] | bool = True,
         max_workers: int = 4,
         time_out: float = 60 * 60 * 1,
-    ) -> tuple[DatacosmosItem, list[str], list[dict[str, Any]]]:
+        on_error: Optional[Callable[[Asset, Exception], None]] = None,
+    ) -> UploadResult:
         """Upload a STAC item (and optionally its assets) to Datacosmos in parallel threads.
 
         Args:
@@ -48,10 +50,10 @@ class Uploader(StorageBase):
                 - False → skip asset upload; just register the item.
             max_workers (int): Maximum number of parallel threads for asset upload.
             time_out (float): Timeout in seconds for the entire asset batch upload.
+            on_error: (Optional[Callable[[Asset, Exception], None]]): Failure hook
 
         Returns:
-            tuple[DatacosmosItem, list[str], list[dict[str, Any]]]:
-            The updated DatacosmosItem, a list of asset keys that were uploaded successfully, and a list of upload failures.
+            UploadResult: The final item, along with lists of successful and failed asset keys.
         """
         if not assets_path and not isinstance(item, str):
             raise ValueError(
@@ -83,18 +85,34 @@ class Uploader(StorageBase):
 
         if not jobs:
             self.item_client.add_item(item)
-            return item, [], []
+            return UploadResult(item=item, successful_assets=[], failed_assets=[])
 
         successes, failures = self.run_in_threads(
             self._upload_asset, jobs, max_workers, time_out
         )
+
+        if on_error:
+            for failure in failures:
+                job_args = failure.get("job_args", ())
+                asset_key_failed = job_args[1] if len(job_args) > 1 else None
+                exception = failure.get("exception")
+
+                if asset_key_failed and exception:
+                    asset_failed = item.assets.get(asset_key_failed)
+
+                    if asset_failed:
+                        on_error(asset_failed, exception)
 
         # Register the item if the overall process didn't time out
         # and there was at least one successful upload.
         if successes:
             self.item_client.add_item(item)
 
-        return item, successes, failures
+        return UploadResult(
+            item=item,
+            successful_assets=successes,
+            failed_assets=failures,
+        )
 
     @staticmethod
     def _load_item(item_json_file_path: str) -> DatacosmosItem:

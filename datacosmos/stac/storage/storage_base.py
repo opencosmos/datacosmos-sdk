@@ -2,7 +2,7 @@
 
 import mimetypes
 from concurrent.futures import Future, ThreadPoolExecutor, wait
-from typing import Any, Callable, Dict, Iterable, List, Tuple
+from typing import Any, Callable, Iterable
 
 from datacosmos.datacosmos_client import DatacosmosClient
 from datacosmos.exceptions.datacosmos_error import DatacosmosError
@@ -23,10 +23,10 @@ class StorageBase:
     def run_in_threads(
         self,
         fn: Callable[..., Any],
-        jobs: Iterable[Tuple[Any, ...]],
+        jobs: Iterable[tuple[Any, ...]],
         max_workers: int,
         timeout: float,
-    ) -> Tuple[List[Any], List[Dict[str, Any]]]:
+    ) -> tuple[list[Any], list[dict[str, Any]]]:
         """Run the callable `fn(*args)` over the iterable of jobs in parallel threads.
 
         Collects successes and failures without aborting the batch on individual errors.
@@ -38,19 +38,24 @@ class StorageBase:
             timeout: Timeout for the entire batch.
 
         Returns:
-            A tuple containing (successes: List[Any], failures: List[Dict[str, Any]]).
+            A tuple containing (successes: list[Any], failures: list[dict[str, Any]]).
             Failures include the exception and job arguments.
 
         Raises:
             DatacosmosError: If the entire batch times out.
         """
-        futures: List[Future] = []
+        futures: list[Future] = []
+
+        # Dictionary to map Future object to its original job arguments
+        future_to_job = {}
 
         executor = ThreadPoolExecutor(max_workers=max_workers)
 
         try:
             for args in jobs:
-                futures.append(executor.submit(fn, *args))
+                future = executor.submit(fn, *args)
+                futures.append(future)
+                future_to_job[future] = args  # Store the link to the original job
 
             # Wait until all futures are done or the timeout is reached
             done, not_done = wait(futures, timeout=timeout)
@@ -59,10 +64,14 @@ class StorageBase:
             failures = []
 
             for future in done:
+                original_args = future_to_job.get(future)
                 try:
                     result = future.result()
                 except Exception as e:
-                    failures.append({"error": str(e), "exception": e})
+                    # Capture the original job arguments upon failure
+                    failures.append(
+                        {"error": str(e), "exception": e, "job_args": original_args}
+                    )
                 else:
                     successes.append(result)
 

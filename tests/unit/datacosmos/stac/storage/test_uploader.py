@@ -7,6 +7,7 @@ import datacosmos.stac.storage.uploader as uploader_module
 from datacosmos.exceptions.datacosmos_error import DatacosmosError
 from datacosmos.stac.item.models.asset import Asset
 from datacosmos.stac.item.models.datacosmos_item import DatacosmosItem
+from datacosmos.stac.storage.dataclasses.upload_result import UploadResult
 from datacosmos.stac.storage.uploader import Uploader
 
 PROJECT_ID = "proj123"
@@ -112,8 +113,8 @@ class TestUploader:
         """Test successful parallel upload and item registration."""
         item, assets_path = simple_item
 
-        # Mock the parallel runner to simulate success
-        mock_run_in_threads = MagicMock(return_value=([True, True], []))
+        # Mock the parallel runner to simulate success (returns List[str] of asset keys)
+        mock_run_in_threads = MagicMock(return_value=(["file1", "file2"], []))
         monkeypatch.setattr(
             uploader_module.Uploader, "run_in_threads", mock_run_in_threads
         )
@@ -121,30 +122,36 @@ class TestUploader:
         uploader.upload_from_file = Mock()
         uploader._update_asset_href = Mock()
 
-        # The method now returns a tuple of (item, successes, failures)
-        result_item, successes, failures = uploader.upload_item(
+        result = uploader.upload_item(
             item, PROJECT_ID, assets_path=assets_path, max_workers=2, time_out=30
         )
 
-        assert mock_run_in_threads.call_count == 1
-        assert result_item is item
-        assert len(successes) == 2
-        assert len(failures) == 0
+        assert isinstance(result, UploadResult)
+        assert result.item is item
+        assert result.successful_assets == ["file1", "file2"]
+        assert result.failed_assets == []
 
+        assert mock_run_in_threads.call_count == 1
         assert patch_item_client.added is item
 
     def test_upload_item_partial_failure(
         self, uploader, simple_item, patch_item_client, monkeypatch
     ):
-        """Test parallel upload where some assets fail, and only successful ones are handled."""
+        """Test parallel upload where some assets fail, and the on_error hook is executed."""
         item, assets_path = simple_item
 
-        # Mock the parallel runner to simulate partial success/failure
-        mock_failure = {
-            "error": "Upload failed",
-            "exception": Exception("Upload failed"),
-        }
-        mock_run_in_threads = MagicMock(return_value=([True], [mock_failure]))
+        mock_exception = Exception("Upload failed due to permissions.")
+        mock_on_error = MagicMock()
+
+        # Mock the parallel runner to simulate 1 success ('file1') and 1 failure ('file2')
+        raw_failures = [
+            {
+                "error": str(mock_exception),
+                "exception": mock_exception,
+                "job_args": (item, "file2", assets_path, PROJECT_ID),
+            }
+        ]
+        mock_run_in_threads = MagicMock(return_value=(["file1"], raw_failures))
         monkeypatch.setattr(
             uploader_module.Uploader, "run_in_threads", mock_run_in_threads
         )
@@ -152,14 +159,22 @@ class TestUploader:
         uploader.upload_from_file = Mock()
         uploader._update_asset_href = Mock()
 
-        result_item, successes, failures = uploader.upload_item(
-            item, PROJECT_ID, assets_path=assets_path, max_workers=2, time_out=30
+        result = uploader.upload_item(
+            item,
+            PROJECT_ID,
+            assets_path=assets_path,
+            max_workers=2,
+            time_out=30,
+            on_error=mock_on_error,
         )
 
-        assert mock_run_in_threads.call_count == 1
-        assert result_item is item
-        assert len(successes) == 1
-        assert len(failures) == 1
+        assert isinstance(result, UploadResult)
+        assert result.item is item
+        assert result.successful_assets == ["file1"]
+        assert len(result.failed_assets) == 1
+
+        failed_asset = item.assets["file2"]
+        mock_on_error.assert_called_once_with(failed_asset, mock_exception)
 
         assert patch_item_client.added is item
 
