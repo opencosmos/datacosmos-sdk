@@ -1,9 +1,11 @@
 """Generic StorageClient for all storage operations (upload, download, etc.)."""
 
-from typing import Any, Dict, List, Tuple
+from typing import Any, Callable, Optional
 
 from datacosmos.datacosmos_client import DatacosmosClient
+from datacosmos.stac.item.models.asset import Asset
 from datacosmos.stac.item.models.datacosmos_item import DatacosmosItem
+from datacosmos.stac.storage.dataclasses.upload_result import UploadResult
 from datacosmos.stac.storage.downloader import Downloader
 from datacosmos.stac.storage.uploader import Uploader
 
@@ -25,7 +27,8 @@ class StorageClient:
         included_assets: list[str] | bool = True,
         max_workers: int = 4,
         time_out: float = 60 * 60 * 1,
-    ) -> Tuple[DatacosmosItem, List[Any], List[Dict[str, Any]]]:
+        on_error: Optional[Callable[[Asset, Exception], None]] = None,
+    ) -> UploadResult:
         """Proxy to Uploader.upload_item, without needing to pass client each call."""
         return self.uploader.upload_item(
             item=item,
@@ -34,6 +37,7 @@ class StorageClient:
             included_assets=included_assets,
             max_workers=max_workers,
             time_out=time_out,
+            on_error=on_error,
         )
 
     def download_assets(
@@ -45,7 +49,7 @@ class StorageClient:
         overwrite: bool = True,
         max_workers: int = 4,
         time_out: float = 60 * 60 * 1,
-    ) -> Tuple[DatacosmosItem, List[Dict[str, str]], List[Dict[str, Any]]]:
+    ) -> tuple[DatacosmosItem, list[dict[str, str]], list[dict[str, Any]]]:
         """Proxy to Downloader.download_assets, without needing to pass client each call."""
         return self.downloader.download_assets(
             item=item,

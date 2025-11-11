@@ -1,7 +1,7 @@
 """Handles uploading files to Datacosmos storage and registering STAC items."""
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, Optional
 
 from pydantic import TypeAdapter
 
@@ -10,7 +10,10 @@ from datacosmos.stac.item.item_client import ItemClient
 from datacosmos.stac.item.models.asset import Asset
 from datacosmos.stac.item.models.datacosmos_item import DatacosmosItem
 from datacosmos.stac.storage.dataclasses.upload_path import UploadPath
+from datacosmos.stac.storage.dataclasses.upload_result import UploadResult
 from datacosmos.stac.storage.storage_base import StorageBase
+
+AssetErrorCallback = Callable[[Asset, Exception], None]
 
 
 class Uploader(StorageBase):
@@ -33,7 +36,8 @@ class Uploader(StorageBase):
         included_assets: list[str] | bool = True,
         max_workers: int = 4,
         time_out: float = 60 * 60 * 1,
-    ) -> tuple[DatacosmosItem, list[str], list[dict[str, Any]]]:
+        on_error: Optional[AssetErrorCallback] = None,
+    ) -> UploadResult:
         """Upload a STAC item (and optionally its assets) to Datacosmos in parallel threads.
 
         Args:
@@ -48,10 +52,12 @@ class Uploader(StorageBase):
                 - False → skip asset upload; just register the item.
             max_workers (int): Maximum number of parallel threads for asset upload.
             time_out (float): Timeout in seconds for the entire asset batch upload.
+            on_error: (Optional[Callable[[Asset, Exception], None]]): Optional callback function
+                      invoked for each failed asset upload, receiving the failed Asset object and
+                      the Exception that caused the failure.
 
         Returns:
-            tuple[DatacosmosItem, list[str], list[dict[str, Any]]]:
-            The updated DatacosmosItem, a list of asset keys that were uploaded successfully, and a list of upload failures.
+            UploadResult: The final item, along with lists of successful and failed asset keys.
         """
         if not assets_path and not isinstance(item, str):
             raise ValueError(
@@ -68,14 +74,7 @@ class Uploader(StorageBase):
 
         assets_path = assets_path or str(Path.cwd())
 
-        if included_assets is False:
-            upload_assets: list[str] = []
-        elif included_assets is True:
-            upload_assets = list(item.assets.keys())
-        elif isinstance(included_assets, list):
-            upload_assets = included_assets
-        else:
-            upload_assets = []
+        upload_assets = self._resolve_upload_assets(item, included_assets)
 
         jobs = [
             (item, asset_key, assets_path, project_id) for asset_key in upload_assets
@@ -83,18 +82,54 @@ class Uploader(StorageBase):
 
         if not jobs:
             self.item_client.add_item(item)
-            return item, [], []
+            return UploadResult(item=item, successful_assets=[], failed_assets=[])
 
-        successes, failures = self.run_in_threads(
+        successful_keys, raw_failures = self.run_in_threads(
             self._upload_asset, jobs, max_workers, time_out
         )
 
-        # Register the item if the overall process didn't time out
-        # and there was at least one successful upload.
-        if successes:
+        self._process_failures(item, raw_failures, on_error)
+
+        if successful_keys:
             self.item_client.add_item(item)
 
-        return item, successes, failures
+        return UploadResult(
+            item=item,
+            successful_assets=successful_keys,
+            failed_assets=raw_failures,
+        )
+
+    def _resolve_upload_assets(
+        self, item: DatacosmosItem, included_assets: list[str] | bool
+    ) -> list[str]:
+        """Resolves the final list of asset keys to be uploaded based on included_assets."""
+        if included_assets is False:
+            return []
+        elif included_assets is True:
+            return list(item.assets.keys())
+        elif isinstance(included_assets, list):
+            return included_assets
+        else:
+            return []
+
+    def _process_failures(
+        self,
+        item: DatacosmosItem,
+        raw_failures: list[dict[str, Any]],
+        on_error: Optional[AssetErrorCallback],
+    ) -> None:
+        """Executes the on_error callback for each failed asset."""
+        if on_error:
+            for failure in raw_failures:
+                job_args = failure.get("job_args") or ()
+                asset_key_failed = job_args[1] if len(job_args) > 1 else None
+                exception = failure.get("exception")
+
+                if asset_key_failed and exception:
+                    asset_failed = item.assets.get(asset_key_failed)
+
+                    if asset_failed:
+                        on_error(asset_failed, exception)
 
     @staticmethod
     def _load_item(item_json_file_path: str) -> DatacosmosItem:

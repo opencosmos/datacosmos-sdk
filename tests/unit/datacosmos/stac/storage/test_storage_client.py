@@ -3,22 +3,27 @@ from unittest.mock import MagicMock
 import pytest
 
 import datacosmos.stac.storage.storage_client as storage_client_module
+from datacosmos.stac.storage.dataclasses.upload_result import UploadResult
 from datacosmos.stac.storage.storage_client import StorageClient
 
 PROJECT_ID = "proj123"
 
 
 class DummyUploader:
+    """Mock class to simulate Uploader and track arguments passed to upload_item."""
+
     def __init__(self, client):
         self.client = client
         self.upload_called_with = None
 
     def upload_item(self, *args, **kwargs):
         self.upload_called_with = (args, kwargs)
-        return "uploaded_item", ["key1"], []
+        return MagicMock(spec=UploadResult, name="MockUploadResult")
 
 
 class DummyDownloader:
+    """Mock class to simulate Downloader and track arguments passed to download_assets."""
+
     def __init__(self, client):
         self.client = client
         self.download_called_with = None
@@ -31,23 +36,28 @@ class DummyDownloader:
 class TestStorageClient:
     @pytest.fixture(autouse=True)
     def setup_mocks(self, monkeypatch):
-
+        """Patches external dependencies for all tests in this class."""
         monkeypatch.setattr(storage_client_module, "Uploader", DummyUploader)
         monkeypatch.setattr(storage_client_module, "Downloader", DummyDownloader)
 
     @pytest.fixture
     def storage_client(self):
+        """Initializes StorageClient with a mock client."""
         dummy_client = MagicMock()
         return StorageClient(dummy_client)
 
     def test_storage_client_upload_item(self, storage_client):
-        """Test the upload_item proxy method passes all args correctly."""
+        """Test the upload_item proxy method passes all args and returns UploadResult."""
+        mock_on_error = MagicMock()
 
         result = storage_client.upload_item(
-            "item_id", PROJECT_ID, assets_path="path", max_workers=2
+            "item_id",
+            PROJECT_ID,
+            assets_path="path",
+            max_workers=2,
+            on_error=mock_on_error,
         )
-
-        assert result == ("uploaded_item", ["key1"], [])
+        assert isinstance(result, MagicMock)
 
         args, kwargs = storage_client.uploader.upload_called_with
         assert kwargs == {
@@ -57,6 +67,7 @@ class TestStorageClient:
             "included_assets": True,
             "max_workers": 2,
             "time_out": 3600,
+            "on_error": mock_on_error,
         }
 
     def test_storage_client_download_assets(self, storage_client, tmp_path):

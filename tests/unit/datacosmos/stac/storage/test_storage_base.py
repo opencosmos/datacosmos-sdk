@@ -64,21 +64,29 @@ class TestStorageBase:
         self, mock_executor, mock_wait, storage_base
     ):
         """Tests batch execution where some jobs fail but successful results are collected."""
-        successful_future_1 = create_mock_future(True, "Result A")
-        failed_future = create_mock_future(False, exception=ValueError("Invalid Input"))
-        successful_future_2 = create_mock_future(True, "Result B")
+        MOCK_FN = MagicMock()
+        SUCCESS_JOB_ARGS: tuple[str] = ("success_data",)
+        FAILED_JOB_ARGS: tuple[str] = ("failure_data",)
+        jobs = [SUCCESS_JOB_ARGS, FAILED_JOB_ARGS]
 
-        futures = [successful_future_1, failed_future, successful_future_2]
+        successful_future = create_mock_future(True, "Result A")
+        failed_future = create_mock_future(False, exception=ValueError("Invalid Input"))
+
+        futures = [successful_future, failed_future]
 
         mock_executor.return_value.submit.side_effect = futures
         mock_wait.return_value = (futures, [])
 
         successes, failures = storage_base.run_in_threads(
-            MagicMock(), MagicMock(), max_workers=3, timeout=60
+            MOCK_FN, jobs, max_workers=3, timeout=60
         )
 
-        assert len(successes) == 2
+        assert len(successes) == 1
+        assert successes == ["Result A"]
+
         assert len(failures) == 1
         assert isinstance(failures[0]["exception"], ValueError)
+
+        assert failures[0]["job_args"] == FAILED_JOB_ARGS
 
         mock_executor.return_value.shutdown.assert_called_once_with(wait=False)
