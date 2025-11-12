@@ -103,7 +103,8 @@ class DatacosmosItem(BaseModel):
         """Validates that the bbox tightly encloses the geometry."""
         if self.geometry and self.bbox:
             try:
-                if "geom_shape" not in locals():
+                # If geom_shape was not created in the check above, create it now for the bbox check.
+                if geom_shape is None:
                     geom_shape = shape(self.geometry)
 
                 true_bbox = list(geom_shape.bounds)
