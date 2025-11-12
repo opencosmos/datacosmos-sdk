@@ -82,20 +82,25 @@ class ItemClient:
         response = self.client.post(url, json=item_json)
         check_api_response(response)
 
-    def add_item(self, item: Item | DatacosmosItem) -> None:
+    def add_item(
+        self, item: Item | DatacosmosItem, is_strict: Optional[bool] = True
+    ) -> None:
         """Adds item to catalog.
 
         The collection ID is inferred from the item.
 
         Args:
             item (Item | DatacosmosItem): The STAC item to be created.
+            is_strict: (Optional[bool]): Check if strict validation is to be done.
 
         Raises:
             ValueError: If the item has no collection set.
             StacValidationError: If the collection ID in the links doesn't match the item's collection field.
             RequestError: If the API returns an error response.
         """
-        collection_id = self._get_validated_collection_id(item, method="add")
+        collection_id = self._get_validated_collection_id(
+            item, method="add", is_strict=is_strict
+        )
 
         if not item.id:
             raise ValueError("Cannot add item: no item_id found on item")
@@ -203,13 +208,14 @@ class ItemClient:
             ) from e
 
     def _get_validated_collection_id(
-        self, item: Item | DatacosmosItem, method: str
+        self, item: Item | DatacosmosItem, method: str, is_strict: Optional[bool] = True
     ) -> str:
         """Resolves and validates the collection ID from an item, checking for link consistency.
 
         Args:
             item: The STAC item.
             method: The client method calling this helper ("create" or "add").
+            is_strict: Check if strict validation is to be done.
 
         Returns:
             The validated collection_id.
@@ -230,12 +236,14 @@ class ItemClient:
                 )
         else:
             collection_id = item.collection
-            if collection_id and not self._is_collection_link_consistent_datacosmos(
-                item
-            ):
-                raise StacValidationError(
-                    "Parent link in DatacosmosItem does not match its collection."
-                )
+            if is_strict:
+                if (
+                    collection_id
+                    and not self._is_collection_link_consistent_datacosmos(item)
+                ):
+                    raise StacValidationError(
+                        "Parent link in DatacosmosItem does not match its collection."
+                    )
 
         if not collection_id:
             if method == "create":
