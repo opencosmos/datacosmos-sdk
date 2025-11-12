@@ -29,7 +29,7 @@ class FakeItemClient:
     def __init__(self):
         self.added = None
 
-    def add_item(self, item):
+    def add_item(self, item, is_strict):
         self.added = item
 
 

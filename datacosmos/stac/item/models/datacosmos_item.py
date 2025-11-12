@@ -4,7 +4,7 @@ import math
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from shapely.errors import ShapelyError
 from shapely.geometry import Polygon, shape
 
@@ -23,6 +23,8 @@ class DatacosmosItem(BaseModel):
     """Model representing a flexible Datacosmos STAC item with mandatory business fields."""
 
     model_config = ConfigDict(extra="allow")
+
+    is_strict: bool = Field(default=True, exclude=True)
 
     id: str
     type: str
@@ -58,41 +60,67 @@ class DatacosmosItem(BaseModel):
     def validate_geometry_is_polygon(
         cls, geometry_data: dict[str, Any]
     ) -> dict[str, Any]:
-        """Validates that the geometry is a Polygon with coordinates and correct winding order."""
-        if geometry_data.get("type") != "Polygon" or not geometry_data.get(
-            "coordinates"
-        ):
-            raise StacValidationError("Geometry must be a Polygon with coordinates.")
+        """Validates that the geometry is a Polygon or MultiPolygon with coordinates."""
+        geom_type = geometry_data.get("type")
 
-        try:
-            # Use shape() for robust GeoJSON parsing and validation
-            polygon = shape(geometry_data)
+        valid_types = {"Polygon", "MultiPolygon"}
 
-            if not polygon.is_valid:
-                raise ValueError(f"Polygon geometry is invalid: {polygon.geom_type}")
+        if geom_type not in valid_types or not geometry_data.get("coordinates"):
+            raise StacValidationError(
+                "Geometry must be a Polygon or MultiPolygon with coordinates."
+            )
 
-            # right-hand rule validation:
-            # The right-hand rule means exterior ring must be counter-clockwise (CCW).
-            # Shapely's Polygon stores the exterior as CCW if the input is valid.
-            if not polygon.exterior.is_ccw:
-                raise ValueError(
-                    "Polygon winding order violates GeoJSON Right-Hand Rule (Exterior ring is clockwise)."
-                )
+        if getattr(cls, "is_strict", True) and geom_type == "Polygon":
+            try:
+                polygon = shape(geometry_data)
 
-        except (KeyError, ShapelyError, ValueError) as e:
-            raise StacValidationError(f"Invalid geometry data: {e}") from e
+                if not polygon.is_valid:
+                    raise ValueError(
+                        f"Polygon geometry is invalid: {polygon.geom_type}"
+                    )
+
+                if not polygon.exterior.is_ccw:
+                    raise ValueError(
+                        "Polygon winding order violates GeoJSON Right-Hand Rule (Exterior ring is clockwise)."
+                    )
+
+            except (KeyError, ShapelyError, ValueError) as e:
+                raise StacValidationError(f"Invalid geometry data: {e}") from e
 
         return geometry_data
 
     @model_validator(mode="after")
     def validate_bbox_vs_geometry(self) -> "DatacosmosItem":
-        """Validates that the bbox tightly encloses the geometry."""
-        if self.geometry and self.bbox:
+        """Validates that the bbox tightly encloses the geometry and performs strict geometric checks."""
+        if not getattr(self, "is_strict", True):
+            return self
+
+        geom_shape = None
+
+        if self.geometry.get("type") == "Polygon":
             try:
                 geom_shape = shape(self.geometry)
+
+                if not geom_shape.is_valid:
+                    raise StacValidationError(
+                        f"Polygon geometry is invalid: {geom_shape.geom_type}"
+                    )
+
+                if not geom_shape.exterior.is_ccw:
+                    raise StacValidationError(
+                        "Polygon winding order violates GeoJSON Right-Hand Rule."
+                    )
+            except Exception as e:
+                raise StacValidationError(f"Invalid geometry data: {e}") from e
+
+        if self.geometry and self.bbox:
+            try:
+                # If geom_shape was not created in the check above, create it now for the bbox check.
+                if geom_shape is None:
+                    geom_shape = shape(self.geometry)
+
                 true_bbox = list(geom_shape.bounds)
 
-                # Check for floating point equality within a tolerance
                 if not all(
                     math.isclose(a, b, rel_tol=1e-9)
                     for a, b in zip(self.bbox, true_bbox)
@@ -101,21 +129,23 @@ class DatacosmosItem(BaseModel):
                         "Provided bbox does not match geometry bounds."
                     )
             except Exception as e:
-                # Catch any errors from Shapely or the comparison
                 raise StacValidationError(f"Invalid bbox or geometry: {e}") from e
+
         return self
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "DatacosmosItem":
-        """Creates a DatacosmosItem instance from a dictionary using Pydantic's model_validate.
-
-        Args:
-            data (dict): The dictionary (JSON response) to validate and load.
-
-        Returns:
-            DatacosmosItem: A validated instance of the model.
-        """
+        """Creates a DatacosmosItem instance from a dictionary using Pydantic's model_validate."""
         return cls.model_validate(data)
+
+    @classmethod
+    def from_dict_permissive(cls, data: dict[str, Any]) -> "DatacosmosItem":
+        """Creates a DatacosmosItem instance from a dictionary in permissive mode, skipping strict geometric and bbox consistency checks."""
+
+        class PermissiveDatacosmosItem(cls):
+            is_strict: bool = False
+
+        return PermissiveDatacosmosItem.model_validate(data)
 
     def get_property(self, key: str) -> Any | None:
         """Get a property value from the Datacosmos item."""

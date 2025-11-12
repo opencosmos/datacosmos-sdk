@@ -28,6 +28,7 @@ class StorageClient:
         max_workers: int = 4,
         time_out: float = 60 * 60 * 1,
         on_error: Optional[Callable[[Asset, Exception], None]] = None,
+        is_strict: Optional[bool] = True,
     ) -> UploadResult:
         """Proxy to Uploader.upload_item, without needing to pass client each call."""
         return self.uploader.upload_item(
@@ -38,6 +39,7 @@ class StorageClient:
             max_workers=max_workers,
             time_out=time_out,
             on_error=on_error,
+            is_strict=is_strict,
         )
 
     def download_assets(

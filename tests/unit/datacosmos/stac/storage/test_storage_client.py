@@ -68,6 +68,7 @@ class TestStorageClient:
             "max_workers": 2,
             "time_out": 3600,
             "on_error": mock_on_error,
+            "is_strict": True,
         }
 
     def test_storage_client_download_assets(self, storage_client, tmp_path):

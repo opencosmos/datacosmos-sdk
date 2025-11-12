@@ -124,7 +124,10 @@ class TestDatacosmosItem(unittest.TestCase):
 
         with self.assertRaises(DatacosmosError) as cm:
             DatacosmosItem(**invalid_data)
-        self.assertIn("Geometry must be a Polygon with coordinates.", str(cm.exception))
+        self.assertIn(
+            "Geometry must be a Polygon or MultiPolygon with coordinates.",
+            str(cm.exception),
+        )
 
     def test_bbox_mismatch_with_geometry(self):
         """
