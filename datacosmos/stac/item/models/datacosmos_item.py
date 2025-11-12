@@ -4,7 +4,8 @@ import math
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from shapely.errors import ShapelyError
 from shapely.geometry import Polygon, shape
 
 from datacosmos.exceptions.stac_validation_error import StacValidationError
@@ -23,7 +24,7 @@ class DatacosmosItem(BaseModel):
 
     model_config = ConfigDict(extra="allow")
 
-    is_strict: bool = True
+    is_strict: bool = Field(default=True, exclude=True)
 
     id: str
     type: str
@@ -69,6 +70,23 @@ class DatacosmosItem(BaseModel):
                 "Geometry must be a Polygon or MultiPolygon with coordinates."
             )
 
+        if getattr(cls, "is_strict", True) and geom_type == "Polygon":
+            try:
+                polygon = shape(geometry_data)
+
+                if not polygon.is_valid:
+                    raise ValueError(
+                        f"Polygon geometry is invalid: {polygon.geom_type}"
+                    )
+
+                if not polygon.exterior.is_ccw:
+                    raise ValueError(
+                        "Polygon winding order violates GeoJSON Right-Hand Rule (Exterior ring is clockwise)."
+                    )
+
+            except (KeyError, ShapelyError, ValueError) as e:
+                raise StacValidationError(f"Invalid geometry data: {e}") from e
+
         return geometry_data
 
     @model_validator(mode="after")
@@ -76,6 +94,8 @@ class DatacosmosItem(BaseModel):
         """Validates that the bbox tightly encloses the geometry and performs strict geometric checks."""
         if not getattr(self, "is_strict", True):
             return self
+
+        geom_shape = None
 
         if self.geometry.get("type") == "Polygon":
             try:
@@ -95,7 +115,8 @@ class DatacosmosItem(BaseModel):
 
         if self.geometry and self.bbox:
             try:
-                if "geom_shape" not in locals():
+                # If geom_shape was not created in the check above, create it now for the bbox check.
+                if geom_shape is None:
                     geom_shape = shape(self.geometry)
 
                 true_bbox = list(geom_shape.bounds)
