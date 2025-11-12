@@ -37,6 +37,7 @@ class Uploader(StorageBase):
         max_workers: int = 4,
         time_out: float = 60 * 60 * 1,
         on_error: Optional[AssetErrorCallback] = None,
+        is_strict: Optional[bool] = True,
     ) -> UploadResult:
         """Upload a STAC item (and optionally its assets) to Datacosmos in parallel threads.
 
@@ -55,6 +56,7 @@ class Uploader(StorageBase):
             on_error: (Optional[Callable[[Asset, Exception], None]]): Optional callback function
                       invoked for each failed asset upload, receiving the failed Asset object and
                       the Exception that caused the failure.
+            is_strict: (Optional[bool]): Check if strict validation is to be done.
 
         Returns:
             UploadResult: The final item, along with lists of successful and failed asset keys.
@@ -91,7 +93,8 @@ class Uploader(StorageBase):
         self._process_failures(item, raw_failures, on_error)
 
         if successful_keys:
-            self.item_client.add_item(item)
+            print(f"is_strict: {is_strict}")
+            self.item_client.add_item(item, is_strict=is_strict)
 
         return UploadResult(
             item=item,

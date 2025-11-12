@@ -81,13 +81,16 @@ class ItemClient:
         response = self.client.post(url, json=item_json)
         check_api_response(response)
 
-    def add_item(self, item: Item | DatacosmosItem) -> None:
+    def add_item(
+        self, item: Item | DatacosmosItem, is_strict: Optional[bool] = True
+    ) -> None:
         """Adds item to catalog.
 
         The collection ID is inferred from the item.
 
         Args:
             item (Item | DatacosmosItem): The STAC item to be created.
+            is_strict: (Optional[bool]): Check if strict validation is to be done.
 
         Raises:
             ValueError: If the item has no collection set.
@@ -206,6 +209,7 @@ class ItemClient:
         Args:
             item: The STAC item.
             method: The client method calling this helper ("create" or "add").
+            is_strict: Check if strict validation is to be done.
 
         Returns:
             The collection_id.
