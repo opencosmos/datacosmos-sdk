@@ -73,9 +73,11 @@ class ItemClient:
         Raises:
             ValueError: If the item has no collection set.
             StacValidationError: If the collection ID in the links doesn't match the item's collection field.
-            RequestError: If the API returns an error response.
+            DatacosmosError: If the API returns an error response.
         """
-        collection_id = self._get_validated_collection_id(item, method="create")
+        collection_id = self._get_validated_collection_id(
+            item, method="create", is_strict=True
+        )
 
         url = self.base_url.with_suffix(f"/collections/{collection_id}/items")
         item_json: dict = item.to_dict()
@@ -96,7 +98,7 @@ class ItemClient:
         Raises:
             ValueError: If the item has no collection set.
             StacValidationError: If the collection ID in the links doesn't match the item's collection field.
-            RequestError: If the API returns an error response.
+            DatacosmosError: If the API returns an error response.
         """
         collection_id = self._get_validated_collection_id(
             item, method="add", is_strict=is_strict
@@ -144,24 +146,14 @@ class ItemClient:
             collection_id (str): The ID of the collection containing the item.
 
         Raises:
-            OCError: If the item is not found or deletion is forbidden.
+            DatacosmosError: If the item is not found or deletion is forbidden.
         """
         url = self.base_url.with_suffix(f"/collections/{collection_id}/items/{item_id}")
         response = self.client.delete(url)
         check_api_response(response)
 
     def _paginate_items(self, url: str, body: dict) -> Generator[Item, None, None]:
-        """Handle pagination for the STAC search POST endpoint.
-
-        Fetches items one page at a time using the 'next' link.
-
-        Args:
-            url (str): The base URL for the search endpoint.
-            body (dict): The request body containing search parameters.
-
-        Yields:
-            Item: Parsed STAC item.
-        """
+        """Handle pagination for the STAC search POST endpoint."""
         params = {"limit": body.get("limit", 10)}
 
         while True:
