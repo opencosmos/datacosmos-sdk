@@ -5,6 +5,8 @@ from typing import Any, Optional
 from pydantic import BaseModel, Field, model_validator
 from pystac import Asset, Link
 
+from datacosmos.exceptions import StacValidationError
+
 
 class ItemUpdate(BaseModel):
     """Model representing a partial update for a STAC item."""
@@ -13,9 +15,7 @@ class ItemUpdate(BaseModel):
 
     stac_extensions: Optional[list[str]] = None
     geometry: Optional[dict[str, Any]] = None
-    bbox: Optional[list[float]] = Field(
-        None, min_items=4, max_items=4
-    )  # Must be [minX, minY, maxX, maxY]
+    bbox: Optional[list[float]] = Field(None, min_items=4, max_items=4)
     properties: Optional[dict[str, Any]] = None
     assets: Optional[dict[str, Asset]] = None
     links: Optional[list[Link]] = None
@@ -50,7 +50,7 @@ class ItemUpdate(BaseModel):
         if not cls.has_valid_datetime(properties) and not cls.has_valid_datetime_range(
             properties
         ):
-            raise ValueError(
+            raise StacValidationError(
                 "Either 'datetime' or both 'start_datetime' and 'end_datetime' must be provided."
             )
 

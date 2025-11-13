@@ -1,5 +1,6 @@
 import pytest
 
+from datacosmos.exceptions import StacValidationError
 from datacosmos.stac.item.models.item_update import ItemUpdate
 
 
@@ -28,7 +29,7 @@ class TestItemUpdate:
     def test_invalid_item_update_missing_datetime(self):
         """Test that ItemUpdate fails validation when datetime is missing."""
         with pytest.raises(
-            ValueError,
+            StacValidationError,
             match="Either 'datetime' or both 'start_datetime' and 'end_datetime' must be provided.",
         ):
             ItemUpdate(properties={"new_property": "value"})
@@ -36,7 +37,7 @@ class TestItemUpdate:
     def test_invalid_item_update_empty_properties(self):
         """Test that ItemUpdate fails validation when properties are empty."""
         with pytest.raises(
-            ValueError,
+            StacValidationError,
             match="Either 'datetime' or both 'start_datetime' and 'end_datetime' must be provided.",
         ):
             ItemUpdate(properties={})

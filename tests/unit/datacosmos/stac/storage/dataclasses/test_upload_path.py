@@ -2,6 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from datacosmos.exceptions import UploadError
 from datacosmos.stac.storage.dataclasses.upload_path import UploadPath
 
 
@@ -39,5 +40,5 @@ class TestUploadPath:
         assert up.asset_name == "file.tif"
 
     def test_from_path_invalid_raises(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(UploadError, match="Invalid path"):
             UploadPath.from_path("invalid/path/structure")

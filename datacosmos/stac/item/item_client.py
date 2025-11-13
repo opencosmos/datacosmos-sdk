@@ -82,7 +82,7 @@ class ItemClient:
         check_api_response(response)
 
     def add_item(
-        self, item: Item | DatacosmosItem, is_strict: Optional[bool] = True
+        self, item: Item | DatacosmosItem
     ) -> None:
         """Adds item to catalog.
 
@@ -90,7 +90,6 @@ class ItemClient:
 
         Args:
             item (Item | DatacosmosItem): The STAC item to be created.
-            is_strict: (Optional[bool]): Check if strict validation is to be done.
 
         Raises:
             ValueError: If the item has no collection set.
@@ -140,24 +139,14 @@ class ItemClient:
             collection_id (str): The ID of the collection containing the item.
 
         Raises:
-            OCError: If the item is not found or deletion is forbidden.
+            DatacosmosError: If the item is not found or deletion is forbidden.
         """
         url = self.base_url.with_suffix(f"/collections/{collection_id}/items/{item_id}")
         response = self.client.delete(url)
         check_api_response(response)
 
     def _paginate_items(self, url: str, body: dict) -> Generator[Item, None, None]:
-        """Handle pagination for the STAC search POST endpoint.
-
-        Fetches items one page at a time using the 'next' link.
-
-        Args:
-            url (str): The base URL for the search endpoint.
-            body (dict): The request body containing search parameters.
-
-        Yields:
-            Item: Parsed STAC item.
-        """
+        """Handle pagination for the STAC search POST endpoint."""
         params = {"limit": body.get("limit", 10)}
 
         while True:

@@ -25,6 +25,7 @@ from datacosmos.config.models.local_user_account_authentication_config import (
     LocalUserAccountAuthenticationConfig,
 )
 from datacosmos.config.models.m2m_authentication_config import M2MAuthenticationConfig
+from datacosmos.exceptions import AuthenticationError
 
 
 class TestFactory:
@@ -46,8 +47,6 @@ class TestFactory:
 
         assert auth.token_url == DEFAULT_AUTH_TOKEN_URL
         assert auth.audience == DEFAULT_AUTH_AUDIENCE
-
-    # Removed: The original test_parse_auth_config_m2m_with_env_fallback is REMOVED.
 
     def test_parse_auth_config_local_dict(self):
         """Test parsing a minimal dictionary into a Local user model."""
@@ -126,12 +125,12 @@ class TestFactory:
     def test_check_required_auth_fields_m2m_missing_raises(self):
         """Test that required M2M fields cause a ValueError."""
         with pytest.raises(
-            ValueError, match="Missing required authentication fields for m2m"
+            AuthenticationError, match="Missing required authentication fields for m2m"
         ):
             check_required_auth_fields(M2MAuthenticationConfig(type="m2m"))
 
         with pytest.raises(
-            ValueError, match="Missing required authentication fields for m2m"
+            AuthenticationError, match="Missing required authentication fields for m2m"
         ):
             check_required_auth_fields(
                 M2MAuthenticationConfig(type="m2m", client_id="cid")
@@ -140,7 +139,7 @@ class TestFactory:
     def test_check_required_auth_fields_local_missing_raises(self):
         """Test that required Local fields cause a ValueError."""
         with pytest.raises(
-            ValueError,
+            AuthenticationError,
             match="Missing required authentication field for local: client_id",
         ):
             check_required_auth_fields(
@@ -199,14 +198,14 @@ class TestFactory:
     def test_normalize_authentication_m2m_missing_secret_raises(self):
         """Test validation failure for incomplete M2M config."""
         with pytest.raises(
-            ValueError, match="Missing required authentication fields for m2m"
+            AuthenticationError, match="Missing required authentication fields for m2m"
         ):
             normalize_authentication({"client_id": "cid"})
 
     def test_normalize_authentication_local_missing_client_id_raises(self):
         """Test validation failure for incomplete Local config."""
         with pytest.raises(
-            ValueError,
+            AuthenticationError,
             match="Missing required authentication field for local: client_id",
         ):
             normalize_authentication({"type": "local"})

@@ -3,7 +3,9 @@ from datetime import datetime, timedelta, timezone
 
 import requests
 from oauthlib.oauth2 import BackendApplicationClient
-from requests.exceptions import ConnectionError, HTTPError, RequestException, Timeout
+from requests.exceptions import ConnectionError
+from requests.exceptions import HTTPError as RequestsHTTPError
+from requests.exceptions import RequestException, Timeout
 from requests_oauthlib import OAuth2Session
 from tenacity import (
     retry,
@@ -13,7 +15,7 @@ from tenacity import (
 )
 
 from datacosmos.auth.base_authenticator import AuthResult, BaseAuthenticator
-from datacosmos.exceptions.datacosmos_error import DatacosmosError
+from datacosmos.exceptions import AuthenticationError
 
 
 class M2MAuthenticator(BaseAuthenticator):
@@ -51,10 +53,10 @@ class M2MAuthenticator(BaseAuthenticator):
             return AuthResult(
                 http_client=http_client, token=token, token_expiry=token_expiry
             )
-        except (HTTPError, ConnectionError, Timeout) as e:
-            raise DatacosmosError(f"M2M authentication failed: {e}") from e
+        except (RequestsHTTPError, ConnectionError, Timeout) as e:
+            raise AuthenticationError(f"M2M authentication failed: {e}") from e
         except RequestException as e:
-            raise DatacosmosError(
+            raise AuthenticationError(
                 f"Unexpected request failure during M2M authentication: {e}"
             ) from e
 
