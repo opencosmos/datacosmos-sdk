@@ -26,7 +26,7 @@ class StorageBase:
         jobs: Iterable[tuple[Any, ...]],
         max_workers: int,
         timeout: float,
-    ) -> tuple[list[Any], list[dict[str, Any]]]:
+    ) -> tuple[list[Any], list[dict[str, Any]], list[tuple[Any, ...]]]:
         """Run the callable `fn(*args)` over the iterable of jobs in parallel threads.
 
         Collects successes and failures without aborting the batch on individual errors.
@@ -38,7 +38,7 @@ class StorageBase:
             timeout: Timeout for the entire batch.
 
         Returns:
-            A tuple containing (successes: list[Any], failures: list[dict[str, Any]]).
+            A tuple containing (successes, failures, cancelled_jobs).
             Failures include the exception and job arguments.
 
         Raises:
@@ -55,20 +55,20 @@ class StorageBase:
             for args in jobs:
                 future = executor.submit(fn, *args)
                 futures.append(future)
-                future_to_job[future] = args  # Store the link to the original job
+                future_to_job[future] = args 
 
             # Wait until all futures are done or the timeout is reached
             done, not_done = wait(futures, timeout=timeout)
 
             successes = []
             failures = []
+            cancelled_jobs: list[tuple[Any, ...]] = []
 
             for future in done:
                 original_args = future_to_job.get(future)
                 try:
                     result = future.result()
                 except Exception as e:
-                    # Capture the original job arguments upon failure
                     failures.append(
                         {"error": str(e), "exception": e, "job_args": original_args}
                     )
@@ -76,11 +76,14 @@ class StorageBase:
                     successes.append(result)
 
             if not_done:
-                # The executor's shutdown wait must be skipped to allow cancellation
+                for future in not_done:
+                    future.cancel()
+                    cancelled_jobs.append(future_to_job.get(future))
+
                 raise DatacosmosError("Batch processing failed: operation timed out.")
 
-            return successes, failures
+            return successes, failures, cancelled_jobs
+
         finally:
             # Shutdown without waiting to enable timeout handling
-            # The wait call already established which jobs finished
             executor.shutdown(wait=False)

@@ -3,14 +3,13 @@
 import json
 import logging
 from pathlib import Path
-from typing import Any
 
 from pystac import Item
 
 from datacosmos.datacosmos_client import DatacosmosClient
 from datacosmos.stac.item.item_client import ItemClient
-from datacosmos.stac.item.models.datacosmos_item import DatacosmosItem
 from datacosmos.stac.storage.storage_base import StorageBase
+from datacosmos.stac.storage.dataclasses.batch_operation_result import BatchOperationResult
 
 _log = logging.getLogger(__name__)
 
@@ -32,7 +31,7 @@ class Downloader(StorageBase):
         overwrite: bool = True,
         max_workers: int = 4,
         time_out: float = 60 * 60 * 1,
-    ) -> tuple[DatacosmosItem, list[dict[str, str]], list[dict[str, Any]]]:
+    ) -> BatchOperationResult:
         """Downloads a STAC item's assets from the catalog in parallel.
 
         Args:
@@ -45,8 +44,7 @@ class Downloader(StorageBase):
             time_out (float): Timeout in seconds for the entire asset batch download.
 
         Returns:
-            tuple[DatacosmosItem, list[dict[str, str]], list[dict[str, Any]]]:
-            The downloaded DatacosmosItem, a list of asset keys mapped to local paths (successes), and a list of failures.
+            BatchOperationResult: The downloaded STAC Item, a list of asset keys mapped to local paths (successes), and a list of failures
         """
         stac_item = self.item_client.fetch_item(
             item_id=item, collection_id=collection_id
@@ -83,11 +81,16 @@ class Downloader(StorageBase):
         if not jobs:
             return stac_item, [], []
 
-        successes, failures = self.run_in_threads(
+        successes, failures, cancelled_jobs = self.run_in_threads(
             self._download_asset_worker, jobs, max_workers, time_out
         )
 
-        return stac_item, successes, failures
+        return BatchOperationResult(
+            item=stac_item, 
+            successful_assets=successes, 
+            failed_assets=failures, 
+            cancelled_assets=cancelled_jobs
+        )
 
     def download_file(self, src: str, dst: str) -> None:
         """Download a single file from the specified URL to a local destination path."""

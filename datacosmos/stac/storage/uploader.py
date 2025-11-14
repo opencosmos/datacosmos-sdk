@@ -10,7 +10,7 @@ from datacosmos.stac.item.item_client import ItemClient
 from datacosmos.stac.item.models.asset import Asset
 from datacosmos.stac.item.models.datacosmos_item import DatacosmosItem
 from datacosmos.stac.storage.dataclasses.upload_path import UploadPath
-from datacosmos.stac.storage.dataclasses.upload_result import UploadResult
+from datacosmos.stac.storage.dataclasses.batch_operation_result import BatchOperationResult
 from datacosmos.stac.storage.storage_base import StorageBase
 
 AssetErrorCallback = Callable[[Asset, Exception], None]
@@ -38,7 +38,7 @@ class Uploader(StorageBase):
         time_out: float = 60 * 60 * 1,
         on_error: Optional[AssetErrorCallback] = None,
         is_strict: Optional[bool] = True,
-    ) -> UploadResult:
+    ) -> BatchOperationResult:
         """Upload a STAC item (and optionally its assets) to Datacosmos in parallel threads.
 
         Args:
@@ -59,7 +59,7 @@ class Uploader(StorageBase):
             is_strict: (Optional[bool]): Check if strict validation is to be done.
 
         Returns:
-            UploadResult: The final item, along with lists of successful and failed asset keys.
+            BatchOperationResult: The final item, along with lists of successful and failed asset keys.
         """
         if not assets_path and not isinstance(item, str):
             raise ValueError(
@@ -84,9 +84,9 @@ class Uploader(StorageBase):
 
         if not jobs:
             self.item_client.add_item(item)
-            return UploadResult(item=item, successful_assets=[], failed_assets=[])
+            return BatchOperationResult(item=item, successful_assets=[], failed_assets=[])
 
-        successful_keys, raw_failures = self.run_in_threads(
+        successful_keys, raw_failures, cancelled_jobs = self.run_in_threads(
             self._upload_asset, jobs, max_workers, time_out
         )
 
@@ -95,10 +95,11 @@ class Uploader(StorageBase):
         if successful_keys:
             self.item_client.add_item(item, is_strict=is_strict)
 
-        return UploadResult(
+        return BatchOperationResult(
             item=item,
             successful_assets=successful_keys,
             failed_assets=raw_failures,
+            cancelled_assets=cancelled_jobs
         )
 
     def _resolve_upload_assets(
