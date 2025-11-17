@@ -73,22 +73,31 @@ class DatacosmosItem(BaseModel):
                 "Geometry must be a Polygon or MultiPolygon with coordinates."
             )
 
-        if geom_type == "Polygon":
-            try:
-                polygon = shape(geometry_data)
-
-                if not polygon.is_valid:
+        try:
+            geom = shape(geometry_data)
+            if geom_type == "Polygon":
+                # Single polygon validation
+                if not geom.is_valid:
                     raise StacValidationError(
-                        f"Polygon geometry is invalid: {polygon.geom_type}"
+                        f"Polygon geometry is invalid: {geom.geom_type}"
                     )
-
-                if not polygon.exterior.is_ccw:
+                if not geom.exterior.is_ccw:
                     raise StacValidationError(
                         "Polygon winding order violates GeoJSON Right-Hand Rule (Exterior ring is clockwise)."
                     )
-
-            except (KeyError, ShapelyError, ValueError) as e:
-                raise StacValidationError(f"Invalid geometry data: {e}") from e
+            elif geom_type == "MultiPolygon":
+                # Validate each polygon in the MultiPolygon
+                for idx, polygon in enumerate(geom.geoms):
+                    if not polygon.is_valid:
+                        raise StacValidationError(
+                            f"MultiPolygon geometry is invalid at index {idx}: {polygon.geom_type}"
+                        )
+                    if not polygon.exterior.is_ccw:
+                        raise StacValidationError(
+                            f"MultiPolygon winding order violates GeoJSON Right-Hand Rule at index {idx} (Exterior ring is clockwise)."
+                        )
+        except (KeyError, ShapelyError, ValueError) as e:
+            raise StacValidationError(f"Invalid geometry data: {e}") from e
 
     def _validate_bbox_vs_geometry(self) -> None:
         """Validates that the bbox tightly encloses the geometry."""
@@ -111,7 +120,7 @@ class DatacosmosItem(BaseModel):
         if not self.collection:
             raise StacValidationError("Item does not have a collection.")
 
-        if self.collection and not self.__is_collection_link_consistent():
+        if not self.__is_collection_link_consistent():
             raise StacValidationError(
                 "Parent link in DatacosmosItem does not match its collection."
             )
@@ -168,6 +177,6 @@ class DatacosmosItem(BaseModel):
             if link.get("rel") == "parent":
                 link_collection_id = link.get("href", "").rstrip("/").split("/")[-1]
                 if not link_collection_id:
-                    return False
-                return link_collection_id == self.collection
-        return False
+                    continue
+                if link_collection_id == self.collection:
+                    return True

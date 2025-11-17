@@ -104,7 +104,7 @@ class TestDatacosmosItem(unittest.TestCase):
         del invalid_data["properties"]["processing:level"]
 
         item = DatacosmosItem(**invalid_data)
-        with self.assertRaisesRegex(StacValidationError, "datetime.+processing:level"):
+        with self.assertRaisesRegex(StacValidationError, "datetime.*processing:level"):
             item.validate()
 
     def test_invalid_geometry_type(self):

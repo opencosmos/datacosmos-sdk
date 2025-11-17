@@ -72,7 +72,6 @@ class ItemClient:
 
         Raises:
             ValueError: If the item has no collection set.
-            StacValidationError: If the collection ID in the links doesn't match the item's collection field.
             RequestError: If the API returns an error response.
         """
         collection_id = self._get_collection_id(item, method="create")
@@ -92,7 +91,6 @@ class ItemClient:
 
         Raises:
             ValueError: If the item has no collection set.
-            StacValidationError: If the collection ID in the links doesn't match the item's collection field.
             RequestError: If the API returns an error response.
         """
         collection_id = self._get_collection_id(item, method="add")
