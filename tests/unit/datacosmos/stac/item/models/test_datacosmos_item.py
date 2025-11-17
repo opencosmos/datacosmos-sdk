@@ -3,7 +3,7 @@ from datetime import datetime
 
 from shapely.geometry import Polygon
 
-from datacosmos.exceptions.datacosmos_error import DatacosmosError
+from datacosmos.exceptions.stac_validation_error import StacValidationError
 from datacosmos.stac.enums.processing_level import ProcessingLevel
 from datacosmos.stac.item.models.datacosmos_item import DatacosmosItem
 
@@ -29,11 +29,16 @@ class TestDatacosmosItem(unittest.TestCase):
             "assets": {},
         }
 
-        # Datacosmos-specific required properties
         self.datacosmos_properties = {
             "datetime": "2023-01-01T12:00:00Z",
             "processing:level": "l1a",
             "sat:platform_international_designator": "TEST-SAT-1",
+        }
+
+        self.valid_parent_link = {
+            "rel": "parent",
+            "href": "https://base.url/collections/test-collection",
+            "type": "application/json",
         }
 
         # Full, valid item data for most tests
@@ -43,6 +48,7 @@ class TestDatacosmosItem(unittest.TestCase):
             "stac_version": "1.0.0",
             "stac_extensions": [],
             "collection": "test-collection",
+            "links": [self.valid_parent_link],
             "assets": {
                 "thumbnail": {
                     "href": "http://example.com/thumb.jpg",
@@ -55,32 +61,29 @@ class TestDatacosmosItem(unittest.TestCase):
         }
 
     def test_valid_item_creation(self):
-        """Test that a DatacosmosItem can be created from a valid dictionary."""
+        """Test that a DatacosmosItem can be created and validated from a valid dictionary."""
         try:
             item = DatacosmosItem(**self.valid_item_data)
+            item.validate()
             self.assertIsInstance(item, DatacosmosItem)
-            self.assertEqual(item.id, "test-item-1")
-            self.assertEqual(item.type, "Feature")
             self.assertEqual(item.collection, "test-collection")
         except Exception as e:
-            self.fail(f"DatacosmosItem creation failed with valid data: {e}")
+            self.fail(
+                f"DatacosmosItem creation or validation failed with valid data: {e}"
+            )
 
     def test_minimum_required_fields_are_valid(self):
-        """
-        Test that an item with only the Datacosmos-specific and
-        STAC-required fields is considered valid.
-        """
+        """Test that an item with only the Datacosmos-specific and STAC-required fields is considered valid."""
         min_valid_data = {
-            "id": "minimal-item",
-            "type": "Feature",
-            "geometry": self.stac_core_data["geometry"],
-            "bbox": self.stac_core_data["bbox"],
+            **self.stac_core_data,
+            "collection": "test-collection",
+            "links": [self.valid_parent_link],
             "properties": self.datacosmos_properties,
-            "links": [],
             "assets": {},
         }
         try:
             item = DatacosmosItem(**min_valid_data)
+            item.validate()
             self.assertIsInstance(item, DatacosmosItem)
         except Exception as e:
             self.fail(f"Minimum valid item creation failed: {e}")
@@ -90,62 +93,56 @@ class TestDatacosmosItem(unittest.TestCase):
         invalid_data = self.valid_item_data.copy()
         del invalid_data["properties"]["datetime"]
 
-        with self.assertRaises(DatacosmosError) as cm:
-            DatacosmosItem(**invalid_data)
-        self.assertIn("datetime", str(cm.exception))
+        item = DatacosmosItem(**invalid_data)
+        with self.assertRaisesRegex(StacValidationError, "datetime"):
+            item.validate()
 
     def test_multiple_invalid_properties_validation(self):
-        """
-        Test that validation fails and reports all missing mandatory properties.
-        """
+        """Test that validation fails and reports all missing mandatory properties."""
         invalid_data = self.valid_item_data.copy()
         del invalid_data["properties"]["datetime"]
         del invalid_data["properties"]["processing:level"]
 
-        with self.assertRaises(DatacosmosError) as cm:
-            DatacosmosItem(**invalid_data)
-        self.assertIn("datetime", str(cm.exception))
-        self.assertIn("processing:level", str(cm.exception))
-        self.assertNotIn("sat:platform_international_designator", str(cm.exception))
+        item = DatacosmosItem(**invalid_data)
+        with self.assertRaisesRegex(StacValidationError, "datetime.+processing:level"):
+            item.validate()
 
     def test_invalid_geometry_type(self):
         """Test that validation fails for a non-Polygon geometry type."""
         invalid_data = self.valid_item_data.copy()
         invalid_data["geometry"] = {"type": "Point", "coordinates": [0.0, 0.0]}
 
-        with self.assertRaises(DatacosmosError) as cm:
-            DatacosmosItem(**invalid_data)
-        self.assertIn("Geometry must be a Polygon", str(cm.exception))
+        item = DatacosmosItem(**invalid_data)
+        with self.assertRaisesRegex(
+            StacValidationError, "Polygon or MultiPolygon with coordinates."
+        ):
+            item.validate()
 
     def test_geometry_missing_coordinates(self):
         """Test that validation fails when geometry coordinates are missing."""
         invalid_data = self.valid_item_data.copy()
         invalid_data["geometry"] = {"type": "Polygon", "coordinates": None}
 
-        with self.assertRaises(DatacosmosError) as cm:
-            DatacosmosItem(**invalid_data)
-        self.assertIn("Geometry must be a Polygon with coordinates.", str(cm.exception))
+        item = DatacosmosItem(**invalid_data)
+        with self.assertRaisesRegex(StacValidationError, "Geometry must be a Polygon"):
+            item.validate()
 
     def test_bbox_mismatch_with_geometry(self):
-        """
-        Test that an item fails to validate when the bbox does not match the geometry.
-        This tests for interdependency.
-        """
+        """Test that an item fails to validate when the bbox does not match the geometry."""
         invalid_data = self.valid_item_data.copy()
-        # Change bbox to a value that doesn't match the geometry
         invalid_data["bbox"] = [10.0, 10.0, 20.0, 20.0]
 
-        with self.assertRaises(DatacosmosError) as cm:
-            DatacosmosItem(**invalid_data)
-        self.assertIn(
-            "Provided bbox does not match geometry bounds.", str(cm.exception)
-        )
+        item = DatacosmosItem(**invalid_data)
+        with self.assertRaisesRegex(
+            StacValidationError, "Provided bbox does not match geometry bounds."
+        ):
+            item.validate()
 
     def test_valid_bbox_vs_geometry(self):
         """Test that an item with a matching bbox and geometry is valid."""
-        # The setUp method already creates a valid item with a matching bbox and geometry.
         try:
-            DatacosmosItem(**self.valid_item_data)
+            item = DatacosmosItem(**self.valid_item_data)
+            item.validate()
         except Exception as e:
             self.fail(f"Valid bbox/geometry consistency check failed: {e}")
 

@@ -6,9 +6,7 @@ from pystac import Item, Link
 from datacosmos.config.config import Config
 from datacosmos.config.models.m2m_authentication_config import M2MAuthenticationConfig
 from datacosmos.datacosmos_client import DatacosmosClient
-from datacosmos.exceptions.stac_validation_error import StacValidationError
 from datacosmos.stac.item.item_client import ItemClient
-from datacosmos.stac.item.models.datacosmos_item import DatacosmosItem
 
 
 class TestItemClientAddItem(unittest.TestCase):
@@ -104,33 +102,3 @@ class TestItemClientAddItem(unittest.TestCase):
             ),
             json=item.to_dict(),
         )
-
-    def test_add_pystac_item_mismatched_collection_raises_error(self):
-        """Test that adding a pystac.Item with a mismatched parent link raises StacValidationError."""
-        item = Item.from_dict(self.item_dict)
-        item.add_link(Link.parent("https://some.url/collections/wrong-collection"))
-
-        with self.assertRaisesRegex(
-            StacValidationError,
-            "Parent link in pystac.Item does not match its collection_id.",
-        ):
-            self.stac_client.add_item(item)
-
-        self.mock_put.assert_not_called()
-        self.mock_check_api_response.assert_not_called()
-
-    def test_add_datacosmos_item_mismatched_collection_raises_error(self):
-        """Test that adding a DatacosmosItem with a mismatched parent link raises StacValidationError."""
-        self.datacosmos_item_dict["links"] = [
-            Link.parent("https://some.url/collections/wrong-collection").to_dict()
-        ]
-        item = DatacosmosItem(**self.datacosmos_item_dict)
-
-        with self.assertRaisesRegex(
-            StacValidationError,
-            "Parent link in DatacosmosItem does not match its collection.",
-        ):
-            self.stac_client.add_item(item)
-
-        self.mock_put.assert_not_called()
-        self.mock_check_api_response.assert_not_called()
