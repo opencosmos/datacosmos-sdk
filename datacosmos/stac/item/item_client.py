@@ -8,7 +8,7 @@ from typing import Generator, Optional
 from pystac import Item
 
 from datacosmos.datacosmos_client import DatacosmosClient
-from datacosmos.exceptions import DatacosmosError, StacValidationError
+from datacosmos.exceptions.datacosmos_error import DatacosmosError
 from datacosmos.stac.item.models.catalog_search_parameters import (
     CatalogSearchParameters,
 )
@@ -72,10 +72,9 @@ class ItemClient:
 
         Raises:
             ValueError: If the item has no collection set.
-            StacValidationError: If the collection ID in the links doesn't match the item's collection field.
             RequestError: If the API returns an error response.
         """
-        collection_id = self._get_validated_collection_id(item, method="create")
+        collection_id = self._get_collection_id(item, method="create")
 
         url = self.base_url.with_suffix(f"/collections/{collection_id}/items")
         item_json: dict = item.to_dict()
@@ -92,10 +91,9 @@ class ItemClient:
 
         Raises:
             ValueError: If the item has no collection set.
-            StacValidationError: If the collection ID in the links doesn't match the item's collection field.
             RequestError: If the API returns an error response.
         """
-        collection_id = self._get_validated_collection_id(item, method="add")
+        collection_id = self._get_collection_id(item, method="add")
 
         if not item.id:
             raise ValueError("Cannot add item: no item_id found on item")
@@ -202,40 +200,23 @@ class ItemClient:
                 response=e.response,
             ) from e
 
-    def _get_validated_collection_id(
-        self, item: Item | DatacosmosItem, method: str
-    ) -> str:
-        """Resolves and validates the collection ID from an item, checking for link consistency.
+    def _get_collection_id(self, item: Item | DatacosmosItem, method: str) -> str:
+        """Resolves the collection ID from an item.
 
         Args:
             item: The STAC item.
             method: The client method calling this helper ("create" or "add").
 
         Returns:
-            The validated collection_id.
+            The collection_id.
 
         Raises:
             ValueError: If collection ID cannot be resolved.
-            StacValidationError: If the collection ID and parent link are inconsistent.
         """
         if isinstance(item, Item):
-            collection_id = item.collection_id or (
-                item.get_collection().id if item.get_collection() else None
-            )
-            if collection_id and not self._is_collection_link_consistent_pystac(
-                item, collection_id
-            ):
-                raise StacValidationError(
-                    "Parent link in pystac.Item does not match its collection_id."
-                )
+            collection_id = item.collection_id
         else:
             collection_id = item.collection
-            if collection_id and not self._is_collection_link_consistent_datacosmos(
-                item
-            ):
-                raise StacValidationError(
-                    "Parent link in DatacosmosItem does not match its collection."
-                )
 
         if not collection_id:
             if method == "create":
@@ -244,27 +225,3 @@ class ItemClient:
                 raise ValueError("Cannot add item: no collection_id found on item")
 
         return collection_id
-
-    def _is_collection_link_consistent_pystac(
-        self, item: Item, collection_id: str
-    ) -> bool:
-        """Helper to check if the parent link matches the pystac item's collection_id."""
-        parent_link = next(
-            (link for link in item.get_links("parent") if link.rel == "parent"), None
-        )
-        if not parent_link:
-            return True
-
-        link_collection_id = parent_link.get_href().rstrip("/").split("/")[-1]
-        return link_collection_id == collection_id
-
-    def _is_collection_link_consistent_datacosmos(self, item: DatacosmosItem) -> bool:
-        """Helper to check if the parent link matches the datacosmos item's collection field."""
-        if not item.collection:
-            return True
-
-        for link in item.links:
-            if link.get("rel") == "parent":
-                link_collection_id = link.get("href", "").rstrip("/").split("/")[-1]
-                return link_collection_id == item.collection
-        return True

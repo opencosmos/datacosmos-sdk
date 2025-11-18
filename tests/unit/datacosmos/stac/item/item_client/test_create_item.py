@@ -6,9 +6,7 @@ from pystac import Item, Link
 from datacosmos.config.config import Config
 from datacosmos.config.models.m2m_authentication_config import M2MAuthenticationConfig
 from datacosmos.datacosmos_client import DatacosmosClient
-from datacosmos.exceptions.stac_validation_error import StacValidationError
 from datacosmos.stac.item.item_client import ItemClient
-from datacosmos.stac.item.models.datacosmos_item import DatacosmosItem
 
 
 class TestItemClient(unittest.TestCase):
@@ -81,68 +79,3 @@ class TestItemClient(unittest.TestCase):
             self.stac_client.base_url.with_suffix("/collections/test-collection/items"),
             json=item.to_dict(),
         )
-
-    def test_create_pystac_item_mismatched_collection_raises_error(self):
-        """Test that creating a pystac.Item with a mismatched parent link raises StacValidationError."""
-        item_dict = {
-            "id": "item-1",
-            "collection": "test-collection",
-            "type": "Feature",
-            "stac_version": "1.0.0",
-            "geometry": {"type": "Point", "coordinates": [0, 0]},
-            "properties": {"datetime": "2023-12-01T12:00:00Z"},
-            "assets": {},
-            "links": [],
-        }
-
-        item = Item.from_dict(item_dict)
-        item.add_link(Link.parent("https://some.url/collections/wrong-collection"))
-
-        with self.assertRaisesRegex(
-            StacValidationError,
-            "Parent link in pystac.Item does not match its collection_id.",
-        ):
-            self.stac_client.create_item(item)
-
-        self.mock_post.assert_not_called()
-        self.mock_check_api_response.assert_not_called()
-
-    def test_create_datacosmos_item_mismatched_collection_raises_error(self):
-        """Test that creating a DatacosmosItem with a mismatched parent link raises StacValidationError."""
-        item_dict = {
-            "id": "item-1",
-            "type": "Feature",
-            "stac_version": "1.0.0",
-            "stac_extensions": [],
-            "geometry": {
-                "type": "Polygon",
-                "coordinates": [
-                    [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0], [0.0, 0.0]]
-                ],
-            },
-            "properties": {
-                "datetime": "2023-12-01T12:00:00Z",
-                "processing:level": "l1a",
-                "sat:platform_international_designator": "TEST-SAT-1",
-            },
-            "bbox": [0.0, 0.0, 1.0, 1.0],
-            "links": [
-                {
-                    "href": "https://some.url/collections/wrong-collection",
-                    "rel": "parent",
-                }
-            ],
-            "assets": {"thumbnail": self.valid_asset_data},
-            "collection": "test-collection",
-        }
-
-        item = DatacosmosItem(**item_dict)
-
-        with self.assertRaisesRegex(
-            StacValidationError,
-            "Parent link in DatacosmosItem does not match its collection.",
-        ):
-            self.stac_client.create_item(item)
-
-        self.mock_post.assert_not_called()
-        self.mock_check_api_response.assert_not_called()
