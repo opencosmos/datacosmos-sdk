@@ -1,7 +1,6 @@
 import os
 
 import pytest
-from pydantic import ValidationError
 
 from datacosmos.config.config import Config
 from datacosmos.config.models.local_user_account_authentication_config import (
@@ -9,6 +8,7 @@ from datacosmos.config.models.local_user_account_authentication_config import (
 )
 from datacosmos.config.models.m2m_authentication_config import M2MAuthenticationConfig
 from datacosmos.config.models.url import URL
+from datacosmos.exceptions import AuthenticationError
 
 ALL_CONFIG_ENV_PREFIXES = [
     "AUTHENTICATION__",
@@ -57,7 +57,6 @@ class TestConfig:
         assert cfg.authentication.audience
         assert cfg.authentication.type == "m2m"
 
-        # STAC config should be default since missing from YAML
         assert isinstance(cfg.stac, URL)
         assert (cfg.stac.protocol, cfg.stac.host, cfg.stac.port, cfg.stac.path) == (
             "https",
@@ -67,15 +66,14 @@ class TestConfig:
         )
 
     def test_yaml_missing_file_raises_validation_error(self, tmp_path, monkeypatch):
-        # Point YAML to a NON-existent file. Environment is already clear by fixture.
+        """Test that missing required fields (no file/no env) raises AuthenticationError."""
         monkeypatch.setattr(
             "datacosmos.config.config.DEFAULT_CONFIG_YAML",
             str(tmp_path / "does_not_exist.yaml"),
             raising=True,
         )
 
-        # With no YAML and no supported ENV set, authentication validator should fail
-        with pytest.raises(ValidationError):
+        with pytest.raises(AuthenticationError):
             Config()
 
     def test_env_m2m(self, monkeypatch, tmp_path):
@@ -86,6 +84,7 @@ class TestConfig:
             raising=True,
         )
 
+        monkeypatch.setenv("AUTHENTICATION__TYPE", "m2m")
         monkeypatch.setenv("AUTHENTICATION__CLIENT_ID", "nested-env-client")
         monkeypatch.setenv("AUTHENTICATION__CLIENT_SECRET", "nested-env-secret")
         monkeypatch.setenv("AUTHENTICATION__TOKEN_URL", "https://nested.token.url")
@@ -114,14 +113,14 @@ class TestConfig:
     def test_invalid_authentication_raises_validation_error(
         self, monkeypatch, tmp_path
     ):
+        """Test that missing client_secret raises AuthenticationError."""
         monkeypatch.setattr(
             "datacosmos.config.config.DEFAULT_CONFIG_YAML",
             str(tmp_path / "does_not_exist.yaml"),
             raising=True,
         )
 
-        # Missing client_secret should cause validation error
-        with pytest.raises(ValidationError):
+        with pytest.raises(AuthenticationError):
             Config(authentication={"client_id": "some-client"})
 
     def test_auth_defaults_applied_when_only_required_m2m(self):

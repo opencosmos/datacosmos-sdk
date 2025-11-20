@@ -7,7 +7,9 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, List, Optional
 
 import requests
-from requests.exceptions import ConnectionError, HTTPError, RequestException, Timeout
+from requests.exceptions import ConnectionError
+from requests.exceptions import HTTPError as RequestsHTTPError
+from requests.exceptions import RequestException, Timeout
 from requests_oauthlib import OAuth2Session
 from tenacity import (
     retry,
@@ -20,7 +22,7 @@ from datacosmos.auth.base_authenticator import BaseAuthenticator
 from datacosmos.auth.local_authenticator import LocalAuthenticator
 from datacosmos.auth.m2m_authenticator import M2MAuthenticator
 from datacosmos.config.config import Config
-from datacosmos.exceptions.datacosmos_error import DatacosmosError
+from datacosmos.exceptions import AuthenticationError, DatacosmosError, HTTPError
 
 _log = logging.getLogger(__name__)
 
@@ -75,7 +77,9 @@ class DatacosmosClient:
         try:
             return Config.model_validate(cfg)
         except Exception as e:
-            raise DatacosmosError("Invalid config provided to DatacosmosClient") from e
+            raise AuthenticationError(
+                "Invalid config provided to DatacosmosClient"
+            ) from e
 
     def _init_with_injected_session(
         self, http_session: requests.Session | OAuth2Session
@@ -86,7 +90,7 @@ class DatacosmosClient:
         token_data = self._extract_token_data(http_session)
         self.token = token_data.get("access_token")
         if not self.token:
-            raise DatacosmosError(
+            raise AuthenticationError(
                 "Failed to extract access token from injected session"
             )
         self.token_expiry = self._compute_expiry(
@@ -101,11 +105,11 @@ class DatacosmosClient:
         if isinstance(http_session, requests.Session):
             auth_header = http_session.headers.get("Authorization", "")
             if not auth_header.startswith("Bearer "):
-                raise DatacosmosError(
+                raise AuthenticationError(
                     "Injected requests.Session must include a 'Bearer' token in its headers"
                 )
             return {"access_token": auth_header.split(" ", 1)[1]}
-        raise DatacosmosError(f"Unsupported session type: {type(http_session)}")
+        raise AuthenticationError(f"Unsupported session type: {type(http_session)}")
 
     def _compute_expiry(
         self,
@@ -132,7 +136,7 @@ class DatacosmosClient:
         elif auth_type == "local":
             self._authenticator = LocalAuthenticator(self.config)
         else:
-            raise DatacosmosError(f"Unsupported authentication type: {auth_type}")
+            raise AuthenticationError(f"Unsupported authentication type: {auth_type}")
 
         auth_result = self._authenticator.authenticate_and_build_session()
         self.token = auth_result.token
@@ -164,7 +168,7 @@ class DatacosmosClient:
                     {"Authorization": f"Bearer {self.token}"}
                 )
             else:
-                raise DatacosmosError(
+                raise AuthenticationError(
                     "Cannot refresh token, no authenticator initialized."
                 )
 
@@ -217,7 +221,7 @@ class DatacosmosClient:
                     _log.error("Response hook failed.", exc_info=True)
 
             return response
-        except HTTPError as e:
+        except RequestsHTTPError as e:
             status = getattr(e.response, "status_code", None)
             if status in (401, 403) and getattr(self, "_owns_session", False):
                 self._refresh_now()
@@ -225,12 +229,12 @@ class DatacosmosClient:
                 try:
                     retry_response.raise_for_status()
                     return retry_response
-                except HTTPError as e:
-                    raise DatacosmosError(
+                except RequestsHTTPError as e:
+                    raise HTTPError(
                         f"HTTP error during {method.upper()} request to {url} after refresh",
                         response=e.response,
                     ) from e
-            raise DatacosmosError(
+            raise HTTPError(
                 f"HTTP error during {method.upper()} request to {url}",
                 response=getattr(e, "response", None),
             ) from e

@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 from pathlib import Path
 
+from datacosmos.exceptions import UploadError
 from datacosmos.stac.item.models.datacosmos_item import DatacosmosItem
 
 
@@ -32,11 +33,15 @@ class UploadPath:
     def from_path(cls, path: str) -> "UploadPath":
         """Reverse-parse a storage key back into its components."""
         parts = Path(path).parts
+
+        # Enforce strict path structure (project/<project-id>/...)
         if len(parts) < 4 or parts[0] != "project":
-            raise ValueError(f"Invalid path: {path}")
+            raise UploadError(f"Invalid path structure: {path}")
 
         project_id, item_id, *rest = parts[1:]
         asset_name = "/".join(rest)
+
         if not asset_name:
-            raise ValueError(f"Asset name is missing in path: {path}")
+            raise UploadError(f"Asset name is missing in path: {path}")
+
         return cls(project_id=project_id, item_id=item_id, asset_name=asset_name)
