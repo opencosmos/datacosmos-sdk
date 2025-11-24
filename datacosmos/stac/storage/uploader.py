@@ -93,7 +93,7 @@ class Uploader(StorageBase):
         self._process_failures(item, raw_failures, on_error)
 
         if successful_keys:
-            self.item_client.add_item(item, is_strict=is_strict)
+            self.item_client.add_item(item)
 
         return UploadResult(
             item=item,
