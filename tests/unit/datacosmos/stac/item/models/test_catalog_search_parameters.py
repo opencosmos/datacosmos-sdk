@@ -1,5 +1,6 @@
 import pytest
 
+from datacosmos.exceptions import StacValidationError
 from datacosmos.stac.constants.satellite_name_mapping import SATELLITE_NAME_MAPPING
 from datacosmos.stac.enums.processing_level import ProcessingLevel
 from datacosmos.stac.enums.product_type import ProductType
@@ -29,19 +30,23 @@ class TestCatalogSearchParameters:
         assert params.collections == ["collection1"]
 
     def test_invalid_start_date_format(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(StacValidationError):
             CatalogSearchParameters(start_date="2024/222/1")
 
     def test_invalid_end_date_format(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(StacValidationError):
             CatalogSearchParameters(end_date="May 15, 2024")
 
     def test_start_date_before_2015(self):
-        with pytest.raises(ValueError, match="Date must be 5/15/2015 or later."):
+        with pytest.raises(
+            StacValidationError, match="Date must be 5/15/2015 or later."
+        ):
             CatalogSearchParameters(start_date="05/10/2015")
 
     def test_end_date_before_start_date(self):
-        with pytest.raises(ValueError, match="end_date cannot be before start_date"):
+        with pytest.raises(
+            StacValidationError, match="end_date cannot be before start_date"
+        ):
             CatalogSearchParameters(start_date="05/20/2024", end_date="05/19/2024")
 
     def test_to_query_output(self):

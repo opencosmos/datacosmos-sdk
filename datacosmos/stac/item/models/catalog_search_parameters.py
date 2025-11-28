@@ -5,6 +5,7 @@ from typing import Any, List, Optional
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from datacosmos.exceptions import StacValidationError
 from datacosmos.stac.constants.satellite_name_mapping import SATELLITE_NAME_MAPPING
 from datacosmos.stac.enums.processing_level import ProcessingLevel
 from datacosmos.stac.enums.product_type import ProductType
@@ -64,11 +65,11 @@ class CatalogSearchParameters(BaseModel):
         try:
             dt = datetime.strptime(value, "%m/%d/%Y")
         except Exception as e:
-            raise ValueError(
+            raise StacValidationError(
                 "Invalid start_date format. Use mm/dd/yyyy (e.g., 05/15/2024)"
             ) from e
         if dt < datetime(2015, 5, 15):
-            raise ValueError("Date must be 5/15/2015 or later.")
+            raise StacValidationError("Date must be 5/15/2015 or later.")
         return dt.isoformat() + "Z"
 
     @field_validator("end_date", mode="before")
@@ -80,12 +81,12 @@ class CatalogSearchParameters(BaseModel):
         try:
             dt = datetime.strptime(value, "%m/%d/%Y")
         except ValueError:
-            raise ValueError(
+            raise StacValidationError(
                 "Invalid end_date format. Use mm/dd/yyyy (e.g., 05/15/2024)"
             )
 
         if dt < datetime(2015, 5, 15):
-            raise ValueError("Date must be 5/15/2015 or later.")
+            raise StacValidationError("Date must be 5/15/2015 or later.")
         dt = dt + timedelta(days=1) - timedelta(milliseconds=1)
         return dt.isoformat() + "Z"
 
@@ -98,7 +99,7 @@ class CatalogSearchParameters(BaseModel):
             start_dt = datetime.fromisoformat(self.start_date.rstrip("Z"))
             end_dt = datetime.fromisoformat(self.end_date.rstrip("Z"))
             if start_dt > end_dt:
-                raise ValueError("end_date cannot be before start_date.")
+                raise StacValidationError("end_date cannot be before start_date.")
         return self
 
     # --- Query Mapper ---

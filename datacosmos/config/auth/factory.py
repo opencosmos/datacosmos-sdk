@@ -23,6 +23,7 @@ from datacosmos.config.models.local_user_account_authentication_config import (
     LocalUserAccountAuthenticationConfig,
 )
 from datacosmos.config.models.m2m_authentication_config import M2MAuthenticationConfig
+from datacosmos.exceptions import AuthenticationError
 
 AuthModel = Union[M2MAuthenticationConfig, LocalUserAccountAuthenticationConfig]
 
@@ -110,14 +111,14 @@ def check_required_auth_fields(auth: AuthModel) -> None:
     if isinstance(auth, M2MAuthenticationConfig):
         missing = [f for f in ("client_id", "client_secret") if not getattr(auth, f)]
         if missing:
-            raise ValueError(
+            raise AuthenticationError(
                 f"Missing required authentication fields for m2m: {', '.join(missing)}"
             )
         return
 
     if isinstance(auth, LocalUserAccountAuthenticationConfig):
         if not auth.client_id:
-            raise ValueError(
+            raise AuthenticationError(
                 "Missing required authentication field for local: client_id"
             )
         return
