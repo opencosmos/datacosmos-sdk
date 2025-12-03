@@ -22,24 +22,24 @@ class StorageClient:
     def upload_item(
         self,
         item: DatacosmosItem,
-        project_id: str,
+        project_id: str | None = None,
+        collection_id: str | None = None,
         assets_path: str | None = None,
         included_assets: list[str] | bool = True,
         max_workers: int = 4,
         time_out: float = 60 * 60 * 1,
         on_error: Optional[Callable[[Asset, Exception], None]] = None,
-        is_strict: Optional[bool] = True,
     ) -> UploadResult:
         """Proxy to Uploader.upload_item, without needing to pass client each call."""
         return self.uploader.upload_item(
             item=item,
             project_id=project_id,
+            collection_id=collection_id,
             assets_path=assets_path,
             included_assets=included_assets,
             max_workers=max_workers,
             time_out=time_out,
             on_error=on_error,
-            is_strict=is_strict,
         )
 
     def download_assets(

@@ -31,13 +31,13 @@ class Uploader(StorageBase):
     def upload_item(
         self,
         item: DatacosmosItem | str,
-        project_id: str,
+        project_id: str | None = None,
+        collection_id: str | None = None,
         assets_path: str | None = None,
         included_assets: list[str] | bool = True,
         max_workers: int = 4,
         time_out: float = 60 * 60 * 1,
         on_error: Optional[AssetErrorCallback] = None,
-        is_strict: Optional[bool] = True,
     ) -> UploadResult:
         """Upload a STAC item (and optionally its assets) to Datacosmos in parallel threads.
 
@@ -45,7 +45,8 @@ class Uploader(StorageBase):
             item (DatacosmosItem | str):
                 - a DatacosmosItem instance, or
                 - the path to an item JSON file on disk.
-            project_id (str): The project ID to upload assets to.
+            project_id (str | None): The project ID to upload assets to.
+            collection_id (str | None): The collection ID for catalog uploads.
             assets_path (str | None): Base directory where local asset files are located.
             included_assets (list[str] | bool):
                 - True → upload every asset in the item.
@@ -56,7 +57,6 @@ class Uploader(StorageBase):
             on_error: (Optional[Callable[[Asset, Exception], None]]): Optional callback function
                       invoked for each failed asset upload, receiving the failed Asset object and
                       the Exception that caused the failure.
-            is_strict: (Optional[bool]): Check if strict validation is to be done.
 
         Returns:
             UploadResult: The final item, along with lists of successful and failed asset keys.
@@ -74,12 +74,18 @@ class Uploader(StorageBase):
         if not isinstance(item, DatacosmosItem):
             raise TypeError(f"item must be a DatacosmosItem, got {type(item).__name__}")
 
+        if not project_id and not collection_id:
+            raise ValueError(
+                "Either project_id (for project uploads) or collection_id (for catalog uploads) must be provided."
+            )
+
         assets_path = assets_path or str(Path.cwd())
 
         upload_assets = self._resolve_upload_assets(item, included_assets)
 
         jobs = [
-            (item, asset_key, assets_path, project_id) for asset_key in upload_assets
+            (item, asset_key, assets_path, project_id, collection_id)
+            for asset_key in upload_assets
         ]
 
         if not jobs:
@@ -152,7 +158,12 @@ class Uploader(StorageBase):
         response.raise_for_status()
 
     def _upload_asset(
-        self, item: DatacosmosItem, asset_key: str, assets_path: str, project_id: str
+        self,
+        item: DatacosmosItem,
+        asset_key: str,
+        assets_path: str,
+        project_id: str | None,
+        collection_id: str | None,
     ) -> str:
         """Upload a single asset file and update its href inside the item object.
 
@@ -165,6 +176,7 @@ class Uploader(StorageBase):
         upload_path = UploadPath.from_item_path(
             item,
             project_id,
+            collection_id,
             Path(asset.href).name,
         )
 

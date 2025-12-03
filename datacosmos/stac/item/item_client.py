@@ -81,9 +81,7 @@ class ItemClient:
         response = self.client.post(url, json=item_json)
         check_api_response(response)
 
-    def add_item(
-        self, item: Item | DatacosmosItem
-    ) -> None:
+    def add_item(self, item: Item | DatacosmosItem) -> None:
         """Adds item to catalog.
 
         The collection ID is inferred from the item.

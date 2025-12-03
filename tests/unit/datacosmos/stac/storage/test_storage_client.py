@@ -53,6 +53,7 @@ class TestStorageClient:
         result = storage_client.upload_item(
             "item_id",
             PROJECT_ID,
+            None,
             assets_path="path",
             max_workers=2,
             on_error=mock_on_error,
@@ -63,12 +64,12 @@ class TestStorageClient:
         assert kwargs == {
             "item": "item_id",
             "project_id": PROJECT_ID,
+            "collection_id": None,
             "assets_path": "path",
             "included_assets": True,
             "max_workers": 2,
             "time_out": 3600,
             "on_error": mock_on_error,
-            "is_strict": True,
         }
 
     def test_storage_client_download_assets(self, storage_client, tmp_path):
