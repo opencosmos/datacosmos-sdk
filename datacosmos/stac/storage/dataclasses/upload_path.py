@@ -1,10 +1,13 @@
 """Dataclass for generating the upload key of an asset."""
 
+import logging
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
 
 from datacosmos.stac.item.models.datacosmos_item import DatacosmosItem
+
+_log = logging.getLogger(__name__)
 
 
 @dataclass
@@ -30,7 +33,10 @@ class UploadPath:
                 "/"
             )
         else:
-            # Fallback path if insufficient data
+            _log.warning(
+                f"Catalog path could not be constructed for item {self.item_id}. "
+                f"Missing date components or collection_id. Using generic fallback path."
+            )
             return f"{self.item_id}/{self.asset_name}".rstrip("/")
 
     @classmethod
@@ -47,12 +53,18 @@ class UploadPath:
                 "Either project_id or collection_id must be provided for asset upload path construction."
             )
 
+        year, month, day = None, None, None
         try:
-            dt: datetime = item.properties["datetime"]
-            year = dt.strftime("%Y")
-            month = dt.strftime("%m")
-            day = dt.strftime("%d")
-        except Exception:
+            dt: str = item.properties["datetime"]
+            format_string = "%Y-%m-%dT%H:%M:%SZ"
+            date_object = datetime.strptime(dt, format_string)
+            year = date_object.strftime("%Y")
+            month = date_object.strftime("%m")
+            day = date_object.strftime("%d")
+        except Exception as e:
+            _log.warning(
+                f"Failed to extract date components from item.datetime for upload path: {e}"
+            )
             year, month, day = None, None, None
 
         return cls(

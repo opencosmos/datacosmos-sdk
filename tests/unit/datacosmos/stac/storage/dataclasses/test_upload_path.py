@@ -19,7 +19,7 @@ class DummyItem:
 
 class TestUploadPath:
 
-    TEST_DATETIME = datetime(2025, 9, 10, 12, 30, 0)
+    TEST_DATETIME = "2025-11-03T11:44:05Z"
     TEST_ITEM_ID = "item-123"
     TEST_ASSET_NAME = "file.tif"
 
@@ -70,8 +70,8 @@ class TestUploadPath:
         assert up.project_id == "proj456"
         assert up.collection_id == item.collection
         assert up.year == "2025"
-        assert up.month == "09"
-        assert up.day == "10"
+        assert up.month == "11"
+        assert up.day == "03"
 
     def test_from_item_path_catalog_upload(self):
         """Test path creation when project_id is None, forcing catalog path."""
@@ -87,8 +87,8 @@ class TestUploadPath:
         assert up.project_id is None
         assert up.collection_id == "new_coll"
         assert up.year == "2025"
-        assert up.month == "09"
-        assert up.day == "10"
+        assert up.month == "11"
+        assert up.day == "03"
 
     def test_from_item_path_missing_required_ids_raises(self):
         """Test that a ValueError is raised when both project_id and collection_id are missing."""

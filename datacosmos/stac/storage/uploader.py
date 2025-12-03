@@ -84,7 +84,8 @@ class Uploader(StorageBase):
         upload_assets = self._resolve_upload_assets(item, included_assets)
 
         jobs = [
-            (item, asset_key, assets_path, project_id) for asset_key in upload_assets
+            (item, asset_key, assets_path, project_id, collection_id)
+            for asset_key in upload_assets
         ]
 
         if not jobs:
