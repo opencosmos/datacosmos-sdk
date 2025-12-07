@@ -28,6 +28,32 @@ class Uploader(StorageBase):
         super().__init__(client)
         self.item_client = ItemClient(client)
 
+    @staticmethod
+    def load_item(item_json_file_path: str) -> DatacosmosItem:
+        """Load a DatacosmosItem from a JSON file on disk."""
+        return Uploader._load_item(item_json_file_path)
+
+    @staticmethod
+    def save_item(item: DatacosmosItem, path: str) -> str:
+        """Save the item to a file.
+
+        Args:
+            item: The item to save.
+            path: The directory path to save the item to.
+                  (File name will be "{item.id}.json" inside this path.)
+
+        Returns:
+            The full path to the saved item file.
+        """
+        Path(path).mkdir(parents=True, exist_ok=True)
+
+        file_path = Path(path) / f"{item.id}.json"
+
+        with open(file_path, "w") as f:
+            f.write(item.model_dump_json(exclude_none=True, by_alias=True))
+
+        return str(file_path)
+
     def upload_item(
         self,
         item: DatacosmosItem | str,

@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from unittest.mock import MagicMock, Mock
 
@@ -42,8 +43,8 @@ def patch_item_client(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def patch_upload_path(monkeypatch):
-    def _dummy_from_item_path(cls, item, project_id, asset_name):
-        return f"project/{project_id}/{item.id}/{asset_name}"
+    def _dummy_from_item_path(cls, item, project_id, collection_id, asset_name):
+        return f"project/{project_id or collection_id}/{item.id}/{asset_name}"
 
     monkeypatch.setattr(
         uploader_module.UploadPath,
@@ -70,14 +71,14 @@ def simple_item(tmp_path):
         title="asset1",
         description="desc1",
         type="image/tiff",
-        roles=None,
+        roles=["data"],
     )
     asset_2 = Asset(
         href=file_path_2.name,
         title="asset2",
         description="desc2",
         type="image/tiff",
-        roles=None,
+        roles=["data"],
     )
 
     item = DatacosmosItem(
@@ -105,7 +106,43 @@ def simple_item(tmp_path):
 
 
 class TestUploader:
-    """Tests for the multithreaded batch functionality of the Uploader."""
+    """Tests for the multithreaded batch functionality and utility methods of the Uploader."""
+
+    def test_save_item_success(self, simple_item, tmp_path):
+        """Test that the save_item method correctly serializes and saves the item."""
+        item, _ = simple_item
+        save_dir = tmp_path / "saved_items"
+
+        saved_path = Uploader.save_item(item, str(save_dir))
+
+        expected_path = save_dir / f"{item.id}.json"
+
+        assert Path(saved_path).exists()
+        assert Path(saved_path) == expected_path
+
+        with open(saved_path, "r") as f:
+            content = json.load(f)
+            assert content["id"] == item.id
+            assert content["collection"] == item.collection
+            assert content["properties"]["datetime"] == "2023-01-01T12:00:00Z"
+
+    def test_load_item_success(self, simple_item, tmp_path):
+        """Test that the load_item method correctly deserializes the item."""
+        item, _ = simple_item
+        save_path = tmp_path / "temp_item.json"
+
+        with open(save_path, "w") as f:
+            f.write(item.model_dump_json(exclude_none=True, by_alias=True))
+
+        loaded_item = Uploader.load_item(str(save_path))
+
+        assert isinstance(loaded_item, DatacosmosItem)
+        assert loaded_item.id == item.id
+        assert (
+            loaded_item.properties["processing:level"]
+            == item.properties["processing:level"]
+        )
+        assert loaded_item.collection == item.collection
 
     def test_upload_item_success(
         self, uploader, simple_item, patch_item_client, monkeypatch
@@ -148,7 +185,7 @@ class TestUploader:
             {
                 "error": str(mock_exception),
                 "exception": mock_exception,
-                "job_args": (item, "file2", assets_path, PROJECT_ID),
+                "job_args": (item, "file2", assets_path, PROJECT_ID, None),
             }
         ]
         mock_run_in_threads = MagicMock(return_value=(["file1"], raw_failures))
