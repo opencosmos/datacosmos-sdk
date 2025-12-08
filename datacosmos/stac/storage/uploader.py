@@ -30,7 +30,14 @@ class Uploader(StorageBase):
 
     @staticmethod
     def load_item(item_json_file_path: str) -> DatacosmosItem:
-        """Load a DatacosmosItem from a JSON file on disk."""
+        """Load a DatacosmosItem from a JSON file on disk.
+
+        Args:
+            item_json_file_path (str): The path to the JSON file containing the DatacosmosItem.
+
+        Returns:
+            DatacosmosItem: The loaded DatacosmosItem object.
+        """
         return Uploader._load_item(item_json_file_path)
 
     @staticmethod
@@ -49,7 +56,7 @@ class Uploader(StorageBase):
 
         file_path = Path(path) / f"{item.id}.json"
 
-        with open(file_path, "w") as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write(item.model_dump_json(exclude_none=True, by_alias=True))
 
         return str(file_path)

@@ -233,3 +233,36 @@ class TestUploader:
             uploader.upload_item(item, PROJECT_ID, assets_path=assets_path)
 
         assert patch_item_client.added is None
+
+    def test_save_item_permission_denied(self, simple_item, tmp_path, monkeypatch):
+        """Test that save_item fails when directory write permission is denied."""
+        item, _ = simple_item
+        unwritable_dir = tmp_path / "unwritable"
+        unwritable_dir.mkdir()
+
+        mock_open = MagicMock(side_effect=PermissionError)
+        monkeypatch.setattr("builtins.open", mock_open)
+
+        with pytest.raises(PermissionError):
+            Uploader.save_item(item, str(unwritable_dir))
+
+        mock_open.assert_called_once()
+
+    def test_load_item_non_existent_file_raises(self, tmp_path):
+        """Test that load_item raises FileNotFoundError for a non-existent path."""
+        non_existent_path = str(tmp_path / "non_existent.json")
+
+        with pytest.raises(FileNotFoundError):
+            Uploader.load_item(non_existent_path)
+
+    def test_load_item_invalid_json_raises(self, tmp_path):
+        """Test that load_item raises a parsing error for a file with invalid JSON content."""
+        invalid_json_path = tmp_path / "invalid.json"
+        invalid_json_path.write_text("This is not valid JSON.")
+
+        with pytest.raises(Exception) as excinfo:
+            Uploader.load_item(str(invalid_json_path))
+
+        assert "Invalid JSON" in str(excinfo.value) or "expected value" in str(
+            excinfo.value
+        )
