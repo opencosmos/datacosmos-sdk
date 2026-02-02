@@ -112,6 +112,12 @@ class Uploader(StorageBase):
                 "Either project_id (for project uploads) or collection_id (for catalog uploads) must be provided."
             )
 
+        # DEBUG: Log collection values in uploader
+        _log.info(
+            f"DEBUG uploader.upload_item: item.id={item.id}, item.collection={item.collection}, "
+            f"passed_collection_id={collection_id}"
+        )
+
         assets_path = assets_path or str(Path.cwd())
 
         upload_assets = self._resolve_upload_assets(item, included_assets)
