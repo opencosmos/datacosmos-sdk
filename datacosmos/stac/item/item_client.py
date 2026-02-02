@@ -66,6 +66,7 @@ class ItemClient:
         """Create a new STAC item in its own collection.
 
         The collection ID is inferred from the item.
+        Missing 'self' and 'parent' links will be automatically added.
 
         Args:
             item (Item | DatacosmosItem): The STAC item to be created.
@@ -76,6 +77,9 @@ class ItemClient:
         """
         collection_id = self._get_collection_id(item, method="create")
 
+        # Ensure standard links are present
+        self._ensure_standard_links(item, collection_id)
+
         url = self.base_url.with_suffix(f"/collections/{collection_id}/items")
         item_json: dict = item.to_dict()
         response = self.client.post(url, json=item_json)
@@ -85,6 +89,7 @@ class ItemClient:
         """Adds item to catalog.
 
         The collection ID is inferred from the item.
+        Missing 'self' and 'parent' links will be automatically added.
 
         Args:
             item (Item | DatacosmosItem): The STAC item to be created.
@@ -97,6 +102,9 @@ class ItemClient:
 
         if not item.id:
             raise ValueError("Cannot add item: no item_id found on item")
+
+        # Ensure standard links are present
+        self._ensure_standard_links(item, collection_id)
 
         url = self.base_url.with_suffix(f"/collections/{collection_id}/items/{item.id}")
         item_json: dict = item.to_dict()
@@ -216,3 +224,57 @@ class ItemClient:
                 raise ValueError("Cannot add item: no collection_id found on item")
 
         return collection_id
+
+    def _ensure_standard_links(
+        self, item: Item | DatacosmosItem, collection_id: str
+    ) -> None:
+        """Ensure the item has 'self' and 'parent' links, adding them if missing.
+
+        This method modifies the item in-place. Existing links are preserved.
+
+        Args:
+            item: The STAC item to update.
+            collection_id: The collection ID for constructing link URLs.
+        """
+        base_url = self.base_url.string().rstrip("/")
+
+        if isinstance(item, DatacosmosItem):
+            item.ensure_standard_links(base_url, collection_id)
+        else:
+            # Handle pystac Item
+            self._ensure_pystac_item_links(item, base_url, collection_id)
+
+    def _ensure_pystac_item_links(
+        self, item: Item, base_url: str, collection_id: str
+    ) -> None:
+        """Ensure a pystac Item has 'self' and 'parent' links.
+
+        Args:
+            item: The pystac Item to update.
+            base_url: The base URL of the STAC API.
+            collection_id: The collection ID for constructing link URLs.
+        """
+        has_self = any(link.rel == "self" for link in item.links)
+        has_parent = any(link.rel == "parent" for link in item.links)
+
+        if not has_self:
+            from pystac import Link
+
+            item.add_link(
+                Link(
+                    rel="self",
+                    target=f"{base_url}/collections/{collection_id}/items/{item.id}",
+                    media_type="application/geo+json",
+                )
+            )
+
+        if not has_parent:
+            from pystac import Link
+
+            item.add_link(
+                Link(
+                    rel="parent",
+                    target=f"{base_url}/collections/{collection_id}",
+                    media_type="application/json",
+                )
+            )

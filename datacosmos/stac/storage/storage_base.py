@@ -6,6 +6,7 @@ from typing import Any, Callable, Iterable
 
 from datacosmos.datacosmos_client import DatacosmosClient
 from datacosmos.exceptions.datacosmos_error import DatacosmosError
+from datacosmos.exceptions.storage_error import StorageError
 
 
 class StorageBase:
@@ -19,6 +20,30 @@ class StorageBase:
     def _guess_mime(self, src: str) -> str:
         mime, _ = mimetypes.guess_type(src)
         return mime or "application/octet-stream"
+
+    def delete_file(self, path: str) -> None:
+        """Delete a file from Datacosmos storage.
+
+        Args:
+            path: The storage path or full URL of the file to delete.
+
+        Raises:
+            StorageError: If the delete operation fails.
+        """
+        if path.startswith("http://") or path.startswith("https://"):
+            url = path
+        else:
+            url = self.base_url.with_suffix(path)
+
+        try:
+            response = self.client.delete(url)
+            response.raise_for_status()
+        except Exception as e:
+            raise StorageError(
+                message=f"Failed to delete file: {e}",
+                path=path,
+                operation="delete",
+            ) from e
 
     def run_in_threads(
         self,
