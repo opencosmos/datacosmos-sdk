@@ -223,6 +223,12 @@ class DatacosmosClient:
             return response
         except RequestsHTTPError as e:
             status = getattr(e.response, "status_code", None)
+            response_body = ""
+            if e.response is not None:
+                try:
+                    response_body = e.response.text
+                except Exception:
+                    pass
             if status in (401, 403) and getattr(self, "_owns_session", False):
                 self._refresh_now()
                 retry_response = self._http_client.request(method, url, *args, **kwargs)
@@ -230,12 +236,18 @@ class DatacosmosClient:
                     retry_response.raise_for_status()
                     return retry_response
                 except RequestsHTTPError as e:
+                    retry_body = ""
+                    if e.response is not None:
+                        try:
+                            retry_body = e.response.text
+                        except Exception:
+                            pass
                     raise HTTPError(
-                        f"HTTP error during {method.upper()} request to {url} after refresh",
+                        f"HTTP error during {method.upper()} request to {url} after refresh. Response: {retry_body}",
                         response=e.response,
                     ) from e
             raise HTTPError(
-                f"HTTP error during {method.upper()} request to {url}",
+                f"HTTP error during {method.upper()} request to {url}. Response: {response_body}",
                 response=getattr(e, "response", None),
             ) from e
         except RequestException as e:
