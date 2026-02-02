@@ -222,6 +222,11 @@ class Uploader(StorageBase):
             Path(asset.href).name,
         )
 
+        _log.info(
+            f"DEBUG _upload_asset: asset_key={asset_key}, upload_path={upload_path}, "
+            f"collection_id={collection_id}, item.collection={item.collection}"
+        )
+
         local_src = Path(assets_path) / asset.href
         if local_src.exists():
             src = str(local_src)
@@ -230,8 +235,11 @@ class Uploader(StorageBase):
             src = str(Path(assets_path) / Path(asset.href).name)
 
         # Always update asset.href to the new upload path before converting to public URL
+        old_href = asset.href
         asset.href = f"file:///{upload_path}"
+        _log.info(f"DEBUG _upload_asset: old_href={old_href}, new_href_before_update={asset.href}")
         self._update_asset_href(asset)  # turn href into public URL
+        _log.info(f"DEBUG _upload_asset: final_href={asset.href}")
         self.upload_from_file(src, str(upload_path), mime_type=asset.type)
 
         return asset_key
