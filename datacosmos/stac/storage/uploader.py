@@ -1,9 +1,12 @@
 """Handles uploading files to Datacosmos storage and registering STAC items."""
 
+import logging
 from pathlib import Path
 from typing import Any, Callable, Optional
 
 from pydantic import TypeAdapter
+
+_log = logging.getLogger(__name__)
 
 from datacosmos.datacosmos_client import DatacosmosClient
 from datacosmos.stac.item.item_client import ItemClient
