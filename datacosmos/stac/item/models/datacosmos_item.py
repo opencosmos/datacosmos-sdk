@@ -2,18 +2,16 @@
 
 import math
 from datetime import datetime
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict
+from pystac import Item as PystacItem
 from shapely.errors import ShapelyError
 from shapely.geometry import Polygon, shape
 
 from datacosmos.exceptions.stac_validation_error import StacValidationError
 from datacosmos.stac.enums.processing_level import ProcessingLevel
 from datacosmos.stac.item.models.asset import Asset
-
-if TYPE_CHECKING:
-    from pystac import Item as PystacItem
 
 _REQUIRED_DATACOSMOS_PROPERTIES = [
     "datetime",
@@ -184,18 +182,16 @@ class DatacosmosItem(BaseModel):
                 if link_collection_id == self.collection:
                     return True
 
-    def to_pystac_item(self) -> "PystacItem":
+    def to_pystac_item(self) -> PystacItem:
         """Convert this DatacosmosItem to a native pystac Item.
 
         Returns:
             PystacItem: The equivalent pystac Item object.
         """
-        from pystac import Item as PystacItem
-
         return PystacItem.from_dict(self.to_dict())
 
     @classmethod
-    def from_pystac_item(cls, item: "PystacItem") -> "DatacosmosItem":
+    def from_pystac_item(cls, item: PystacItem) -> "DatacosmosItem":
         """Create a DatacosmosItem from a native pystac Item.
 
         Args:
