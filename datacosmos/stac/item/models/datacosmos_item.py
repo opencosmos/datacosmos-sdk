@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict
+from pystac import Item as PystacItem
 from shapely.errors import ShapelyError
 from shapely.geometry import Polygon, shape
 
@@ -180,3 +181,77 @@ class DatacosmosItem(BaseModel):
                     continue
                 if link_collection_id == self.collection:
                     return True
+
+    def to_pystac_item(self) -> PystacItem:
+        """Convert this DatacosmosItem to a native pystac Item.
+
+        Returns:
+            PystacItem: The equivalent pystac Item object.
+        """
+        return PystacItem.from_dict(self.to_dict())
+
+    @classmethod
+    def from_pystac_item(cls, item: PystacItem) -> "DatacosmosItem":
+        """Create a DatacosmosItem from a native pystac Item.
+
+        Args:
+            item: The pystac Item to convert.
+
+        Returns:
+            DatacosmosItem: The equivalent DatacosmosItem object.
+        """
+        return cls.from_dict(item.to_dict())
+
+    def add_self_link(self, base_url: str, collection_id: str | None = None) -> None:
+        """Add a 'self' link to the item if not already present.
+
+        Args:
+            base_url: The base URL of the STAC API (e.g., 'https://api.example.com/stac').
+            collection_id: The collection ID. If None, uses self.collection.
+        """
+        if self.has_self_link():
+            return
+
+        coll_id = collection_id or self.collection
+        if not coll_id:
+            raise ValueError("Cannot add self link: no collection_id provided or set on item.")
+
+        base = base_url.rstrip("/")
+        self.links.append({
+            "rel": "self",
+            "href": f"{base}/collections/{coll_id}/items/{self.id}",
+            "type": "application/geo+json",
+        })
+
+    def add_parent_link(self, base_url: str, collection_id: str | None = None) -> None:
+        """Add a 'parent' link to the item if not already present.
+
+        Args:
+            base_url: The base URL of the STAC API (e.g., 'https://api.example.com/stac').
+            collection_id: The collection ID. If None, uses self.collection.
+        """
+        if self.has_parent_link():
+            return
+
+        coll_id = collection_id or self.collection
+        if not coll_id:
+            raise ValueError("Cannot add parent link: no collection_id provided or set on item.")
+
+        base = base_url.rstrip("/")
+        self.links.append({
+            "rel": "parent",
+            "href": f"{base}/collections/{coll_id}",
+            "type": "application/json",
+        })
+
+    def ensure_standard_links(self, base_url: str, collection_id: str | None = None) -> None:
+        """Ensure the item has both 'self' and 'parent' links.
+
+        This method adds missing links without modifying existing ones.
+
+        Args:
+            base_url: The base URL of the STAC API.
+            collection_id: The collection ID. If None, uses self.collection.
+        """
+        self.add_self_link(base_url, collection_id)
+        self.add_parent_link(base_url, collection_id)

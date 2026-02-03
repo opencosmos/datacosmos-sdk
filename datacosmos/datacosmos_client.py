@@ -178,6 +178,32 @@ class DatacosmosClient:
 
     # --------------------------- request API ---------------------------
 
+    def _safe_get_response_body(self, response: Optional[requests.Response]) -> str:
+        """Safely extract response body text, returning empty string on failure."""
+        if response is None:
+            return ""
+        try:
+            return response.text
+        except Exception:  # noqa: S110
+            # Intentionally broad catch - response.text can fail in various ways
+            return ""
+
+    def _handle_auth_retry(
+        self, method: str, url: str, *args: Any, **kwargs: Any
+    ) -> requests.Response:
+        """Handle 401/403 by refreshing token and retrying the request."""
+        self._refresh_now()
+        retry_response = self._http_client.request(method, url, *args, **kwargs)
+        try:
+            retry_response.raise_for_status()
+            return retry_response
+        except RequestsHTTPError as e:
+            retry_body = self._safe_get_response_body(e.response)
+            raise HTTPError(
+                f"HTTP error during {method.upper()} request to {url} after refresh. Response: {retry_body}",
+                response=e.response,
+            ) from e
+
     @retry(
         stop=stop_after_attempt(5),
         wait=wait_exponential(multiplier=1, min=2, max=20),
@@ -201,47 +227,57 @@ class DatacosmosClient:
             DatacosmosError: For any HTTP or request-related errors.
         """
         self._refresh_token_if_needed()
+        self._run_request_hooks(method, url, *args, **kwargs)
 
-        # Call pre-request hooks
+        try:
+            response = self._http_client.request(method, url, *args, **kwargs)
+            response.raise_for_status()
+            self._run_response_hooks(response)
+            return response
+        except RequestsHTTPError as e:
+            return self._handle_http_error(e, method, url, *args, **kwargs)
+        except RequestException as e:
+            raise DatacosmosError(
+                f"Unexpected request failure during {method.upper()} request to {url}: {e}"
+            ) from e
+
+    def _run_request_hooks(
+        self, method: str, url: str, *args: Any, **kwargs: Any
+    ) -> None:
+        """Execute all registered request hooks."""
         for hook in self._request_hooks:
             try:
                 hook(method, url, *args, **kwargs)
             except Exception:
                 _log.error("Request hook failed.", exc_info=True)
 
-        try:
-            response = self._http_client.request(method, url, *args, **kwargs)
-            response.raise_for_status()
+    def _run_response_hooks(self, response: requests.Response) -> None:
+        """Execute all registered response hooks."""
+        for hook in self._response_hooks:
+            try:
+                hook(response)
+            except Exception:
+                _log.error("Response hook failed.", exc_info=True)
 
-            # Call post-response hooks on success
-            for hook in self._response_hooks:
-                try:
-                    hook(response)
-                except Exception:
-                    _log.error("Response hook failed.", exc_info=True)
+    def _handle_http_error(
+        self,
+        e: RequestsHTTPError,
+        method: str,
+        url: str,
+        *args: Any,
+        **kwargs: Any,
+    ) -> requests.Response:
+        """Handle HTTP errors, including auth retry for 401/403."""
+        status = getattr(e.response, "status_code", None)
+        response_body = self._safe_get_response_body(e.response)
 
-            return response
-        except RequestsHTTPError as e:
-            status = getattr(e.response, "status_code", None)
-            if status in (401, 403) and getattr(self, "_owns_session", False):
-                self._refresh_now()
-                retry_response = self._http_client.request(method, url, *args, **kwargs)
-                try:
-                    retry_response.raise_for_status()
-                    return retry_response
-                except RequestsHTTPError as e:
-                    raise HTTPError(
-                        f"HTTP error during {method.upper()} request to {url} after refresh",
-                        response=e.response,
-                    ) from e
-            raise HTTPError(
-                f"HTTP error during {method.upper()} request to {url}",
-                response=getattr(e, "response", None),
-            ) from e
-        except RequestException as e:
-            raise DatacosmosError(
-                f"Unexpected request failure during {method.upper()} request to {url}: {e}"
-            ) from e
+        if status in (401, 403) and getattr(self, "_owns_session", False):
+            return self._handle_auth_retry(method, url, *args, **kwargs)
+
+        raise HTTPError(
+            f"HTTP error during {method.upper()} request to {url}. Response: {response_body}",
+            response=getattr(e, "response", None),
+        ) from e
 
     def get(self, url: str, *args: Any, **kwargs: Any) -> requests.Response:
         """Send a GET request using the authenticated session."""

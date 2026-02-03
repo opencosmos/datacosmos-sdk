@@ -216,11 +216,12 @@ class Uploader(StorageBase):
         local_src = Path(assets_path) / asset.href
         if local_src.exists():
             src = str(local_src)
-            asset.href = f"file:///{upload_path}"
         else:
             # fallback: try matching just the filename inside assets_path
             src = str(Path(assets_path) / Path(asset.href).name)
 
+        # Always update asset.href to the new upload path before converting to public URL
+        asset.href = f"file:///{upload_path}"
         self._update_asset_href(asset)  # turn href into public URL
         self.upload_from_file(src, str(upload_path), mime_type=asset.type)
 

@@ -29,7 +29,10 @@ class UploadPath:
                 "/"
             )
         elif self.collection_id and self.year and self.month and self.day:
-            return f"catalog/{self.collection_id}/{self.year}/{self.month}/{self.day}/{self.item_id}/{self.asset_name}".rstrip(
+            # Normalize collection_id by stripping --qa suffix for storage path
+            # The catalog API expects assets to be stored under the base collection name
+            normalized_collection = self.collection_id.removesuffix("--qa")
+            return f"catalog/{normalized_collection}/{self.year}/{self.month}/{self.day}/{self.item_id}/{self.asset_name}".rstrip(
                 "/"
             )
         else:
