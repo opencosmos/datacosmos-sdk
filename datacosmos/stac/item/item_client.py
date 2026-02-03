@@ -109,14 +109,6 @@ class ItemClient:
         url = self.base_url.with_suffix(f"/collections/{collection_id}/items/{item.id}")
         item_json: dict = item.to_dict()
 
-        # DEBUG: Log collection values before PUT request
-        import logging
-        _debug_log = logging.getLogger(__name__)
-        _debug_log.info(
-            f"DEBUG item_client.add_item: item.id={item.id}, item.collection={getattr(item, 'collection', None)}, "
-            f"resolved_collection_id={collection_id}, item_json_collection={item_json.get('collection')}"
-        )
-
         response = self.client.put(url, json=item_json)
         check_api_response(response)
 
