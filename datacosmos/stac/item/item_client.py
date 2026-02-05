@@ -4,6 +4,7 @@ Provides methods for querying, fetching, creating, updating, and deleting STAC i
 """
 
 from typing import Generator, Optional
+from urllib.parse import parse_qs, urlparse
 
 from pystac import Item
 
@@ -153,15 +154,28 @@ class ItemClient:
         check_api_response(response)
 
     def _paginate_items(self, url: str, body: dict) -> Generator[Item, None, None]:
-        """Handle pagination for the STAC search POST endpoint."""
-        params = {"limit": body.get("limit", 10)}
+        """Handle pagination for the STAC search POST endpoint.
+
+        Args:
+            url: The STAC search endpoint URL.
+            body: The request body containing search parameters.
+
+        Yields:
+            Item: Parsed STAC items from the search results.
+
+        Raises:
+            DatacosmosError: If pagination fails or the API returns an error.
+        """
+        # Create a copy of the body to avoid mutating the original
+        request_body = body.copy()
 
         while True:
-            response = self.client.post(url, json=body, params=params)
+            response = self.client.post(url, json=request_body)
             check_api_response(response)
             data = response.json()
 
-            yield from (Item.from_dict(feature) for feature in data.get("features", []))
+            features = data.get("features", [])
+            yield from (Item.from_dict(feature) for feature in features)
 
             next_href = self._get_next_link(data)
             if not next_href:
@@ -170,33 +184,45 @@ class ItemClient:
             token = self._extract_pagination_token(next_href)
             if not token:
                 break
-            params["cursor"] = token
+
+            # Add cursor to body for next page request
+            request_body["cursor"] = token
 
     def _get_next_link(self, data: dict) -> Optional[str]:
-        """Extract the next page link from the response."""
+        """Extract the next page link from the response.
+
+        Args:
+            data: The JSON response data from the STAC search endpoint.
+
+        Returns:
+            The href of the next page link, or None if not found.
+        """
         next_link = next(
             (link for link in data.get("links", []) if link.get("rel") == "next"), None
         )
         return next_link.get("href", "") if next_link else None
 
     def _extract_pagination_token(self, next_href: str) -> Optional[str]:
-        """Extract the pagination token from the next link URL.
+        """Extract the pagination token (cursor) from the next link URL.
 
         Args:
-            next_href (str): The next page URL.
+            next_href: The URL of the next page from the STAC response.
 
         Returns:
-            Optional[str]: The extracted token, or None if parsing fails.
+            The cursor token for the next page, or None if not found.
 
         Raises:
-            DatacosmosError: If pagination token extraction fails.
+            DatacosmosError: If the URL cannot be parsed.
         """
         try:
-            return next_href.split("?")[1].split("=")[-1]
-        except (IndexError, AttributeError) as e:
+            parsed = urlparse(next_href)
+            query_params = parse_qs(parsed.query)
+            cursor_values = query_params.get("cursor", [])
+            return cursor_values[0] if cursor_values else None
+        except (ValueError, TypeError) as e:
             raise DatacosmosError(
-                f"Failed to parse pagination token from {next_href}",
-                response=e.response,
+                f"Failed to parse pagination cursor from next link: {next_href}. "
+                f"Expected URL with 'cursor' query parameter. Error: {e}"
             ) from e
 
     def _get_collection_id(self, item: Item | DatacosmosItem, method: str) -> str:
