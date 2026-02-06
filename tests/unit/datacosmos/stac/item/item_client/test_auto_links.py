@@ -118,7 +118,7 @@ class TestItemClientAutoLinks(unittest.TestCase):
 
         # Create pystac item without self/parent links
         pystac_data = self.item_data_no_links.copy()
-        pystac_data["stac_version"] = "1.0.0"
+        pystac_data["stac_version"] = "1.1.0"
         item = Item.from_dict(pystac_data)
 
         # Verify no self/parent links initially

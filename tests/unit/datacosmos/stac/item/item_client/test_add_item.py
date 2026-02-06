@@ -42,7 +42,7 @@ class TestItemClientAddItem(unittest.TestCase):
             "id": "item-1",
             "collection": "test-collection",
             "type": "Feature",
-            "stac_version": "1.0.0",
+            "stac_version": "1.1.0",
             "geometry": {"type": "Point", "coordinates": [0, 0]},
             "properties": {"datetime": "2023-12-01T12:00:00Z"},
             "assets": {},
@@ -52,7 +52,7 @@ class TestItemClientAddItem(unittest.TestCase):
         self.datacosmos_item_dict = {
             "id": "item-1",
             "type": "Feature",
-            "stac_version": "1.0.0",
+            "stac_version": "1.1.0",
             "stac_extensions": [],
             "geometry": {
                 "type": "Polygon",

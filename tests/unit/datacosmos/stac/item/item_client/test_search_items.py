@@ -29,7 +29,7 @@ def test_search_items(
                 "id": "item-1",
                 "collection": "test-collection",
                 "type": "Feature",
-                "stac_version": "1.0.0",
+                "stac_version": "1.1.0",
                 "geometry": {"type": "Point", "coordinates": [0, 0]},
                 "properties": {"datetime": "2025-02-09T12:00:00Z"},
                 "assets": {},
@@ -78,5 +78,6 @@ def test_search_items(
     mock_post.assert_called_once_with(
         stac_client.base_url.with_suffix("/search"),
         json=expected_body,
+        params={"limit": 50},
     )
     mock_check_api_response.assert_called_once_with(mock_response)

@@ -27,7 +27,7 @@ class TestDatacosmosItemPystacCompatibility(unittest.TestCase):
                 "processing:level": "l1a",
                 "sat:platform_international_designator": "TEST-SAT-1",
             },
-            "stac_version": "1.0.0",
+            "stac_version": "1.1.0",
             "stac_extensions": [],
             "collection": "test-collection",
             "links": [

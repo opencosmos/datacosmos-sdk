@@ -3,6 +3,7 @@
 import math
 from datetime import datetime
 from typing import Any
+from urllib.parse import urlparse
 
 from pydantic import BaseModel, ConfigDict
 from pystac import Item as PystacItem
@@ -51,6 +52,8 @@ class DatacosmosItem(BaseModel):
         self._validate_bbox_vs_geometry()
 
         self._validate_collection_id()
+
+        self._validate_absolute_self_link()
 
     def _validate_datacosmos_properties(self) -> None:
         """Validates that Datacosmos-specific properties exist."""
@@ -125,6 +128,22 @@ class DatacosmosItem(BaseModel):
             raise StacValidationError(
                 "Parent link in DatacosmosItem does not match its collection."
             )
+
+    def _validate_absolute_self_link(self) -> None:
+        """Validates that self links use absolute URLs.
+
+        This validation is always enforced regardless of the item's stac_version,
+        as the SDK targets STAC 1.1.0+ compliance where absolute self links are required.
+        """
+        for link in self.links:
+            if link.get("rel") == "self":
+                href = link.get("href", "")
+                parsed = urlparse(href)
+                if not parsed.scheme or not parsed.netloc:
+                    raise StacValidationError(
+                        f"Self link must be an absolute URL (STAC 1.1.0 requirement). "
+                        f"Got: {href}"
+                    )
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "DatacosmosItem":

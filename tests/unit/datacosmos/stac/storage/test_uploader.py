@@ -84,7 +84,7 @@ def simple_item(tmp_path):
     item = DatacosmosItem(
         id="item1",
         type="Feature",
-        stac_version="1.0.0",
+        stac_version="1.1.0",
         stac_extensions=[],
         geometry={
             "type": "Polygon",

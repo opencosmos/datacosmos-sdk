@@ -1,23 +1,32 @@
 """Model representing a datacosmos item asset."""
 
-from pydantic import BaseModel, Field
+from typing import Any
 
-from datacosmos.stac.item.models.eo_band import EoBand
-from datacosmos.stac.item.models.raster_band import RasterBand
+from pydantic import BaseModel, ConfigDict
+
+from datacosmos.stac.item.models.band import Band
+from datacosmos.stac.item.models.statistics import Statistics
 
 
 class Asset(BaseModel):
-    """Model representing a datacosmos item asset."""
+    """Model representing a datacosmos item asset.
+
+    Includes STAC 1.1.0 common metadata fields.
+    Spec: https://github.com/radiantearth/stac-spec/blob/master/commons/assets.md
+    """
+
+    model_config = ConfigDict(extra="allow", populate_by_name=True)
 
     href: str
-    title: str
-    description: str
-    type: str
-    roles: list[str] | None
-    eo_bands: list[EoBand] | None = Field(default=None, alias="eo:bands")
-    raster_bands: list[RasterBand] | None = Field(default=None, alias="raster:bands")
+    title: str | None = None
+    description: str | None = None
+    type: str | None = None
+    roles: list[str] | None = None
 
-    class Config:
-        """Pydantic configuration."""
-
-        populate_by_name = True
+    # STAC 1.1.0 common metadata fields
+    keywords: list[str] | None = None
+    data_type: str | None = None
+    nodata: Any | None = None
+    unit: str | None = None
+    statistics: Statistics | None = None
+    bands: list[Band] | None = None

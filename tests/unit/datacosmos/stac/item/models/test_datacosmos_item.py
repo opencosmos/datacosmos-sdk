@@ -45,7 +45,7 @@ class TestDatacosmosItem(unittest.TestCase):
         self.valid_item_data = {
             **self.stac_core_data,
             "properties": {**self.datacosmos_properties},
-            "stac_version": "1.0.0",
+            "stac_version": "1.1.0",
             "stac_extensions": [],
             "collection": "test-collection",
             "links": [self.valid_parent_link],
