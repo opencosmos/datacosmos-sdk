@@ -13,7 +13,7 @@ jobs:
     name: lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install uv
         run: pip install uv
       - name: Set up uv environment
@@ -30,7 +30,7 @@ jobs:
     name: bandit
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install uv
         run: pip install uv
       - name: Set up uv environment
@@ -46,7 +46,7 @@ jobs:
     name: cognitive
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install uv
         run: pip install uv
       - name: Set up uv environment
@@ -62,7 +62,7 @@ jobs:
     name: pydocstyle
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install uv
         run: pip install uv
       - name: Set up uv environment
@@ -79,7 +79,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [bandit, cognitive, lint, pydocstyle]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install uv
         run: pip install uv
       - name: Set up uv environment
@@ -96,8 +96,14 @@ jobs:
     runs-on: ubuntu-latest
     needs: test
     if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+      id-token: write
+      pull-requests: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Install uv
         run: pip install uv
       - name: Set up uv environment
@@ -105,33 +111,70 @@ jobs:
       - name: Install dependencies
         run: uv pip install -r pyproject.toml
       - name: Version
-        uses: paulhatch/semantic-version@v5.0.0
+        uses: paulhatch/semantic-version@v5.4.0
         id: version
         with:
           major_pattern: "(feat!)"
           minor_pattern: "(feat)"
+          version_format: "${major}.${minor}.${patch}"
+      - name: Check if tag exists
+        id: tag_check
+        run: |
+          if git rev-parse "v${{ steps.version.outputs.version }}" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
       - name: Create changelog text
+        if: steps.tag_check.outputs.exists == 'false'
         id: changelog
         uses: loopwerk/tag-changelog@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           exclude_types: other,doc,chore
+      - name: Create tag
+        if: steps.tag_check.outputs.exists == 'false'
+        id: create_tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "v${{ steps.version.outputs.version }}" -m "Release v${{ steps.version.outputs.version }}"
+          git push origin "v${{ steps.version.outputs.version }}"
+          echo "created=true" >> $GITHUB_OUTPUT
       - name: Create release
-        uses: actions/create-release@latest
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: steps.tag_check.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.version.outputs.version_tag }}
-          release_name: Release ${{ steps.version.outputs.version_tag }}
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Release v${{ steps.version.outputs.version }}
           body: ${{ steps.changelog.outputs.changes }}
+          generate_release_notes: false
+      - name: Build package
+        if: steps.tag_check.outputs.exists == 'false'
+        run: |
+          source .venv/bin/activate
+          uv pip install build
+          python -m build
+      - name: Publish to PyPI
+        if: steps.tag_check.outputs.exists == 'false'
+        uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Cleanup tag and release on failure
+        if: failure() && steps.create_tag.outputs.created == 'true'
+        run: |
+          echo "Cleaning up tag and release due to failure..."
+          git push --delete origin "v${{ steps.version.outputs.version }}" || true
+          gh release delete "v${{ steps.version.outputs.version }}" --yes || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Create changelog pull request
-        uses: peter-evans/create-pull-request@v2
+        if: steps.tag_check.outputs.exists == 'false'
+        uses: peter-evans/create-pull-request@v6
         with:
-          commit-message: "Release ${{ steps.version.outputs.version_tag }} [skip ci]"
+          commit-message: "Release v${{ steps.version.outputs.version }} [skip ci]"
           labels: release, bot
-          title: "Release ${{ steps.version.outputs.version_tag }}"
+          title: "Release v${{ steps.version.outputs.version }}"
           body: |
-            # Release ${{ steps.version.outputs.version_tag }}
+            # Release v${{ steps.version.outputs.version }}
 
             Merge this PR to update your version and changelog!
 
