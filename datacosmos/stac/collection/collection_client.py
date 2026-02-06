@@ -113,7 +113,7 @@ class CollectionClient:
                     **collection,
                     "type": collection.get("type", "Collection"),
                     "id": collection.get("id", ""),
-                    "stac_version": collection.get("stac_version", "1.0.0"),
+                    "stac_version": collection.get("stac_version", "1.1.0"),
                     "extent": collection.get(
                         "extent",
                         {"spatial": {"bbox": []}, "temporal": {"interval": []}},

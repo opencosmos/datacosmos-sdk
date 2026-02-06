@@ -18,7 +18,7 @@ def test_fetch_item(mock_get, mock_check_api_response, mock_fetch_token):
     mock_response.json.return_value = {
         "id": "S2B_MSIL1C_20230101T103009_N0509_R065_T31TEJ_20230101T115310",
         "type": "Feature",
-        "stac_version": "1.0.0",
+        "stac_version": "1.1.0",
         "stac_extensions": [
             "https://stac-extensions.github.io/sat/v1.0.0/schema.json",
             "https://stac-extensions.github.io/processing/v1.0.0/schema.json",

@@ -11,39 +11,24 @@ def check_api_response(response: Response) -> None:
     """Validates an API response and raises a DatacosmosError if an error occurs.
 
     Args:
-        response (requests.Response): The response object to validate.
+        resp (requests.Response): The response object.
 
     Raises:
-        DatacosmosError: If the response status code indicates an error (>= 400).
-            The error message will include structured error details if available,
-            or the raw response body otherwise.
+        DatacosmosError: If the response status code indicates an error.
     """
     if 200 <= response.status_code < 400:
         return
 
-    # Capture request context for error messages
-    request_url = response.url if hasattr(response, "url") else "unknown"
-    request_method = (
-        response.request.method if hasattr(response, "request") else "unknown"
-    )
-
     try:
-        parsed_response = DatacosmosResponse.model_validate_json(response.text)
-        msg = parsed_response.errors[0].human_readable()
-        if len(parsed_response.errors) > 1:
+        response = DatacosmosResponse.model_validate_json(response.text)
+        msg = response.errors[0].human_readable()
+        if len(response.errors) > 1:
             msg = "\n  * " + "\n  * ".join(
-                error.human_readable() for error in parsed_response.errors
+                error.human_readable() for error in response.errors
             )
-        # DatacosmosError will append status code and response details automatically
-        raise DatacosmosError(
-            f"API error during {request_method} {request_url}: {msg}",
-            response=response,
-        )
+        raise DatacosmosError(msg, response=response)
 
     except ValidationError:
-        # Response doesn't match expected error schema
-        # DatacosmosError will append status code and response details automatically
         raise DatacosmosError(
-            f"API error during {request_method} {request_url}",
-            response=response,
+            f"HTTP {response.status_code}: {response.text}", response=response
         )

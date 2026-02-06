@@ -19,7 +19,7 @@ def test_update_item(mock_check_api_response, mock_patch, mock_fetch_token):
         "id": "item-1",
         "collection": "test-collection",
         "type": "Feature",
-        "stac_version": "1.0.0",
+        "stac_version": "1.1.0",
         "geometry": {"type": "Point", "coordinates": [0, 0]},
         "properties": {"datetime": "2023-12-01T12:00:00Z", "new_property": "value"},
         "assets": {},
