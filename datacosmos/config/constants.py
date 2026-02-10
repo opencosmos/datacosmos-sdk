@@ -14,16 +14,35 @@ DEFAULT_LOCAL_REDIRECT_PORT = 8765
 DEFAULT_LOCAL_SCOPES = "openid profile email offline_access"
 DEFAULT_LOCAL_CACHE_FILE = "~/.datacosmos/token_cache.json"
 
+# ---- Kubernetes detection ----
+KUBERNETES_SERVICE_HOST_ENV = "KUBERNETES_SERVICE_HOST"
+
 # ---- Service URLs ----
-DEFAULT_STAC = dict(
+# External URLs (default, used outside Kubernetes)
+DEFAULT_STAC_EXTERNAL = dict(
     protocol="https", host="app.open-cosmos.com", port=443, path="/api/data/v0/stac"
 )
-DEFAULT_STORAGE = dict(
+DEFAULT_STORAGE_EXTERNAL = dict(
     protocol="https", host="app.open-cosmos.com", port=443, path="/api/data/v0/storage"
 )
 DEFAULT_PROJECT = dict(
     protocol="https", host="app.open-cosmos.com", port=443, path="/api/data/v0"
 )
+
+# Internal URLs (used inside Kubernetes cluster)
+DEFAULT_STAC_INTERNAL = dict(
+    protocol="http", host="catalog.default.svc.cluster.local", port=80, path="/"
+)
+DEFAULT_STORAGE_INTERNAL = dict(
+    protocol="http",
+    host="storage.default.svc.cluster.local",
+    port=80,
+    path="/",
+)
+
+# Legacy aliases for backward compatibility
+DEFAULT_STAC = DEFAULT_STAC_EXTERNAL
+DEFAULT_STORAGE = DEFAULT_STORAGE_EXTERNAL
 
 # ---- Config file path ----
 DEFAULT_CONFIG_YAML = "config/config.yaml"
