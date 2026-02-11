@@ -87,6 +87,10 @@ client = DatacosmosClient(config=config)
 | `datacosmos_public_cloud_storage.host`     | `app.open-cosmos.com`                   | YAML / ENV     |
 | `datacosmos_public_cloud_storage.port`     | `443`                                   | YAML / ENV     |
 | `datacosmos_public_cloud_storage.path`     | `/api/data/v0/storage`                 | YAML / ENV     |
+| `project.protocol`                         | `https`                                 | YAML / ENV     |
+| `project.host`                             | `app.open-cosmos.com`                   | YAML / ENV     |
+| `project.port`                             | `443`                                   | YAML / ENV     |
+| `project.path`                             | `/api/data/v0/scenario`                 | YAML / ENV     |
 
 ## STAC Client
 
@@ -330,6 +334,157 @@ client = DatacosmosClient()
 stac_client = STACClient(client)
 
 stac_client.delete_collection("test-collection")
+```
+
+### Project Item Operations
+
+The `STACClient` also provides methods to interact with project/scenario items. Projects (also called scenarios) are collections of STAC items that can include both linked catalog items and project-specific items.
+
+#### 11. List Project Items
+
+List all items in a project/scenario:
+
+```python
+from datacosmos.datacosmos_client import DatacosmosClient
+from datacosmos.stac.stac_client import STACClient
+
+client = DatacosmosClient()
+stac_client = STACClient(client)
+
+scenario_id = "your-scenario-uuid"
+items = list(stac_client.list_project_items(scenario_id))
+
+for item in items:
+    print(f"{item.id} (collection: {item.collection_id})")
+```
+
+#### 12. Get a Project Item
+
+Fetch a specific item from a project:
+
+```python
+from datacosmos.datacosmos_client import DatacosmosClient
+from datacosmos.stac.stac_client import STACClient
+
+client = DatacosmosClient()
+stac_client = STACClient(client)
+
+scenario_id = "your-scenario-uuid"
+item_id = "your-item-id"
+
+item = stac_client.get_project_item(scenario_id, item_id)
+print(f"Item: {item.id}")
+```
+
+#### 13. Add an Item to a Project
+
+Link an existing catalog item to a project:
+
+```python
+from datacosmos.datacosmos_client import DatacosmosClient
+from datacosmos.stac.stac_client import STACClient
+
+client = DatacosmosClient()
+stac_client = STACClient(client)
+
+scenario_id = "your-scenario-uuid"
+collection_id = "catalog-collection-id"
+item_id = "catalog-item-id"
+
+stac_client.add_project_item(scenario_id, collection_id, item_id)
+```
+
+#### 14. Create a Project Item
+
+Create a new STAC item directly in a project:
+
+```python
+from pystac import Item
+from datetime import datetime
+
+from datacosmos.datacosmos_client import DatacosmosClient
+from datacosmos.stac.stac_client import STACClient
+
+client = DatacosmosClient()
+stac_client = STACClient(client)
+
+scenario_id = "your-scenario-uuid"
+
+stac_item = Item(
+    id="new-project-item",
+    geometry={"type": "Point", "coordinates": [102.0, 0.5]},
+    bbox=[101.0, 0.0, 103.0, 1.0],
+    datetime=datetime.utcnow(),
+    properties={"datetime": datetime.utcnow().isoformat()},
+)
+
+stac_client.create_project_item(scenario_id, stac_item)
+```
+
+#### 15. Delete a Project Item
+
+Remove an item from a project:
+
+```python
+from datacosmos.datacosmos_client import DatacosmosClient
+from datacosmos.stac.stac_client import STACClient
+
+client = DatacosmosClient()
+stac_client = STACClient(client)
+
+scenario_id = "your-scenario-uuid"
+item_id = "item-to-delete"
+
+stac_client.delete_project_item(scenario_id, item_id)
+```
+
+#### 16. Search Project Items
+
+Search for items within a project with optional filters:
+
+```python
+from datacosmos.datacosmos_client import DatacosmosClient
+from datacosmos.stac.stac_client import STACClient
+from datacosmos.stac.project.models.project_search_parameters import ProjectSearchParameters
+
+client = DatacosmosClient()
+stac_client = STACClient(client)
+
+scenario_id = "your-scenario-uuid"
+
+# Search with parameters
+params = ProjectSearchParameters(
+    collections=["specific-collection"],
+    limit=10
+)
+
+results = list(stac_client.search_project_items(scenario_id, params))
+for item in results:
+    print(f"{item.id}")
+```
+
+#### 17. Check if Items Exist in a Project
+
+Check if specific catalog items are linked to a project:
+
+```python
+from datacosmos.datacosmos_client import DatacosmosClient
+from datacosmos.stac.stac_client import STACClient
+from datacosmos.stac.project.models.collection_item_pair import CollectionItemPair
+
+client = DatacosmosClient()
+stac_client = STACClient(client)
+
+scenario_id = "your-scenario-uuid"
+
+pairs = [
+    CollectionItemPair(collection="collection-1", item="item-1"),
+    CollectionItemPair(collection="collection-2", item="item-2"),
+]
+
+existence = stac_client.check_project_items_exist(scenario_id, pairs)
+for result in existence:
+    print(f"{result.collection}/{result.item}: exists={result.exists}")
 ```
 
 ## Uploading Files and Registering STAC Items

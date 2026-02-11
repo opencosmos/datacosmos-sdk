@@ -3,10 +3,11 @@
 from datacosmos.datacosmos_client import DatacosmosClient
 from datacosmos.stac.collection.collection_client import CollectionClient
 from datacosmos.stac.item.item_client import ItemClient
+from datacosmos.stac.project.project_item_client import ProjectItemClient
 from datacosmos.stac.storage.storage_client import StorageClient
 
 
-class STACClient(ItemClient, CollectionClient, StorageClient):
+class STACClient(ItemClient, CollectionClient, StorageClient, ProjectItemClient):
     """Unified interface for STAC API, combining Item & Collection operations."""
 
     def __init__(self, client: DatacosmosClient):
@@ -14,3 +15,4 @@ class STACClient(ItemClient, CollectionClient, StorageClient):
         ItemClient.__init__(self, client)
         CollectionClient.__init__(self, client)
         StorageClient.__init__(self, client)
+        ProjectItemClient.__init__(self, client)
