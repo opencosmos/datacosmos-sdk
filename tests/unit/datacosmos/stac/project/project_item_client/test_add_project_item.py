@@ -1,9 +1,9 @@
 """Tests for ProjectItemClient.add_project_item method."""
 
+import unittest
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
-import pytest
 from pystac import Item
 
 from datacosmos.config.config import Config
@@ -12,85 +12,88 @@ from datacosmos.datacosmos_client import DatacosmosClient
 from datacosmos.stac.project.project_item_client import ProjectItemClient
 
 
-@patch("requests_oauthlib.OAuth2Session.fetch_token")
-@patch("datacosmos.stac.project.project_item_client.check_api_response")
-@patch.object(DatacosmosClient, "put")
-def test_add_project_item(mock_put, mock_check_api_response, mock_fetch_token):
-    """Test adding/upserting an item in a project/scenario."""
-    mock_fetch_token.return_value = {"access_token": "mock-token", "expires_in": 3600}
+class TestAddProjectItem(unittest.TestCase):
+    """Unit tests for the ProjectItemClient.add_project_item method."""
 
-    mock_response = MagicMock()
-    mock_response.status_code = 200
-    mock_put.return_value = mock_response
-    mock_check_api_response.return_value = None
+    def setUp(self):
+        """Set up mock objects and client instance for all tests."""
+        self.mock_fetch_token = patch(
+            "requests_oauthlib.OAuth2Session.fetch_token"
+        ).start()
+        self.mock_put = patch.object(DatacosmosClient, "put").start()
+        self.mock_check_api_response = patch(
+            "datacosmos.stac.project.project_item_client.check_api_response"
+        ).start()
 
-    config = Config(
-        authentication=M2MAuthenticationConfig(
-            type="m2m",
-            client_id="test-client-id",
-            client_secret="test-client-secret",
-            token_url="https://mock.token.url/oauth/token",
-            audience="https://mock.audience",
+        self.mock_fetch_token.return_value = {
+            "access_token": "mock-token",
+            "expires_in": 3600,
+        }
+
+        self.config = Config(
+            authentication=M2MAuthenticationConfig(
+                type="m2m",
+                client_id="test-client-id",
+                client_secret="test-client-secret",
+                token_url="https://mock.token.url/oauth/token",
+                audience="https://mock.audience",
+            )
         )
-    )
+        self.client = DatacosmosClient(config=self.config)
+        self.project_client = ProjectItemClient(self.client)
 
-    client = DatacosmosClient(config=config)
-    project_client = ProjectItemClient(client)
+    def tearDown(self):
+        """Stop all patches."""
+        patch.stopall()
 
-    item = Item(
-        id="item-456",
-        geometry={
-            "type": "Polygon",
-            "coordinates": [
-                [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0], [0.0, 0.0]]
-            ],
-        },
-        bbox=[0.0, 0.0, 1.0, 1.0],
-        datetime=datetime(2023, 1, 1, 10, 30, 9, tzinfo=timezone.utc),
-        properties={},
-    )
+    def test_add_project_item(self):
+        """Test adding/upserting an item in a project/scenario."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        self.mock_put.return_value = mock_response
+        self.mock_check_api_response.return_value = None
 
-    project_client.add_project_item("scenario-123", item)
-
-    mock_put.assert_called_once_with(
-        project_client.project_base_url.with_suffix(
-            "/scenario/scenario-123/items/item-456"
-        ),
-        json=item.to_dict(),
-    )
-    mock_check_api_response.assert_called_once_with(mock_response)
-
-
-@patch("requests_oauthlib.OAuth2Session.fetch_token")
-def test_add_project_item_no_id(mock_fetch_token):
-    """Test adding an item without ID raises ValueError."""
-    mock_fetch_token.return_value = {"access_token": "mock-token", "expires_in": 3600}
-
-    config = Config(
-        authentication=M2MAuthenticationConfig(
-            type="m2m",
-            client_id="test-client-id",
-            client_secret="test-client-secret",
-            token_url="https://mock.token.url/oauth/token",
-            audience="https://mock.audience",
+        item = Item(
+            id="item-456",
+            geometry={
+                "type": "Polygon",
+                "coordinates": [
+                    [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0], [0.0, 0.0]]
+                ],
+            },
+            bbox=[0.0, 0.0, 1.0, 1.0],
+            datetime=datetime(2023, 1, 1, 10, 30, 9, tzinfo=timezone.utc),
+            properties={},
         )
-    )
 
-    client = DatacosmosClient(config=config)
-    project_client = ProjectItemClient(client)
+        self.project_client.add_project_item("scenario-123", item)
 
-    item = Item(
-        id="",
-        geometry={
-            "type": "Polygon",
-            "coordinates": [
-                [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0], [0.0, 0.0]]
-            ],
-        },
-        bbox=[0.0, 0.0, 1.0, 1.0],
-        datetime=datetime(2023, 1, 1, 10, 30, 9, tzinfo=timezone.utc),
-        properties={},
-    )
+        self.mock_put.assert_called_once_with(
+            self.project_client.project_base_url.with_suffix(
+                "/scenario/scenario-123/items/item-456"
+            ),
+            json=item.to_dict(),
+        )
+        self.mock_check_api_response.assert_called_once_with(mock_response)
 
-    with pytest.raises(ValueError, match="no item_id found on item"):
-        project_client.add_project_item("scenario-123", item)
+    def test_add_project_item_no_id(self):
+        """Test adding an item without ID raises ValueError."""
+        item = Item(
+            id="",
+            geometry={
+                "type": "Polygon",
+                "coordinates": [
+                    [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0], [0.0, 0.0]]
+                ],
+            },
+            bbox=[0.0, 0.0, 1.0, 1.0],
+            datetime=datetime(2023, 1, 1, 10, 30, 9, tzinfo=timezone.utc),
+            properties={},
+        )
+
+        with self.assertRaises(ValueError, msg="no item_id found on item"):
+            self.project_client.add_project_item("scenario-123", item)
+
+
+if __name__ == "__main__":
+    unittest.main()
