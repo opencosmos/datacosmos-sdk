@@ -14,8 +14,12 @@ DEFAULT_LOCAL_REDIRECT_PORT = 8765
 DEFAULT_LOCAL_SCOPES = "openid profile email offline_access"
 DEFAULT_LOCAL_CACHE_FILE = "~/.datacosmos/token_cache.json"
 
-# ---- Kubernetes detection ----
-KUBERNETES_SERVICE_HOST_ENV = "KUBERNETES_SERVICE_HOST"
+# ---- Open Cosmos cluster detection ----
+# Custom environment variable to identify Open Cosmos's internal cluster.
+# Only when this is set will the SDK use internal cluster URLs.
+# This prevents customers running the SDK in their own K8s clusters
+# from incorrectly trying to use Open Cosmos internal services.
+OPENCOSMOS_INTERNAL_CLUSTER_ENV = "OPENCOSMOS_INTERNAL_CLUSTER"
 
 # ---- Service URLs ----
 # External URLs (default, used outside Kubernetes)

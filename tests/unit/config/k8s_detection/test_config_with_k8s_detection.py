@@ -1,27 +1,27 @@
-"""Tests for Config class with Kubernetes auto-detection."""
+"""Tests for Config class with Open Cosmos cluster auto-detection."""
 
 import os
 
 import pytest
 
 from datacosmos.config.config import Config
-from datacosmos.config.constants import KUBERNETES_SERVICE_HOST_ENV
+from datacosmos.config.constants import OPENCOSMOS_INTERNAL_CLUSTER_ENV
 
 
-class TestConfigWithKubernetesDetection:
-    """Tests for Config class with Kubernetes auto-detection."""
+class TestConfigWithOpenCosmosClusterDetection:
+    """Tests for Config class with Open Cosmos cluster auto-detection."""
 
     @pytest.fixture(autouse=True)
     def clean_environment(self, monkeypatch):
         """Clean environment before each test."""
-        monkeypatch.delenv(KUBERNETES_SERVICE_HOST_ENV, raising=False)
+        monkeypatch.delenv(OPENCOSMOS_INTERNAL_CLUSTER_ENV, raising=False)
         for k in list(os.environ):
-            if k.startswith(("AUTHENTICATION__", "STAC__", "DATACOSMOS_")):
+            if k.startswith(("AUTHENTICATION__", "STAC__", "DATACOSMOS_", "OPENCOSMOS_")):
                 monkeypatch.delenv(k, raising=False)
 
-    def test_config_uses_external_urls_outside_k8s(self, tmp_path, monkeypatch):
-        """Config should use external URLs when not running in Kubernetes."""
-        monkeypatch.delenv(KUBERNETES_SERVICE_HOST_ENV, raising=False)
+    def test_config_uses_external_urls_outside_oc_cluster(self, tmp_path, monkeypatch):
+        """Config should use external URLs when not running in Open Cosmos cluster."""
+        monkeypatch.delenv(OPENCOSMOS_INTERNAL_CLUSTER_ENV, raising=False)
 
         yaml_file = tmp_path / "config.yaml"
         yaml_file.write_text(
@@ -50,9 +50,9 @@ class TestConfigWithKubernetesDetection:
         assert cfg.datacosmos_public_cloud_storage.protocol == "https"
         assert cfg.datacosmos_public_cloud_storage.host == "app.open-cosmos.com"
 
-    def test_config_uses_internal_urls_inside_k8s(self, tmp_path, monkeypatch):
-        """Config should use internal URLs when running in Kubernetes."""
-        monkeypatch.setenv(KUBERNETES_SERVICE_HOST_ENV, "10.0.0.1")
+    def test_config_uses_internal_urls_inside_oc_cluster(self, tmp_path, monkeypatch):
+        """Config should use internal URLs when running in Open Cosmos cluster."""
+        monkeypatch.setenv(OPENCOSMOS_INTERNAL_CLUSTER_ENV, "true")
 
         yaml_file = tmp_path / "config.yaml"
         yaml_file.write_text(
@@ -82,9 +82,9 @@ class TestConfigWithKubernetesDetection:
         assert cfg.datacosmos_public_cloud_storage.protocol == "https"
         assert cfg.datacosmos_public_cloud_storage.host == "app.open-cosmos.com"
 
-    def test_explicit_config_overrides_k8s_detection(self, tmp_path, monkeypatch):
+    def test_explicit_config_overrides_oc_cluster_detection(self, tmp_path, monkeypatch):
         """Explicit YAML config should override auto-detected URLs."""
-        monkeypatch.setenv(KUBERNETES_SERVICE_HOST_ENV, "10.0.0.1")
+        monkeypatch.setenv(OPENCOSMOS_INTERNAL_CLUSTER_ENV, "true")
 
         yaml_file = tmp_path / "config.yaml"
         yaml_file.write_text(
@@ -107,15 +107,15 @@ class TestConfigWithKubernetesDetection:
 
         cfg = Config()
 
-        # Explicit config should override the K8s defaults
+        # Explicit config should override the OC cluster defaults
         assert cfg.stac.protocol == "https"
         assert cfg.stac.host == "custom.stac.host"
         assert cfg.stac.port == 8443
         assert cfg.stac.path == "/custom/stac"
 
-    def test_env_vars_override_k8s_detection(self, tmp_path, monkeypatch):
+    def test_env_vars_override_oc_cluster_detection(self, tmp_path, monkeypatch):
         """Environment variables should override auto-detected URLs."""
-        monkeypatch.setenv(KUBERNETES_SERVICE_HOST_ENV, "10.0.0.1")
+        monkeypatch.setenv(OPENCOSMOS_INTERNAL_CLUSTER_ENV, "true")
         monkeypatch.setenv("STAC__PROTOCOL", "https")
         monkeypatch.setenv("STAC__HOST", "env-override.host")
         monkeypatch.setenv("STAC__PORT", "9443")
@@ -137,7 +137,7 @@ class TestConfigWithKubernetesDetection:
 
         cfg = Config()
 
-        # Env vars should override the K8s defaults
+        # Env vars should override the OC cluster defaults
         assert cfg.stac.protocol == "https"
         assert cfg.stac.host == "env-override.host"
         assert cfg.stac.port == 9443

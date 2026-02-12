@@ -11,38 +11,49 @@ from datacosmos.config.constants import (
     DEFAULT_STAC_INTERNAL,
     DEFAULT_STORAGE_EXTERNAL,
     DEFAULT_STORAGE_INTERNAL,
-    KUBERNETES_SERVICE_HOST_ENV,
+    OPENCOSMOS_INTERNAL_CLUSTER_ENV,
 )
 
 
-def is_running_in_kubernetes() -> bool:
-    """Detect if the SDK is running inside a Kubernetes cluster.
+def is_running_in_opencosmos_cluster() -> bool:
+    """Detect if the SDK is running inside Open Cosmos's internal cluster.
 
-    Returns True if KUBERNETES_SERVICE_HOST environment variable is set,
-    which is automatically injected by Kubernetes into all pods.
+    Returns True if OPENCOSMOS_INTERNAL_CLUSTER environment variable is set.
+    This variable must be explicitly set in Open Cosmos workflows/jobs
+    to enable internal URL routing.
+
+    Note: We do NOT use generic KUBERNETES_SERVICE_HOST detection because
+    customers may run the SDK in their own K8s clusters, where Open Cosmos
+    internal services are not available.
     """
-    return KUBERNETES_SERVICE_HOST_ENV in os.environ
+    return os.environ.get(OPENCOSMOS_INTERNAL_CLUSTER_ENV, "").lower() in (
+        "true",
+        "1",
+        "yes",
+    )
 
 
 def get_default_stac() -> dict:
     """Get the default STAC URL based on environment.
 
-    Returns internal cluster URLs when running in Kubernetes,
+    Returns internal cluster URLs when running in Open Cosmos's cluster,
     otherwise returns external URLs.
     """
     return (
-        DEFAULT_STAC_INTERNAL if is_running_in_kubernetes() else DEFAULT_STAC_EXTERNAL
+        DEFAULT_STAC_INTERNAL
+        if is_running_in_opencosmos_cluster()
+        else DEFAULT_STAC_EXTERNAL
     )
 
 
 def get_default_storage() -> dict:
     """Get the default storage URL based on environment.
 
-    Returns internal cluster URLs when running in Kubernetes,
+    Returns internal cluster URLs when running in Open Cosmos's cluster,
     otherwise returns external URLs.
     """
     return (
         DEFAULT_STORAGE_INTERNAL
-        if is_running_in_kubernetes()
+        if is_running_in_opencosmos_cluster()
         else DEFAULT_STORAGE_EXTERNAL
     )
