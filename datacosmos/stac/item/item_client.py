@@ -153,6 +153,51 @@ class ItemClient:
         response = self.client.delete(url)
         check_api_response(response)
 
+    def register_item_to_project(
+        self, item: Item | DatacosmosItem, project_id: str
+    ) -> None:
+        """Register a STAC item to a project.
+
+        This method associates a STAC item with a specific project by creating
+        a relation. The item does not need to exist in the catalog first - it
+        can be registered directly to a project for project-scoped data.
+
+        Args:
+            item (Item | DatacosmosItem): The STAC item to register to the project.
+                Must have both an id and collection set.
+            project_id (str): The ID of the project to register the item to.
+
+        Raises:
+            ValueError: If the item has no id or collection set.
+            DatacosmosError: If the API returns an error response.
+
+        Example:
+            # Option 1: Register to project only (project-scoped data)
+            item_client.register_item_to_project(item, project_id="my-project-id")
+
+            # Option 2: Register to both catalog and project
+            item_client.create_item(item)  # catalog
+            item_client.register_item_to_project(item, project_id="my-project-id")
+        """
+        collection_id = self._get_collection_id(item, method="register_to_project")
+
+        if not item.id:
+            raise ValueError(
+                "Cannot register item to project: no item_id found on item"
+            )
+
+        # Build URL: /api/data/v0/scenario/relation
+        scenario_relation_url = self.client.config.project.as_domain_url().with_suffix(
+            "/relation"
+        )
+        body = {
+            "scenario": project_id,
+            "collection": collection_id,
+            "item": item.id,
+        }
+        response = self.client.post(scenario_relation_url, json=body)
+        check_api_response(response)
+
     def _paginate_items(self, url: str, body: dict) -> Generator[Item, None, None]:
         """Handle pagination for the STAC search POST endpoint.
 

@@ -496,6 +496,39 @@ for result in existence:
     print(f"{result.collection}/{result.item}: exists={result.exists}")
 ```
 
+#### 18. Register a Catalog Item to a Project
+
+Link an existing catalog item to a project. This creates a relation between the item and the project without copying the item:
+
+```python
+from pystac import Item
+from datetime import datetime
+
+from datacosmos.datacosmos_client import DatacosmosClient
+from datacosmos.stac.stac_client import STACClient
+
+client = DatacosmosClient()
+stac_client = STACClient(client)
+
+project_id = "your-project-uuid"
+
+# First, create/add the item to the catalog
+stac_item = Item(
+    id="catalog-item",
+    geometry={"type": "Point", "coordinates": [102.0, 0.5]},
+    bbox=[101.0, 0.0, 103.0, 1.0],
+    datetime=datetime.utcnow(),
+    properties={"processing:level": "l1a"},
+    collection="my-collection"
+)
+stac_client.add_item(stac_item)
+
+# Then register/link it to a project
+stac_client.register_item_to_project(stac_item, project_id)
+```
+
+This is useful when you want to associate existing catalog items with a project without duplicating the data.
+
 ## Uploading Files and Registering STAC Items
 
 You can use the `STACClient` class to upload files to the DataCosmos cloud storage and register a STAC item.
