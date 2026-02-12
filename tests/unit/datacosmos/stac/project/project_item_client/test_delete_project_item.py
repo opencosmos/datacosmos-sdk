@@ -35,5 +35,9 @@ def test_delete_project_item(mock_delete, mock_check_api_response, mock_fetch_to
 
     project_client.delete_project_item("scenario-123", "item-456")
 
-    mock_delete.assert_called_once()
+    mock_delete.assert_called_once_with(
+        project_client.project_base_url.with_suffix(
+            "/scenario/scenario-123/items/item-456"
+        )
+    )
     mock_check_api_response.assert_called_once_with(mock_response)

@@ -1,4 +1,4 @@
-"""Tests for ProjectItemClient.add_project_item method."""
+"""Tests for ProjectItemClient.create_project_item method."""
 
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
@@ -14,14 +14,14 @@ from datacosmos.stac.project.project_item_client import ProjectItemClient
 
 @patch("requests_oauthlib.OAuth2Session.fetch_token")
 @patch("datacosmos.stac.project.project_item_client.check_api_response")
-@patch.object(DatacosmosClient, "put")
-def test_add_project_item(mock_put, mock_check_api_response, mock_fetch_token):
-    """Test adding/upserting an item in a project/scenario."""
+@patch.object(DatacosmosClient, "post")
+def test_create_project_item(mock_post, mock_check_api_response, mock_fetch_token):
+    """Test creating a new item in a project/scenario."""
     mock_fetch_token.return_value = {"access_token": "mock-token", "expires_in": 3600}
 
     mock_response = MagicMock()
-    mock_response.status_code = 200
-    mock_put.return_value = mock_response
+    mock_response.status_code = 201
+    mock_post.return_value = mock_response
     mock_check_api_response.return_value = None
 
     config = Config(
@@ -38,7 +38,7 @@ def test_add_project_item(mock_put, mock_check_api_response, mock_fetch_token):
     project_client = ProjectItemClient(client)
 
     item = Item(
-        id="item-456",
+        id="new-item-789",
         geometry={
             "type": "Polygon",
             "coordinates": [
@@ -50,20 +50,18 @@ def test_add_project_item(mock_put, mock_check_api_response, mock_fetch_token):
         properties={},
     )
 
-    project_client.add_project_item("scenario-123", item)
+    project_client.create_project_item("scenario-123", item)
 
-    mock_put.assert_called_once_with(
-        project_client.project_base_url.with_suffix(
-            "/scenario/scenario-123/items/item-456"
-        ),
+    mock_post.assert_called_once_with(
+        project_client.project_base_url.with_suffix("/scenario/scenario-123/items"),
         json=item.to_dict(),
     )
     mock_check_api_response.assert_called_once_with(mock_response)
 
 
 @patch("requests_oauthlib.OAuth2Session.fetch_token")
-def test_add_project_item_no_id(mock_fetch_token):
-    """Test adding an item without ID raises ValueError."""
+def test_create_project_item_no_id(mock_fetch_token):
+    """Test creating an item without ID raises ValueError."""
     mock_fetch_token.return_value = {"access_token": "mock-token", "expires_in": 3600}
 
     config = Config(
@@ -93,4 +91,4 @@ def test_add_project_item_no_id(mock_fetch_token):
     )
 
     with pytest.raises(ValueError, match="no item_id found on item"):
-        project_client.add_project_item("scenario-123", item)
+        project_client.create_project_item("scenario-123", item)

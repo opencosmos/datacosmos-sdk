@@ -79,5 +79,7 @@ def test_list_project_items(mock_get, mock_check_api_response, mock_fetch_token)
     assert len(items) == 2
     assert items[0].id == "item-1"
     assert items[1].id == "item-2"
-    mock_get.assert_called_once()
+    mock_get.assert_called_once_with(
+        project_client.project_base_url.with_suffix("/scenario/scenario-123/items")
+    )
     mock_check_api_response.assert_called_once_with(mock_response)

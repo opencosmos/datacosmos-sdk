@@ -67,7 +67,10 @@ def test_search_project_items(mock_post, mock_check_api_response, mock_fetch_tok
 
     assert len(items) == 1
     assert items[0].id == "item-1"
-    mock_post.assert_called_once()
+    mock_post.assert_called_once_with(
+        project_client.project_base_url.with_suffix("/scenario/scenario-123/search"),
+        json={"collections": ["test-collection"], "limit": 10},
+    )
     mock_check_api_response.assert_called_once_with(mock_response)
 
 
@@ -106,4 +109,8 @@ def test_search_project_items_no_params(
     items = list(project_client.search_project_items("scenario-123"))
 
     assert len(items) == 0
-    mock_post.assert_called_once()
+    mock_post.assert_called_once_with(
+        project_client.project_base_url.with_suffix("/scenario/scenario-123/search"),
+        json={},
+    )
+    mock_check_api_response.assert_called_once_with(mock_response)

@@ -69,5 +69,9 @@ def test_get_project_item(mock_get, mock_check_api_response, mock_fetch_token):
 
     assert item.id == "item-123"
     assert item.properties["datetime"] == "2023-01-01T10:30:09Z"
-    mock_get.assert_called_once()
+    mock_get.assert_called_once_with(
+        project_client.project_base_url.with_suffix(
+            "/scenario/scenario-123/items/item-123"
+        )
+    )
     mock_check_api_response.assert_called_once_with(mock_response)

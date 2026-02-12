@@ -378,9 +378,12 @@ print(f"Item: {item.id}")
 
 #### 13. Add an Item to a Project
 
-Link an existing catalog item to a project:
+Add or update an item in a project (upsert):
 
 ```python
+from pystac import Item
+from datetime import datetime
+
 from datacosmos.datacosmos_client import DatacosmosClient
 from datacosmos.stac.stac_client import STACClient
 
@@ -388,10 +391,16 @@ client = DatacosmosClient()
 stac_client = STACClient(client)
 
 scenario_id = "your-scenario-uuid"
-collection_id = "catalog-collection-id"
-item_id = "catalog-item-id"
 
-stac_client.add_project_item(scenario_id, collection_id, item_id)
+item = Item(
+    id="my-item-id",
+    geometry={"type": "Point", "coordinates": [102.0, 0.5]},
+    bbox=[101.0, 0.0, 103.0, 1.0],
+    datetime=datetime.utcnow(),
+    properties={},
+)
+
+stac_client.add_project_item(scenario_id, item)
 ```
 
 #### 14. Create a Project Item
