@@ -81,6 +81,8 @@ def attempt_create_search_params(context):
         kwargs = {}
         if "start_date" in context.extra:
             kwargs["start_date"] = context.extra["start_date"]
+        else:
+            kwargs["start_date"] = "01/01/2024"  # Default start date
         if "end_date" in context.extra:
             kwargs["end_date"] = context.extra["end_date"]
         else:

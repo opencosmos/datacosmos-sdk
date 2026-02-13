@@ -3,27 +3,17 @@
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
-import pytest
 import responses
 from pystac import Item
 from pytest_bdd import given, when, then, parsers, scenarios
 
 from tests.bdd.conftest import (
     PROJECT_BASE_URL,
-    STAC_BASE_URL,
     sample_item_dict,
-    ScenarioContext,
 )
 
 # Load all scenarios from the feature file
 scenarios("../features/projects.feature")
-
-
-# Background step
-@given("a configured STAC client")
-def configured_stac_client(stac_client, context):
-    """Ensure stac_client fixture is available."""
-    context.extra["stac_client"] = stac_client
 
 
 # Helper to create project item response format

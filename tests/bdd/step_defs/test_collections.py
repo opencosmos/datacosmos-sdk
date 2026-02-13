@@ -15,13 +15,6 @@ from datacosmos.stac.collection.models.collection_update import CollectionUpdate
 scenarios("../features/collections.feature")
 
 
-# Background step (reuse from items)
-@given("a configured STAC client")
-def configured_stac_client(stac_client, context):
-    """Ensure stac_client fixture is available."""
-    context.extra["stac_client"] = stac_client
-
-
 # Fetch Collection Steps
 
 

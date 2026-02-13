@@ -1,8 +1,6 @@
 """Step definitions for storage operations."""
 
 import os
-import shutil
-import tempfile
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
@@ -19,13 +17,6 @@ from tests.bdd.conftest import (
 
 # Load all scenarios from the feature file
 scenarios("../features/storage.feature")
-
-
-# Background step
-@given("a configured STAC client")
-def configured_stac_client(stac_client, context):
-    """Ensure stac_client fixture is available."""
-    context.extra["stac_client"] = stac_client
 
 
 # Upload Steps
@@ -124,25 +115,17 @@ def item_with_assets(mock_responses, context):
 
 
 @given("asset files exist at the assets path")
-def assets_exist_at_path(context, request):
+def assets_exist_at_path(context, tmp_path):
     """Create temporary asset files."""
-    temp_dir = tempfile.mkdtemp()
-    context.assets_path = temp_dir
-    
-    # Register cleanup to run after the test
-    def cleanup():
-        if os.path.exists(temp_dir):
-            shutil.rmtree(temp_dir)
-    request.addfinalizer(cleanup)
+    context.assets_path = str(tmp_path)
     
     # Create fake asset files
     item = context.extra.get("item")
     if item:
         for asset_key, asset in item.assets.items():
             asset_filename = os.path.basename(asset.href)
-            asset_path = os.path.join(temp_dir, asset_filename)
-            with open(asset_path, "wb") as f:
-                f.write(b"fake asset content")
+            asset_path = tmp_path / asset_filename
+            asset_path.write_bytes(b"fake asset content")
 
 
 @given("a STAC item object without file path")
@@ -197,7 +180,7 @@ def upload_selected_assets(stac_client, context, asset1, asset2):
 
 
 @when("I upload with included_assets set to false")
-def upload_no_assets(stac_client, context):
+def upload_no_assets(stac_client, context, tmp_path):
     """Upload without assets."""
     with patch.object(stac_client.uploader, "upload_item") as mock_upload:
         mock_upload.return_value = MagicMock(
@@ -206,7 +189,7 @@ def upload_no_assets(stac_client, context):
         )
         context.upload_result = stac_client.upload_item(
             item=context.extra["item"],
-            assets_path=context.assets_path or tempfile.mkdtemp(),
+            assets_path=context.assets_path or str(tmp_path),
             collection_id=context.collection_id,
             included_assets=False,
         )
@@ -359,35 +342,33 @@ def asset_exists_locally(context):
 
 
 @when("I download all assets")
-def download_all_assets(stac_client, context):
+def download_all_assets(stac_client, context, tmp_path):
     """Download all assets."""
     with patch.object(stac_client.downloader, "download_assets") as mock_download:
         mock_item = MagicMock()
         mock_item.id = context.item_id
         mock_download.return_value = (mock_item, ["data", "thumbnail"], [])
         
-        temp_dir = tempfile.mkdtemp()
         context.download_result = stac_client.download_assets(
             item=context.item_id,
             collection_id=context.collection_id,
-            target_path=temp_dir,
+            target_path=str(tmp_path),
         )
         context.result = "downloaded"
 
 
 @when(parsers.parse('I download with included_assets "{asset_name}"'))
-def download_selected_assets(stac_client, context, asset_name):
+def download_selected_assets(stac_client, context, asset_name, tmp_path):
     """Download selected assets."""
     with patch.object(stac_client.downloader, "download_assets") as mock_download:
         mock_item = MagicMock()
         mock_item.id = context.item_id
         mock_download.return_value = (mock_item, [asset_name], [])
         
-        temp_dir = tempfile.mkdtemp()
         context.download_result = stac_client.download_assets(
             item=context.item_id,
             collection_id=context.collection_id,
-            target_path=temp_dir,
+            target_path=str(tmp_path),
             included_assets=[asset_name],
         )
         context.extra["downloaded_asset"] = asset_name
@@ -395,18 +376,17 @@ def download_selected_assets(stac_client, context, asset_name):
 
 
 @when("I download with overwrite set to false")
-def download_no_overwrite(stac_client, context):
+def download_no_overwrite(stac_client, context, tmp_path):
     """Download without overwriting."""
     with patch.object(stac_client.downloader, "download_assets") as mock_download:
         mock_item = MagicMock()
         mock_item.id = context.item_id
         mock_download.return_value = (mock_item, [], [])  # Empty because skipped
         
-        temp_dir = tempfile.mkdtemp()
         context.download_result = stac_client.download_assets(
             item=context.item_id,
             collection_id=context.collection_id,
-            target_path=temp_dir,
+            target_path=str(tmp_path),
             overwrite=False,
         )
         context.result = "downloaded_skipped"

@@ -17,13 +17,6 @@ from datacosmos.stac.item.models.catalog_search_parameters import CatalogSearchP
 scenarios("../features/items.feature")
 
 
-# Background step
-@given("a configured STAC client")
-def configured_stac_client(stac_client, context):
-    """Ensure stac_client fixture is available."""
-    context.extra["stac_client"] = stac_client
-
-
 # Fetch Item Steps
 
 

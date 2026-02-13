@@ -1,6 +1,5 @@
 """Shared fixtures for BDD tests."""
 
-import json
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
@@ -8,7 +7,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import responses
-from pytest_bdd import then, parsers
+from pytest_bdd import then, parsers, given
 
 from datacosmos.config.config import Config
 from datacosmos.config.models.m2m_authentication_config import M2MAuthenticationConfig
@@ -36,14 +35,14 @@ class ScenarioContext:
     # Items
     item_id: str = ""
     collection_id: str = ""
-    items: list = field(default_factory=list)
+    items: list[dict[str, Any]] = field(default_factory=list)
 
     # Collections
-    collections: list = field(default_factory=list)
+    collections: list[dict[str, Any]] = field(default_factory=list)
 
     # Projects
     scenario_id: str = ""
-    project_items: list = field(default_factory=list)
+    project_items: list[dict[str, Any]] = field(default_factory=list)
 
     # Storage
     assets_path: str = ""
@@ -55,7 +54,7 @@ class ScenarioContext:
     search_params: Any = None
 
     # Additional context
-    extra: dict = field(default_factory=dict)
+    extra: dict[str, Any] = field(default_factory=dict)
 
 
 @pytest.fixture
@@ -271,6 +270,12 @@ def sample_error_response(
 
 
 # Consolidated step definitions shared across all feature files
+
+
+@given("a configured STAC client")
+def configured_stac_client(stac_client, context):
+    """Ensure stac_client fixture is available."""
+    context.extra["stac_client"] = stac_client
 
 
 @then(parsers.parse("a DatacosmosError should be raised with status {status:d}"))

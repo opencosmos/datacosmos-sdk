@@ -2,10 +2,7 @@
 
 from unittest.mock import MagicMock
 
-import pytest
 from pytest_bdd import given, when, then, parsers, scenarios
-
-from tests.bdd.conftest import ScenarioContext
 
 # Load all scenarios from the feature file
 scenarios("../features/error_handling.feature")

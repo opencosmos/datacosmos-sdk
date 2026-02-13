@@ -89,7 +89,7 @@ jobs:
       - name: Activate virtual environment & run unit tests
         run: |
           source .venv/bin/activate
-          pytest tests/unit/ -v
+          pytest tests/unit/ tests/test_pass.py -v
 
   bdd-test:
     name: BDD tests

@@ -3,15 +3,13 @@
 from datetime import datetime, timezone, timedelta
 from unittest.mock import MagicMock, patch
 
-import pytest
 import responses
-from pytest_bdd import given, when, then, parsers, scenarios
+from pytest_bdd import given, when, then, scenarios
 from requests import Session
 
 from tests.bdd.conftest import (
     TOKEN_URL,
     STAC_BASE_URL,
-    ScenarioContext,
 )
 from datacosmos.config.config import Config
 from datacosmos.config.models.m2m_authentication_config import M2MAuthenticationConfig
