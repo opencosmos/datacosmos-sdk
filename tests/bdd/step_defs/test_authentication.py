@@ -228,15 +228,12 @@ def session_no_auth(context):
 
 
 @when("I create a DatacosmosClient with the session")
-def create_client_with_session(context):
+def create_client_with_session(context, mock_config):
     """Create client with injected session."""
-    with patch(
-        "datacosmos.datacosmos_client.DatacosmosClient._authenticate_and_initialize_client"
-    ) as mock_auth:
-        mock_auth.return_value = context.extra["session"]
-        
-        from datacosmos.datacosmos_client import DatacosmosClient
-        context.result = DatacosmosClient(http_session=context.extra["session"])
+    from datacosmos.datacosmos_client import DatacosmosClient
+    
+    # Use mock_config which has valid authentication, but the session will be used instead
+    context.result = DatacosmosClient(config=mock_config, http_session=context.extra["session"])
 
 
 @when("I attempt to create a DatacosmosClient with the session")

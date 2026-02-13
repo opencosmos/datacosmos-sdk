@@ -84,11 +84,38 @@ def mock_responses():
 @pytest.fixture
 def mock_config():
     """Provide a mock configuration for the DatacosmosClient."""
+    from datacosmos.config.models.url import URL
+    
+    # Explicitly set URLs to match our test constants (not relying on config.yaml)
     return Config(
         authentication=M2MAuthenticationConfig(
             client_id="test-client-id",
             client_secret="test-client-secret",
-        )
+        ),
+        stac=URL(
+            protocol="https",
+            host="test.app.open-cosmos.com",
+            port=443,
+            path="/api/data/v0/stac",
+        ),
+        datacosmos_cloud_storage=URL(
+            protocol="https",
+            host="test.app.open-cosmos.com",
+            port=443,
+            path="/api/data/v0/storage",
+        ),
+        datacosmos_public_cloud_storage=URL(
+            protocol="https",
+            host="test.app.open-cosmos.com",
+            port=443,
+            path="/api/data/v0/storage",
+        ),
+        project=URL(
+            protocol="https",
+            host="test.app.open-cosmos.com",
+            port=443,
+            path="/api/data/v0",
+        ),
     )
 
 
