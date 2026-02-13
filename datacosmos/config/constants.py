@@ -21,6 +21,9 @@ DEFAULT_STAC = dict(
 DEFAULT_STORAGE = dict(
     protocol="https", host="app.open-cosmos.com", port=443, path="/api/data/v0/storage"
 )
+DEFAULT_PROJECT = dict(
+    protocol="https", host="app.open-cosmos.com", port=443, path="/api/data/v0"
+)
 
 # ---- Config file path ----
 DEFAULT_CONFIG_YAML = "config/config.yaml"

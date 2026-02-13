@@ -13,6 +13,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from datacosmos.config.auth.factory import normalize_authentication, parse_auth_config
 from datacosmos.config.constants import (
     DEFAULT_CONFIG_YAML,
+    DEFAULT_PROJECT,
     DEFAULT_STAC,
     DEFAULT_STORAGE,
 )
@@ -43,6 +44,7 @@ class Config(BaseSettings):
     datacosmos_public_cloud_storage: URL = Field(
         default_factory=lambda: URL(**DEFAULT_STORAGE)
     )
+    project: URL = Field(default_factory=lambda: URL(**DEFAULT_PROJECT))
 
     @classmethod
     def settings_customise_sources(cls, *args, **kwargs):
