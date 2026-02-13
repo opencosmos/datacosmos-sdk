@@ -7,6 +7,8 @@ appropriate configuration defaults.
 import os
 
 from datacosmos.config.constants import (
+    DEFAULT_PROJECT,
+    DEFAULT_PROJECT_INTERNAL,
     DEFAULT_STAC_EXTERNAL,
     DEFAULT_STAC_INTERNAL,
     DEFAULT_STORAGE_EXTERNAL,
@@ -56,4 +58,17 @@ def get_default_storage() -> dict:
         DEFAULT_STORAGE_INTERNAL
         if is_running_in_opencosmos_cluster()
         else DEFAULT_STORAGE_EXTERNAL
+    )
+
+
+def get_default_project() -> dict:
+    """Get the default project URL based on environment.
+
+    Returns internal cluster URLs when running in Open Cosmos's cluster,
+    otherwise returns external URLs.
+    """
+    return (
+        DEFAULT_PROJECT_INTERNAL
+        if is_running_in_opencosmos_cluster()
+        else DEFAULT_PROJECT
     )

@@ -43,6 +43,12 @@ DEFAULT_STORAGE_INTERNAL = dict(
     port=80,
     path="/",
 )
+DEFAULT_PROJECT_INTERNAL = dict(
+    protocol="http",
+    host="stac-scenario-service.default.svc.cluster.local",
+    port=80,
+    path="",
+)
 
 # Legacy aliases for backward compatibility
 DEFAULT_STAC = DEFAULT_STAC_EXTERNAL
