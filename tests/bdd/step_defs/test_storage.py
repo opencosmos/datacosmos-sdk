@@ -201,7 +201,7 @@ def upload_no_assets(stac_client, context):
         )
         context.upload_result = stac_client.upload_item(
             item=context.extra["item"],
-            assets_path=context.assets_path or "/tmp",
+            assets_path=context.assets_path or tempfile.mkdtemp(),
             collection_id=context.collection_id,
             included_assets=False,
         )
