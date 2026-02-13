@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../project-service"
+		},
+		{
+			"path": "../conida/geoapp-sdk"
+		}
+	],
+	"settings": {}
+}

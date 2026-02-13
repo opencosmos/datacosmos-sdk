@@ -1,11 +1,11 @@
 """Step definitions for storage operations."""
 
 import os
+import shutil
 import tempfile
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
-import pytest
 import responses
 from pystac import Asset, Item
 from pytest_bdd import given, when, then, parsers, scenarios
@@ -15,7 +15,6 @@ from tests.bdd.conftest import (
     STORAGE_BASE_URL,
     PUBLIC_STORAGE_BASE_URL,
     sample_item_dict,
-    ScenarioContext,
 )
 
 # Load all scenarios from the feature file
@@ -125,10 +124,16 @@ def item_with_assets(mock_responses, context):
 
 
 @given("asset files exist at the assets path")
-def assets_exist_at_path(context):
+def assets_exist_at_path(context, request):
     """Create temporary asset files."""
     temp_dir = tempfile.mkdtemp()
     context.assets_path = temp_dir
+    
+    # Register cleanup to run after the test
+    def cleanup():
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir)
+    request.addfinalizer(cleanup)
     
     # Create fake asset files
     item = context.extra.get("item")

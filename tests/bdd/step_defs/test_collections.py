@@ -1,6 +1,5 @@
 """Step definitions for STAC collection operations."""
 
-import pytest
 import responses
 from pystac import Collection, Extent, SpatialExtent, TemporalExtent
 from pytest_bdd import given, when, then, parsers, scenarios
@@ -9,7 +8,6 @@ from tests.bdd.conftest import (
     STAC_BASE_URL,
     sample_collection_dict,
     sample_collections_response,
-    ScenarioContext,
 )
 from datacosmos.stac.collection.models.collection_update import CollectionUpdate
 
@@ -266,10 +264,3 @@ def attempt_delete_collection(stac_client, context, collection_id):
 def verify_collection_deleted(context):
     """Verify collection was deleted."""
     assert context.result == "deleted"
-
-
-# Error handling (reuse from items)
-@then(parsers.parse("a DatacosmosError should be raised with status {status:d}"))
-def verify_datacosmos_error(context, status):
-    """Verify a DatacosmosError was raised."""
-    assert context.exception is not None

@@ -166,7 +166,9 @@ def attempt_get_project_item(stac_client, context, item_id, scenario_id):
     try:
         with patch.object(stac_client, "get_project_item") as mock_get:
             from datacosmos.exceptions import DatacosmosError
-            mock_get.side_effect = DatacosmosError("Item not found", status_code=404)
+            error = DatacosmosError("Item not found")
+            setattr(error, "status_code", 404)
+            mock_get.side_effect = error
             context.result = stac_client.get_project_item(scenario_id, item_id)
     except Exception as e:
         context.exception = e
@@ -442,18 +444,3 @@ def register_item_to_project(stac_client, context, project_id):
 def verify_item_linked(context):
     """Verify item linked to project."""
     assert context.result == "registered"
-
-
-# Error handling
-@then(parsers.parse("a DatacosmosError should be raised with status {status:d}"))
-def verify_datacosmos_error(context, status):
-    """Verify DatacosmosError raised."""
-    assert context.exception is not None
-
-
-@then(parsers.parse('a ValueError should be raised with message containing "{message}"'))
-def verify_value_error(context, message):
-    """Verify ValueError with message."""
-    assert context.exception is not None
-    assert isinstance(context.exception, ValueError)
-    assert message.lower() in str(context.exception).lower()

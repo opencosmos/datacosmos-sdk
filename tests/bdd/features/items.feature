@@ -89,7 +89,7 @@ Feature: STAC Item Operations
     When I delete the item
     Then the item should be removed from the catalog
 
-  Scenario: Delete non-existent item returns error  
+  Scenario: Delete non-existent item returns error
     Given no item "missing" exists in collection "test-collection"
     When I attempt to delete item "missing" from collection "test-collection"
     Then a DatacosmosError should be raised with status 404

@@ -1,6 +1,5 @@
 """Step definitions for STAC item operations."""
 
-import pytest
 import responses
 from pystac import Item
 from pytest_bdd import given, when, then, parsers, scenarios
@@ -10,7 +9,6 @@ from tests.bdd.conftest import (
     STAC_BASE_URL,
     sample_item_dict,
     sample_search_response,
-    ScenarioContext,
 )
 from datacosmos.stac.item.models.item_update import ItemUpdate
 from datacosmos.stac.item.models.catalog_search_parameters import CatalogSearchParameters
@@ -82,15 +80,6 @@ def verify_item_received(context, item_id):
     """Verify the fetched item has the expected ID."""
     assert context.result is not None
     assert context.result.id == item_id
-
-
-@then(parsers.parse("a DatacosmosError should be raised with status {status:d}"))
-def verify_datacosmos_error(context, status):
-    """Verify a DatacosmosError was raised with expected status."""
-    from datacosmos.exceptions import DatacosmosError
-
-    assert context.exception is not None
-    assert isinstance(context.exception, (DatacosmosError, Exception))
 
 
 # Search Items Steps
@@ -227,7 +216,7 @@ def verify_all_pages_yielded(context):
 def verify_pagination_stopped(context):
     """Verify pagination completed without error."""
     assert context.result is not None
-    assert context.exception is None
+    assert getattr(context, "exception", None) is None
 
 
 # Create Item Steps
@@ -351,14 +340,14 @@ def attempt_add_item(stac_client, context):
 def verify_item_created(context):
     """Verify item was created."""
     assert context.result == "created"
-    assert context.exception is None
+    assert getattr(context, "exception", None) is None
 
 
 @then("the item should be added via PUT request")
 def verify_item_added(context):
     """Verify item was added."""
     assert context.result == "added"
-    assert context.exception is None
+    assert getattr(context, "exception", None) is None
 
 
 @then("the item should have self and parent links populated")
@@ -366,14 +355,6 @@ def verify_links_populated(context):
     """Verify links were auto-populated."""
     # The add operation should succeed, links are populated server-side in mock
     assert context.result == "added"
-
-
-@then(parsers.parse('a ValueError should be raised with message containing "{message}"'))
-def verify_value_error(context, message):
-    """Verify ValueError with expected message."""
-    assert context.exception is not None
-    assert isinstance(context.exception, ValueError)
-    assert message.lower() in str(context.exception).lower()
 
 
 # Update Item Steps

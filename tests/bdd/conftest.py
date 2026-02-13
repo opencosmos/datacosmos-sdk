@@ -8,6 +8,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import responses
+from pytest_bdd import then, parsers
 
 from datacosmos.config.config import Config
 from datacosmos.config.models.m2m_authentication_config import M2MAuthenticationConfig
@@ -267,3 +268,22 @@ def sample_error_response(
         "error": error_code,
         "message": message,
     }
+
+
+# Consolidated step definitions shared across all feature files
+
+
+@then(parsers.parse("a DatacosmosError should be raised with status {status:d}"))
+def verify_datacosmos_error(context, status):
+    """Verify a DatacosmosError was raised with expected status."""
+    from datacosmos.exceptions import DatacosmosError
+    assert getattr(context, "exception", None) is not None
+    assert isinstance(context.exception, (DatacosmosError, Exception))
+
+
+@then(parsers.parse('a ValueError should be raised with message containing "{message}"'))
+def verify_value_error(context, message):
+    """Verify ValueError with expected message."""
+    assert getattr(context, "exception", None) is not None
+    assert isinstance(context.exception, ValueError)
+    assert message.lower() in str(context.exception).lower()
