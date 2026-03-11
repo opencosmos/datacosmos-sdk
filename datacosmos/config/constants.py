@@ -14,16 +14,45 @@ DEFAULT_LOCAL_REDIRECT_PORT = 8765
 DEFAULT_LOCAL_SCOPES = "openid profile email offline_access"
 DEFAULT_LOCAL_CACHE_FILE = "~/.datacosmos/token_cache.json"
 
+# ---- Open Cosmos cluster detection ----
+# Custom environment variable to identify Open Cosmos's internal cluster.
+# Only when this is set will the SDK use internal cluster URLs.
+# This prevents customers running the SDK in their own K8s clusters
+# from incorrectly trying to use Open Cosmos internal services.
+OPENCOSMOS_INTERNAL_CLUSTER_ENV = "OPENCOSMOS_INTERNAL_CLUSTER"
+
 # ---- Service URLs ----
-DEFAULT_STAC = dict(
+# External URLs (default, used outside Kubernetes)
+DEFAULT_STAC_EXTERNAL = dict(
     protocol="https", host="app.open-cosmos.com", port=443, path="/api/data/v0/stac"
 )
-DEFAULT_STORAGE = dict(
+DEFAULT_STORAGE_EXTERNAL = dict(
     protocol="https", host="app.open-cosmos.com", port=443, path="/api/data/v0/storage"
 )
 DEFAULT_PROJECT = dict(
     protocol="https", host="app.open-cosmos.com", port=443, path="/api/data/v0"
 )
+
+# Internal URLs (used inside Kubernetes cluster)
+DEFAULT_STAC_INTERNAL = dict(
+    protocol="http", host="catalog.default.svc.cluster.local", port=80, path="/"
+)
+DEFAULT_STORAGE_INTERNAL = dict(
+    protocol="http",
+    host="storage.default.svc.cluster.local",
+    port=80,
+    path="/",
+)
+DEFAULT_PROJECT_INTERNAL = dict(
+    protocol="http",
+    host="stac-scenario-service.default.svc.cluster.local",
+    port=80,
+    path="",
+)
+
+# Legacy aliases for backward compatibility
+DEFAULT_STAC = DEFAULT_STAC_EXTERNAL
+DEFAULT_STORAGE = DEFAULT_STORAGE_EXTERNAL
 
 # ---- Config file path ----
 DEFAULT_CONFIG_YAML = "config/config.yaml"

@@ -11,11 +11,11 @@ from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from datacosmos.config.auth.factory import normalize_authentication, parse_auth_config
-from datacosmos.config.constants import (
-    DEFAULT_CONFIG_YAML,
-    DEFAULT_PROJECT,
-    DEFAULT_STAC,
-    DEFAULT_STORAGE,
+from datacosmos.config.constants import DEFAULT_CONFIG_YAML, DEFAULT_STORAGE_EXTERNAL
+from datacosmos.config.environment import (
+    get_default_project,
+    get_default_stac,
+    get_default_storage,
 )
 from datacosmos.config.loaders.yaml_source import yaml_settings_source
 from datacosmos.config.models.authentication_config import AuthenticationConfig
@@ -37,14 +37,14 @@ class Config(BaseSettings):
 
     authentication: Optional[AuthenticationConfig] = None
 
-    stac: URL = Field(default_factory=lambda: URL(**DEFAULT_STAC))
+    stac: URL = Field(default_factory=lambda: URL(**get_default_stac()))
     datacosmos_cloud_storage: URL = Field(
-        default_factory=lambda: URL(**DEFAULT_STORAGE)
+        default_factory=lambda: URL(**get_default_storage())
     )
     datacosmos_public_cloud_storage: URL = Field(
-        default_factory=lambda: URL(**DEFAULT_STORAGE)
+        default_factory=lambda: URL(**DEFAULT_STORAGE_EXTERNAL)
     )
-    project: URL = Field(default_factory=lambda: URL(**DEFAULT_PROJECT))
+    project: URL = Field(default_factory=lambda: URL(**get_default_project()))
 
     @classmethod
     def settings_customise_sources(cls, *args, **kwargs):
