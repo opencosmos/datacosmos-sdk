@@ -68,6 +68,61 @@ config = Config(
 client = DatacosmosClient(config=config)
 ```
 
+### Using a Pre-obtained Token
+
+If you already have an access token (e.g., from an external authentication flow), you can pass it directly:
+
+```python
+from datacosmos.datacosmos_client import DatacosmosClient
+
+client = DatacosmosClient(token="your-access-token")
+```
+
+**Note:** When using a token directly, the client will not attempt to refresh it automatically. You are responsible for managing token expiration.
+
+### Using a Pre-authenticated Session
+
+For advanced use cases where you manage your own HTTP session (e.g., with custom middleware or authentication), you can inject it:
+
+```python
+import requests
+from datacosmos.datacosmos_client import DatacosmosClient
+
+# Create a session with your own authentication setup
+session = requests.Session()
+session.headers.update({"Authorization": "Bearer your-token"})
+
+client = DatacosmosClient(http_session=session)
+```
+
+You can also use an OAuth2Session:
+
+```python
+from requests_oauthlib import OAuth2Session
+from datacosmos.datacosmos_client import DatacosmosClient
+
+oauth_session = OAuth2Session(client_id="your-client-id")
+oauth_session.token = {
+    "access_token": "your-access-token",
+    "expires_in": 3600
+}
+
+client = DatacosmosClient(http_session=oauth_session)
+```
+
+### Local User Authentication (Interactive)
+
+For interactive local development, you can use browser-based authentication:
+
+```yaml
+# config/config.yaml
+authentication:
+    type: local
+    client_id: {client_id}
+```
+
+This opens a browser window for login and caches the token locally at `~/.datacosmos/token_cache.json`.
+
 ### Configuration Options and Defaults
 
 | Setting                      | Default Value                                     | Override Method |
@@ -570,16 +625,134 @@ assets_path = "path/to/assets"
 stac_client.upload_item(stac_item, assets_path)
 ```
 
-## Error Handling
+### Download Assets
 
-Use `try-except` blocks to handle API errors gracefully:
+Download all assets of a STAC item to a local directory:
 
 ```python
+from datacosmos.datacosmos_client import DatacosmosClient
+from datacosmos.stac.stac_client import STACClient
+
+client = DatacosmosClient()
+stac_client = STACClient(client)
+
+# Download assets for an item
+item, successes, failures = stac_client.download_assets(
+    item="item-id",
+    collection_id="collection-id",
+    target_path="./downloads",
+    included_assets=True,  # True for all assets, or list of asset keys
+    overwrite=True,
+    max_workers=4
+)
+
+print(f"Downloaded {len(successes)} assets")
+if failures:
+    print(f"Failed: {failures}")
+```
+
+### Delete Item with Assets
+
+Delete a STAC item and optionally remove its assets from storage:
+
+```python
+from datacosmos.datacosmos_client import DatacosmosClient
+from datacosmos.stac.stac_client import STACClient
+
+client = DatacosmosClient()
+stac_client = STACClient(client)
+
+# Delete item and all its assets from storage
+result = stac_client.delete_item_with_assets(
+    item_id="item-id",
+    collection_id="collection-id",
+    delete_from_storage=True,  # Set to False to keep files in storage
+    max_workers=4
+)
+
+print(f"Item deleted: {result.item_deleted}")
+print(f"Assets deleted: {result.assets_deleted}")
+print(f"Assets failed: {result.assets_failed}")
+```
+
+### Load and Save Items
+
+Utility methods for working with STAC items as JSON files:
+
+```python
+from datacosmos.stac.storage.uploader import Uploader
+
+# Load an item from a JSON file
+item = Uploader.load_item("./data/my-item.json")
+
+# Save an item to a directory (creates {item.id}.json)
+saved_path = Uploader.save_item(item, "./output")
+print(f"Saved to: {saved_path}")
+```
+
+## Error Handling
+
+The SDK provides specific exception types for different error scenarios:
+
+```python
+from datacosmos.exceptions import (
+    AuthenticationError,
+    DatacosmosError,
+    HTTPError,
+    ItemNotFoundError,
+    CollectionError,
+    DeleteError,
+    StorageError,
+    UploadError,
+    StacValidationError,
+)
+
 try:
-    data = client.get_data("dataset_id")
-    print(data)
-except Exception as e:
-    print(f"An error occurred: {e}")
+    item = stac_client.fetch_item(item_id="missing", collection_id="col")
+except ItemNotFoundError:
+    print("Item does not exist")
+except AuthenticationError:
+    print("Authentication failed - check your credentials")
+except HTTPError as e:
+    print(f"HTTP error: {e.status_code} - {e.message}")
+except DatacosmosError as e:
+    print(f"General API error: {e}")
+```
+
+### Exception Types
+
+| Exception | When Raised |
+|-----------|-----------|
+| `AuthenticationError` | Authentication fails (invalid credentials, expired token) |
+| `HTTPError` | Non-2xx HTTP response from the API |
+| `ItemNotFoundError` | Requested STAC item does not exist |
+| `CollectionError` | Collection operation fails |
+| `DeleteError` | Delete operation fails |
+| `StorageError` | Storage operation fails (upload/download) |
+| `UploadError` | File upload fails |
+| `StacValidationError` | STAC item/collection validation fails |
+| `DatacosmosError` | Base exception for all SDK errors |
+
+## Advanced Features
+
+### Request and Response Hooks
+
+You can add custom hooks to intercept requests and responses for logging, metrics, or custom processing:
+
+```python
+from datacosmos.datacosmos_client import DatacosmosClient
+
+def log_request(method, url, *args, **kwargs):
+    print(f"Request: {method} {url}")
+
+def log_response(response):
+    print(f"Response: {response.status_code}")
+
+client = DatacosmosClient(
+    config={...},
+    request_hooks=[log_request],
+    response_hooks=[log_response]
+)
 ```
 
 ## Contributing

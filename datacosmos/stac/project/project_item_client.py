@@ -32,9 +32,7 @@ class ProjectItemClient:
         self.client = client
         self.project_base_url = client.config.project.as_domain_url()
 
-    def list_project_items(
-        self, scenario_id: str
-    ) -> Generator[Item, None, None]:
+    def list_project_items(self, scenario_id: str) -> Generator[Item, None, None]:
         """List all items in a project/scenario.
 
         Args:
@@ -102,9 +100,7 @@ class ProjectItemClient:
         response = self.client.post(url, json=item_json)
         check_api_response(response)
 
-    def add_project_item(
-        self, scenario_id: str, item: Item | DatacosmosItem
-    ) -> None:
+    def add_project_item(self, scenario_id: str, item: Item | DatacosmosItem) -> None:
         """Add or update an item in a project/scenario (upsert).
 
         Args:

@@ -22,6 +22,7 @@ from datacosmos.auth.base_authenticator import BaseAuthenticator
 from datacosmos.auth.local_authenticator import LocalAuthenticator
 from datacosmos.auth.m2m_authenticator import M2MAuthenticator
 from datacosmos.config.config import Config
+from datacosmos.config.models.no_authentication_config import NoAuthenticationConfig
 from datacosmos.exceptions import AuthenticationError, DatacosmosError, HTTPError
 
 _log = logging.getLogger(__name__)
@@ -39,6 +40,7 @@ class DatacosmosClient:
         self,
         config: Optional[Config | Any] = None,
         http_session: Optional[requests.Session | OAuth2Session] = None,
+        token: Optional[str] = None,
         request_hooks: Optional[List[RequestHook]] = None,
         response_hooks: Optional[List[ResponseHook]] = None,
     ):
@@ -47,10 +49,14 @@ class DatacosmosClient:
         Args:
             config (Optional[Config]): Configuration object (only needed when SDK creates its own session).
             http_session (Optional[requests.Session]): Pre-authenticated session.
+            token (Optional[str]): A pre-obtained access token. When provided, the client
+                creates a session with a Bearer Authorization header. Cannot be combined
+                with config or http_session.
             request_hooks (Optional[List[RequestHook]]): A list of functions to be called before each request.
             response_hooks (Optional[List[ResponseHook]]): A list of functions to be called after each successful response.
         """
-        self.config = self._coerce_config(config)
+        self._validate_init_params(config, http_session, token)
+
         self.token: Optional[str] = None
         self.token_expiry: Optional[datetime] = None
         self._refresh_lock = threading.Lock()
@@ -58,14 +64,66 @@ class DatacosmosClient:
         self._request_hooks = request_hooks or []
         self._response_hooks = response_hooks or []
 
-        if http_session is not None:
-            self._init_with_injected_session(http_session)
+        if token is not None:
+            self._init_with_token(token)
             return
 
+        if http_session is not None:
+            self._init_with_injected_session(http_session, config)
+            return
+
+        self.config = self._coerce_config(config)
         self._owns_session = True
         self._http_client = self._authenticate_and_initialize_client()
 
     # --------------------------- init helpers ---------------------------
+
+    def _validate_init_params(
+        self,
+        config: Optional[Config | Any],
+        http_session: Optional[requests.Session | OAuth2Session],
+        token: Optional[str],
+    ) -> None:
+        """Validate mutual exclusivity of initialization parameters.
+
+        Args:
+            config: Configuration object.
+            http_session: Pre-authenticated session.
+            token: Pre-obtained access token.
+
+        Raises:
+            AuthenticationError: If token is combined with config or http_session.
+        """
+        if token is not None:
+            if http_session is not None:
+                raise AuthenticationError(
+                    "Cannot provide both 'token' and 'http_session'. "
+                    "Use 'token' for simple token-based auth, or 'http_session' "
+                    "for a pre-configured session."
+                )
+            if config is not None:
+                raise AuthenticationError(
+                    "Cannot provide both 'token' and 'config'. "
+                    "Use 'token' for simple token-based auth, or 'config' "
+                    "for M2M/local authentication flows."
+                )
+
+    def _init_with_token(self, token: str) -> None:
+        """Initialize the client with a pre-obtained access token.
+
+        Creates a requests.Session with the token set in the Authorization header.
+        The client will not attempt to refresh the token automatically.
+
+        Args:
+            token: The access token to use for authentication.
+        """
+        self._http_client = requests.Session()
+        self._http_client.headers.update({"Authorization": f"Bearer {token}"})
+        self._owns_session = False
+        self.token = token
+        self.token_expiry = None
+        # Use NoAuthenticationConfig to skip credential validation
+        self.config = Config(authentication=NoAuthenticationConfig(type="none"))
 
     def _coerce_config(self, cfg: Optional[Config | Any]) -> Config:
         if cfg is None:
@@ -82,10 +140,18 @@ class DatacosmosClient:
             ) from e
 
     def _init_with_injected_session(
-        self, http_session: requests.Session | OAuth2Session
+        self,
+        http_session: requests.Session | OAuth2Session,
+        config: Optional[Config | Any] = None,
     ) -> None:
         self._http_client = http_session
         self._owns_session = False
+
+        # Use NoAuthenticationConfig when no config provided (skip credential validation)
+        if config is None:
+            self.config = Config(authentication=NoAuthenticationConfig(type="none"))
+        else:
+            self.config = self._coerce_config(config)
 
         token_data = self._extract_token_data(http_session)
         self.token = token_data.get("access_token")

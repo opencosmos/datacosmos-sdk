@@ -23,14 +23,26 @@ from datacosmos.config.models.local_user_account_authentication_config import (
     LocalUserAccountAuthenticationConfig,
 )
 from datacosmos.config.models.m2m_authentication_config import M2MAuthenticationConfig
+from datacosmos.config.models.no_authentication_config import NoAuthenticationConfig
 from datacosmos.exceptions import AuthenticationError
 
-AuthModel = Union[M2MAuthenticationConfig, LocalUserAccountAuthenticationConfig]
+AuthModel = Union[
+    M2MAuthenticationConfig,
+    LocalUserAccountAuthenticationConfig,
+    NoAuthenticationConfig,
+]
 
 
 def parse_auth_config(raw: dict | AuthModel | None) -> Optional[AuthModel]:
     """Turn a raw dict (e.g., from YAML/env) into a concrete auth model."""
-    if isinstance(raw, (M2MAuthenticationConfig, LocalUserAccountAuthenticationConfig)):
+    if isinstance(
+        raw,
+        (
+            M2MAuthenticationConfig,
+            LocalUserAccountAuthenticationConfig,
+            NoAuthenticationConfig,
+        ),
+    ):
         return cast(Optional[AuthModel], raw)
 
     if raw is None:
@@ -42,6 +54,9 @@ def parse_auth_config(raw: dict | AuthModel | None) -> Optional[AuthModel]:
         return None
 
     auth_type = _normalize_auth_type(raw_data.get("type") or DEFAULT_AUTH_TYPE)
+
+    if auth_type == "none":
+        return NoAuthenticationConfig(type="none")
 
     if auth_type == "local":
         return LocalUserAccountAuthenticationConfig(
@@ -108,6 +123,10 @@ def apply_auth_defaults(auth: AuthModel | None) -> AuthModel:
 
 def check_required_auth_fields(auth: AuthModel) -> None:
     """Enforce required fields per auth type."""
+    if isinstance(auth, NoAuthenticationConfig):
+        # No validation needed for "none" auth type
+        return
+
     if isinstance(auth, M2MAuthenticationConfig):
         missing = [f for f in ("client_id", "client_secret") if not getattr(auth, f)]
         if missing:
@@ -129,6 +148,11 @@ def check_required_auth_fields(auth: AuthModel) -> None:
 def normalize_authentication(raw: dict | AuthModel | None) -> AuthModel:
     """End-to-end auth normalization: parse -> apply defaults -> required-field checks."""
     model = parse_auth_config(raw)
+
+    # NoAuthenticationConfig requires no further processing
+    if isinstance(model, NoAuthenticationConfig):
+        return model
+
     model = apply_auth_defaults(model)
     check_required_auth_fields(model)
     return model
@@ -137,8 +161,8 @@ def normalize_authentication(raw: dict | AuthModel | None) -> AuthModel:
 def _normalize_auth_type(value: str) -> str:
     """Return a normalized auth type or raise for unsupported values."""
     v = (value or "").strip().lower()
-    if v in {"m2m", "local"}:
+    if v in {"m2m", "local", "none"}:
         return v
     raise ValueError(
-        f"Unsupported authentication type: {value!r}. Expected 'm2m' or 'local'."
+        f"Unsupported authentication type: {value!r}. Expected 'm2m', 'local', or 'none'."
     )
