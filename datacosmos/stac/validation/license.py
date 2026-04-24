@@ -43,7 +43,9 @@ def normalize_collection_license(license_value: str) -> tuple[str, str | None]:
     # Check for deprecated licenses
     if lower in DEPRECATED_LICENSES:
         replacement = DEPRECATED_LICENSES[lower]
-        warning = f'license value "{license_value}" is deprecated; mapped to "{replacement}"'
+        warning = (
+            f'license value "{license_value}" is deprecated; mapped to "{replacement}"'
+        )
         return replacement, warning
 
     if lower == "other":

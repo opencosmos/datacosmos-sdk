@@ -148,11 +148,13 @@ class StorageClient:
                         future.result()
                         successful_assets.append(asset_key)
                     except Exception as e:
-                        failed_assets.append({
-                            "asset_key": asset_key,
-                            "error": str(e),
-                            "exception": e,
-                        })
+                        failed_assets.append(
+                            {
+                                "asset_key": asset_key,
+                                "error": str(e),
+                                "exception": e,
+                            }
+                        )
 
         # Step 3: Delete item metadata
         item_deleted = False

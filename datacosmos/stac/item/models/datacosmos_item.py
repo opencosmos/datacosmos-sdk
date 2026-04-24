@@ -233,14 +233,18 @@ class DatacosmosItem(BaseModel):
 
         coll_id = collection_id or self.collection
         if not coll_id:
-            raise ValueError("Cannot add self link: no collection_id provided or set on item.")
+            raise ValueError(
+                "Cannot add self link: no collection_id provided or set on item."
+            )
 
         base = base_url.rstrip("/")
-        self.links.append({
-            "rel": "self",
-            "href": f"{base}/collections/{coll_id}/items/{self.id}",
-            "type": "application/geo+json",
-        })
+        self.links.append(
+            {
+                "rel": "self",
+                "href": f"{base}/collections/{coll_id}/items/{self.id}",
+                "type": "application/geo+json",
+            }
+        )
 
     def add_parent_link(self, base_url: str, collection_id: str | None = None) -> None:
         """Add a 'parent' link to the item if not already present.
@@ -254,16 +258,22 @@ class DatacosmosItem(BaseModel):
 
         coll_id = collection_id or self.collection
         if not coll_id:
-            raise ValueError("Cannot add parent link: no collection_id provided or set on item.")
+            raise ValueError(
+                "Cannot add parent link: no collection_id provided or set on item."
+            )
 
         base = base_url.rstrip("/")
-        self.links.append({
-            "rel": "parent",
-            "href": f"{base}/collections/{coll_id}",
-            "type": "application/json",
-        })
+        self.links.append(
+            {
+                "rel": "parent",
+                "href": f"{base}/collections/{coll_id}",
+                "type": "application/json",
+            }
+        )
 
-    def ensure_standard_links(self, base_url: str, collection_id: str | None = None) -> None:
+    def ensure_standard_links(
+        self, base_url: str, collection_id: str | None = None
+    ) -> None:
         """Ensure the item has both 'self' and 'parent' links.
 
         This method adds missing links without modifying existing ones.

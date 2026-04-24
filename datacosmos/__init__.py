@@ -1,6 +1,6 @@
 """A library for interacting with DataCosmos from Python code."""
 
-from importlib.metadata import version, PackageNotFoundError
+from importlib.metadata import PackageNotFoundError, version
 
 try:
     __version__ = version("datacosmos")

@@ -23,6 +23,7 @@ from datacosmos.config.models.local_user_account_authentication_config import (
     LocalUserAccountAuthenticationConfig,
 )
 from datacosmos.config.models.m2m_authentication_config import M2MAuthenticationConfig
+from datacosmos.config.models.no_authentication_config import NoAuthenticationConfig
 from datacosmos.config.models.url import URL
 
 
@@ -77,7 +78,12 @@ class Config(BaseSettings):
         if raw is None:
             return None
         if isinstance(
-            raw, (M2MAuthenticationConfig, LocalUserAccountAuthenticationConfig)
+            raw,
+            (
+                M2MAuthenticationConfig,
+                LocalUserAccountAuthenticationConfig,
+                NoAuthenticationConfig,
+            ),
         ):
             return raw
         if isinstance(raw, dict):
