@@ -20,11 +20,15 @@ from datacosmos.config.constants import (
     DEFAULT_LOCAL_REDIRECT_PORT,
     DEFAULT_LOCAL_SCOPES,
     DEFAULT_LOCAL_TOKEN_ENDPOINT,
+    DEFAULT_USER_TOKEN_ENV_VAR,
 )
 from datacosmos.config.models.local_user_account_authentication_config import (
     LocalUserAccountAuthenticationConfig,
 )
 from datacosmos.config.models.m2m_authentication_config import M2MAuthenticationConfig
+from datacosmos.config.models.token_authentication_config import (
+    TokenAuthenticationConfig,
+)
 from datacosmos.exceptions import AuthenticationError
 
 
@@ -209,3 +213,26 @@ class TestFactory:
             match="Missing required authentication field for local: client_id",
         ):
             normalize_authentication({"type": "local"})
+
+    def test_parse_auth_config_token_dict_defaults_env_var(self):
+        """Test parsing a token dict defaults the env var name."""
+        auth = parse_auth_config({"type": "token"})
+        assert isinstance(auth, TokenAuthenticationConfig)
+        assert auth.type == "token"
+        assert auth.token_env_var == DEFAULT_USER_TOKEN_ENV_VAR
+
+    def test_parse_auth_config_token_dict_custom_env_var(self):
+        """Test parsing a token dict honours a custom env var name."""
+        auth = parse_auth_config({"type": "token", "token_env_var": "MY_TOKEN"})
+        assert isinstance(auth, TokenAuthenticationConfig)
+        assert auth.token_env_var == "MY_TOKEN"
+
+    def test_normalize_authentication_token_requires_no_secrets(self):
+        """Test that token auth normalizes without any required credentials."""
+        auth = normalize_authentication({"type": "token"})
+        assert isinstance(auth, TokenAuthenticationConfig)
+        assert auth.token_env_var == DEFAULT_USER_TOKEN_ENV_VAR
+
+    def test_check_required_auth_fields_token_ok(self):
+        """Test that token config passes required-field validation."""
+        check_required_auth_fields(TokenAuthenticationConfig(type="token"))

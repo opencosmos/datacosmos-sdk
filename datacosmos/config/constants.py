@@ -3,6 +3,9 @@
 # ---- Authentication defaults ----
 DEFAULT_AUTH_TYPE = "m2m"
 
+# Token (pre-obtained bearer token read from the environment)
+DEFAULT_USER_TOKEN_ENV_VAR = "DATACOSMOS_USER_TOKEN"
+
 # M2M
 DEFAULT_AUTH_TOKEN_URL = "https://login.open-cosmos.com/oauth/token"
 DEFAULT_AUTH_AUDIENCE = "https://beeapp.open-cosmos.com"

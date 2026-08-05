@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import threading
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, List, Optional
@@ -22,6 +23,7 @@ from datacosmos.auth.base_authenticator import BaseAuthenticator
 from datacosmos.auth.local_authenticator import LocalAuthenticator
 from datacosmos.auth.m2m_authenticator import M2MAuthenticator
 from datacosmos.config.config import Config
+from datacosmos.config.constants import DEFAULT_USER_TOKEN_ENV_VAR
 from datacosmos.config.models.no_authentication_config import NoAuthenticationConfig
 from datacosmos.exceptions import AuthenticationError, DatacosmosError, HTTPError
 
@@ -73,6 +75,9 @@ class DatacosmosClient:
             return
 
         self.config = self._coerce_config(config)
+        if getattr(self.config.authentication, "type", None) == "token":
+            self._init_with_env_token(self.config.authentication)
+            return
         self._owns_session = True
         self._http_client = self._authenticate_and_initialize_client()
 
@@ -124,6 +129,32 @@ class DatacosmosClient:
         self.token_expiry = None
         # Use NoAuthenticationConfig to skip credential validation
         self.config = Config(authentication=NoAuthenticationConfig(type="none"))
+
+    def _init_with_env_token(self, auth: Any) -> None:
+        """Initialize using a bearer token read from the environment.
+
+        Used by the "token" authentication type: reads the token from the env
+        var named by the auth config and builds a non-refreshing bearer
+        session, while preserving the coerced config's endpoint settings.
+
+        Args:
+            auth: The resolved TokenAuthenticationConfig.
+
+        Raises:
+            AuthenticationError: If the configured env var is unset or empty.
+        """
+        env_var = getattr(auth, "token_env_var", None) or DEFAULT_USER_TOKEN_ENV_VAR
+        token = os.environ.get(env_var)
+        if not token:
+            raise AuthenticationError(
+                f"Authentication type 'token' requires the environment variable "
+                f"'{env_var}' to be set."
+            )
+        self._http_client = requests.Session()
+        self._http_client.headers.update({"Authorization": f"Bearer {token}"})
+        self._owns_session = False
+        self.token = token
+        self.token_expiry = None
 
     def _coerce_config(self, cfg: Optional[Config | Any]) -> Config:
         if cfg is None:
