@@ -18,18 +18,23 @@ from datacosmos.config.constants import (
     DEFAULT_LOCAL_REDIRECT_PORT,
     DEFAULT_LOCAL_SCOPES,
     DEFAULT_LOCAL_TOKEN_ENDPOINT,
+    DEFAULT_USER_TOKEN_ENV_VAR,
 )
 from datacosmos.config.models.local_user_account_authentication_config import (
     LocalUserAccountAuthenticationConfig,
 )
 from datacosmos.config.models.m2m_authentication_config import M2MAuthenticationConfig
 from datacosmos.config.models.no_authentication_config import NoAuthenticationConfig
+from datacosmos.config.models.token_authentication_config import (
+    TokenAuthenticationConfig,
+)
 from datacosmos.exceptions import AuthenticationError
 
 AuthModel = Union[
     M2MAuthenticationConfig,
     LocalUserAccountAuthenticationConfig,
     NoAuthenticationConfig,
+    TokenAuthenticationConfig,
 ]
 
 
@@ -41,6 +46,7 @@ def parse_auth_config(raw: dict | AuthModel | None) -> Optional[AuthModel]:
             M2MAuthenticationConfig,
             LocalUserAccountAuthenticationConfig,
             NoAuthenticationConfig,
+            TokenAuthenticationConfig,
         ),
     ):
         return cast(Optional[AuthModel], raw)
@@ -57,6 +63,12 @@ def parse_auth_config(raw: dict | AuthModel | None) -> Optional[AuthModel]:
 
     if auth_type == "none":
         return NoAuthenticationConfig(type="none")
+
+    if auth_type == "token":
+        return TokenAuthenticationConfig(
+            type="token",
+            token_env_var=raw_data.get("token_env_var") or DEFAULT_USER_TOKEN_ENV_VAR,
+        )
 
     if auth_type == "local":
         return LocalUserAccountAuthenticationConfig(
@@ -108,6 +120,10 @@ def apply_auth_defaults(auth: AuthModel | None) -> AuthModel:
         auth.audience = auth.audience or DEFAULT_AUTH_AUDIENCE
         return auth
 
+    if isinstance(auth, TokenAuthenticationConfig):
+        auth.token_env_var = auth.token_env_var or DEFAULT_USER_TOKEN_ENV_VAR
+        return auth
+
     auth.type = auth.type or "local"
     auth.authorization_endpoint = (
         auth.authorization_endpoint or DEFAULT_LOCAL_AUTHORIZATION_ENDPOINT
@@ -125,6 +141,11 @@ def check_required_auth_fields(auth: AuthModel) -> None:
     """Enforce required fields per auth type."""
     if isinstance(auth, NoAuthenticationConfig):
         # No validation needed for "none" auth type
+        return
+
+    if isinstance(auth, TokenAuthenticationConfig):
+        # The token is read from the environment at client construction;
+        # there is nothing to validate here.
         return
 
     if isinstance(auth, M2MAuthenticationConfig):
@@ -161,8 +182,9 @@ def normalize_authentication(raw: dict | AuthModel | None) -> AuthModel:
 def _normalize_auth_type(value: str) -> str:
     """Return a normalized auth type or raise for unsupported values."""
     v = (value or "").strip().lower()
-    if v in {"m2m", "local", "none"}:
+    if v in {"m2m", "local", "none", "token"}:
         return v
     raise ValueError(
-        f"Unsupported authentication type: {value!r}. Expected 'm2m', 'local', or 'none'."
+        f"Unsupported authentication type: {value!r}. "
+        "Expected 'm2m', 'local', 'none', or 'token'."
     )
