@@ -16,7 +16,9 @@ class TestConfigWithOpenCosmosClusterDetection:
         """Clean environment before each test."""
         monkeypatch.delenv(OPENCOSMOS_INTERNAL_CLUSTER_ENV, raising=False)
         for k in list(os.environ):
-            if k.startswith(("AUTHENTICATION__", "STAC__", "DATACOSMOS_", "OPENCOSMOS_")):
+            if k.startswith(
+                ("AUTHENTICATION__", "STAC__", "DATACOSMOS_", "OPENCOSMOS_")
+            ):
                 monkeypatch.delenv(k, raising=False)
 
     def test_config_uses_external_urls_outside_oc_cluster(self, tmp_path, monkeypatch):
@@ -76,13 +78,18 @@ class TestConfigWithOpenCosmosClusterDetection:
         assert cfg.stac.path == "/"
 
         assert cfg.datacosmos_cloud_storage.protocol == "http"
-        assert cfg.datacosmos_cloud_storage.host == "storage.default.svc.cluster.local"
+        assert (
+            cfg.datacosmos_cloud_storage.host
+            == "datacosmos-file-storage.default.svc.cluster.local"
+        )
 
         # Public cloud storage should always use external URLs (for public asset hrefs)
         assert cfg.datacosmos_public_cloud_storage.protocol == "https"
         assert cfg.datacosmos_public_cloud_storage.host == "app.open-cosmos.com"
 
-    def test_explicit_config_overrides_oc_cluster_detection(self, tmp_path, monkeypatch):
+    def test_explicit_config_overrides_oc_cluster_detection(
+        self, tmp_path, monkeypatch
+    ):
         """Explicit YAML config should override auto-detected URLs."""
         monkeypatch.setenv(OPENCOSMOS_INTERNAL_CLUSTER_ENV, "true")
 

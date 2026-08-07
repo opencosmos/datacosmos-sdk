@@ -147,6 +147,13 @@ This opens a browser window for login and caches the token locally at `~/.dataco
 | `project.port`                             | `443`                                   | YAML / ENV     |
 | `project.path`                             | `/api/data/v0/scenario`                 | YAML / ENV     |
 
+> **Note:** when `datacosmos_public_cloud_storage` is not set explicitly and the
+> SDK is running outside the Open Cosmos cluster, it mirrors
+> `datacosmos_cloud_storage`, so overriding the storage URL (e.g. pointing it at
+> a test environment) automatically keeps public asset hrefs consistent. Inside
+> the cluster the external default is kept, since internal service URLs
+> are not publicly reachable.
+
 ## STAC Client
 
 The `STACClient` enables interaction with the STAC API, allowing for searching, retrieving, creating, updating, and deleting STAC items and collections.
