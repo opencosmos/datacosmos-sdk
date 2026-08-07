@@ -7,7 +7,7 @@ and supports environment variable-based overrides.
 
 from typing import Optional
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from datacosmos.config.auth.factory import normalize_authentication, parse_auth_config
@@ -16,6 +16,7 @@ from datacosmos.config.environment import (
     get_default_project,
     get_default_stac,
     get_default_storage,
+    is_running_in_opencosmos_cluster,
 )
 from datacosmos.config.loaders.yaml_source import yaml_settings_source
 from datacosmos.config.models.authentication_config import AuthenticationConfig
@@ -74,6 +75,24 @@ class Config(BaseSettings):
             file_secret_settings,
         ]
         return tuple(s for s in sources if s is not None)
+
+    @model_validator(mode="after")
+    def _default_public_storage_from_storage(self):
+        """Mirror datacosmos_cloud_storage unless public storage is set explicitly.
+
+        Outside the cluster datacosmos_cloud_storage is the external,
+        per-environment URL, so it is also the correct public URL. Inside the
+        cluster datacosmos_cloud_storage resolves to an internal service URL
+        that is not publicly reachable, so the external default is kept there.
+        """
+        if (
+            "datacosmos_public_cloud_storage" not in self.model_fields_set
+            and not is_running_in_opencosmos_cluster()
+        ):
+            self.datacosmos_public_cloud_storage = (
+                self.datacosmos_cloud_storage.model_copy()
+            )
+        return self
 
     @field_validator("authentication", mode="before")
     @classmethod

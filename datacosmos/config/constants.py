@@ -33,7 +33,10 @@ DEFAULT_STORAGE_EXTERNAL = dict(
     protocol="https", host="app.open-cosmos.com", port=443, path="/api/data/v0/storage"
 )
 DEFAULT_PROJECT = dict(
-    protocol="https", host="app.open-cosmos.com", port=443, path="/api/data/v0"
+    protocol="https",
+    host="app.open-cosmos.com",
+    port=443,
+    path="/api/data/v0/scenario",
 )
 
 # Internal URLs (used inside Kubernetes cluster)
@@ -42,7 +45,7 @@ DEFAULT_STAC_INTERNAL = dict(
 )
 DEFAULT_STORAGE_INTERNAL = dict(
     protocol="http",
-    host="storage.default.svc.cluster.local",
+    host="datacosmos-file-storage.default.svc.cluster.local",
     port=80,
     path="/",
 )

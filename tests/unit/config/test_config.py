@@ -13,8 +13,10 @@ from datacosmos.exceptions import AuthenticationError
 ALL_CONFIG_ENV_PREFIXES = [
     "AUTHENTICATION__",
     "STAC__",
-    "DATACOSMOS_DATACOSMOS_CLOUD_STORAGE__",
-    "DATACOSMOS_DATACOSMOS_PUBLIC_CLOUD_STORAGE__",
+    "DATACOSMOS_CLOUD_STORAGE__",
+    "DATACOSMOS_PUBLIC_CLOUD_STORAGE__",
+    "PROJECT__",
+    "OPENCOSMOS_",
 ]
 
 
@@ -170,6 +172,67 @@ class TestConfig:
             443,
             "/api/data/v0/storage",
         )
+
+    def test_project_defaults_applied_when_missing(self):
+        """Test project falls back to the external scenario service defaults."""
+        cfg = Config(authentication={"client_id": "id", "client_secret": "secret"})
+        p = cfg.project
+        assert isinstance(p, URL)
+        assert (p.protocol, p.host, p.port, p.path) == (
+            "https",
+            "app.open-cosmos.com",
+            443,
+            "/api/data/v0/scenario",
+        )
+
+    def test_public_cloud_storage_mirrors_cloud_storage_when_not_set(
+        self, monkeypatch, tmp_path
+    ):
+        """Public storage follows datacosmos_cloud_storage outside the cluster."""
+        monkeypatch.setattr(
+            "datacosmos.config.config.DEFAULT_CONFIG_YAML",
+            str(tmp_path / "does_not_exist.yaml"),
+            raising=True,
+        )
+        monkeypatch.setenv("DATACOSMOS_CLOUD_STORAGE__PROTOCOL", "https")
+        monkeypatch.setenv("DATACOSMOS_CLOUD_STORAGE__HOST", "test.app.open-cosmos.com")
+        monkeypatch.setenv("DATACOSMOS_CLOUD_STORAGE__PORT", "443")
+        monkeypatch.setenv("DATACOSMOS_CLOUD_STORAGE__PATH", "/api/data/v0/storage")
+
+        cfg = Config(authentication={"client_id": "id", "client_secret": "secret"})
+
+        s = cfg.datacosmos_public_cloud_storage
+        assert (s.protocol, s.host, s.port, s.path) == (
+            "https",
+            "test.app.open-cosmos.com",
+            443,
+            "/api/data/v0/storage",
+        )
+
+    def test_public_cloud_storage_explicit_value_wins(self, monkeypatch, tmp_path):
+        """An explicit public storage setting is never overridden by mirroring."""
+        monkeypatch.setattr(
+            "datacosmos.config.config.DEFAULT_CONFIG_YAML",
+            str(tmp_path / "does_not_exist.yaml"),
+            raising=True,
+        )
+        monkeypatch.setenv("DATACOSMOS_CLOUD_STORAGE__PROTOCOL", "https")
+        monkeypatch.setenv("DATACOSMOS_CLOUD_STORAGE__HOST", "test.app.open-cosmos.com")
+        monkeypatch.setenv("DATACOSMOS_CLOUD_STORAGE__PORT", "443")
+        monkeypatch.setenv("DATACOSMOS_CLOUD_STORAGE__PATH", "/api/data/v0/storage")
+        monkeypatch.setenv("DATACOSMOS_PUBLIC_CLOUD_STORAGE__PROTOCOL", "https")
+        monkeypatch.setenv(
+            "DATACOSMOS_PUBLIC_CLOUD_STORAGE__HOST", "public.example.com"
+        )
+        monkeypatch.setenv("DATACOSMOS_PUBLIC_CLOUD_STORAGE__PORT", "443")
+        monkeypatch.setenv(
+            "DATACOSMOS_PUBLIC_CLOUD_STORAGE__PATH", "/api/data/v0/storage"
+        )
+
+        cfg = Config(authentication={"client_id": "id", "client_secret": "secret"})
+
+        assert cfg.datacosmos_public_cloud_storage.host == "public.example.com"
+        assert cfg.datacosmos_cloud_storage.host == "test.app.open-cosmos.com"
 
     def test_local_auth_defaults_applied(self):
         """Test local authentication fields are correctly defaulted by the factory."""
